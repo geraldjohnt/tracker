@@ -1,0 +1,48 @@
+{
+  "rules": {
+    "weightTracker": {
+      ".read": true,
+      ".write": true,
+      "weeks": {
+        "$weekId": {
+          ".validate": "newData.hasChildren(['startDate','endDate']) || !newData.exists()",
+          "startDate": { ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)" },
+          "endDate":   { ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)" },
+          "id":        { ".validate": "newData.isString()" },
+          "createdAt": { ".validate": "newData.isNumber()" },
+          "participants": {
+            "$pid": {
+              "name":        { ".validate": "newData.isString() && newData.val().length <= 60" },
+              "startWeight": { ".validate": "newData.isNumber() || !newData.exists()" },
+              "endWeight":   { ".validate": "newData.isNumber() || !newData.exists()" },
+              "order":       { ".validate": "newData.isNumber()" },
+              "$other": { ".validate": false }
+            }
+          },
+          "$other": { ".validate": false }
+        }
+      },
+      "settings": {
+        "unit":  { ".validate": "newData.isString() && (newData.val() === 'kg' || newData.val() === 'lb')" },
+        "theme": { ".validate": "newData.isString() && (newData.val() === 'dark' || newData.val() === 'light')" }
+      }
+    },
+    "spendingTracker": {
+      ".read": true,
+      ".write": true,
+      "expenses": {
+        "$expenseId": {
+          ".validate": "newData.hasChildren(['date','item','price']) || !newData.exists()",
+          "date":      { ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)" },
+          "item":      { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
+          "price":     { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "createdAt": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        }
+      },
+      "settings": {
+        "theme": { ".validate": "newData.isString() && (newData.val() === 'dark' || newData.val() === 'light')" }
+      }
+    }
+  }
+}

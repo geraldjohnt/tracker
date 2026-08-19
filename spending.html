@@ -1,0 +1,1170 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6366f1">
+<title>Spendly · Daily Spending Tracker</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+<style>
+/* ============================================================
+   Design tokens (matches weight.html)
+   ============================================================ */
+:root{
+  --bg:#f4f5fb;
+  --bg-grad-1:rgba(99,102,241,.16);
+  --bg-grad-2:rgba(236,72,153,.12);
+  --card:#ffffff;
+  --card-2:#fafbff;
+  --text:#0f172a;
+  --muted:#6b7280;
+  --border:#e7e9f2;
+  --border-strong:#d7dae8;
+  --accent:#6366f1;
+  --accent-2:#8b5cf6;
+  --accent-soft:rgba(99,102,241,.10);
+  --good:#059669;
+  --good-soft:rgba(16,185,129,.12);
+  --bad:#dc2626;
+  --bad-soft:rgba(239,68,68,.12);
+  --warn:#d97706;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+  --shadow:0 6px 24px -12px rgba(16,24,40,.20), 0 2px 6px -3px rgba(16,24,40,.08);
+  --shadow-lg:0 24px 60px -28px rgba(16,24,40,.34);
+  --r-lg:20px;
+  --r-md:14px;
+  --r-sm:10px;
+}
+[data-bs-theme="dark"]{
+  --bg:#080b14;
+  --bg-grad-1:rgba(99,102,241,.22);
+  --bg-grad-2:rgba(217,70,239,.14);
+  --card:#111726;
+  --card-2:#161d2f;
+  --text:#e8ecf6;
+  --muted:#94a1b8;
+  --border:#232c42;
+  --border-strong:#2f3a55;
+  --accent:#818cf8;
+  --accent-2:#a78bfa;
+  --accent-soft:rgba(129,140,248,.14);
+  --good:#34d399;
+  --good-soft:rgba(52,211,153,.14);
+  --bad:#f87171;
+  --bad-soft:rgba(248,113,113,.14);
+  --warn:#fbbf24;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow:0 8px 30px -14px rgba(0,0,0,.7);
+  --shadow-lg:0 30px 70px -30px rgba(0,0,0,.85);
+}
+
+*{ -webkit-tap-highlight-color:transparent; }
+html,body{ height:100%; }
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-feature-settings:'cv02','cv03','cv04','tnum';
+  min-height:100dvh;
+  padding-bottom:calc(2.5rem + env(safe-area-inset-bottom));
+  overflow-x:hidden;
+}
+body::before{
+  content:'';
+  position:fixed; inset:-30% -10% auto -10%; height:70vh;
+  background:
+    radial-gradient(60% 60% at 20% 20%, var(--bg-grad-1), transparent 70%),
+    radial-gradient(50% 50% at 85% 10%, var(--bg-grad-2), transparent 70%);
+  pointer-events:none; z-index:0;
+}
+.container{ position:relative; z-index:1; max-width:1000px; }
+::selection{ background:var(--accent); color:#fff; }
+
+/* Header */
+.app-header{
+  position:sticky; top:0; z-index:1030;
+  backdrop-filter:saturate(180%) blur(14px);
+  -webkit-backdrop-filter:saturate(180%) blur(14px);
+  background:color-mix(in srgb, var(--bg) 78%, transparent);
+  border-bottom:1px solid var(--border);
+}
+.app-header .container{ display:flex; align-items:center; gap:.75rem; padding-top:.7rem; padding-bottom:.7rem; }
+.brand{ display:flex; align-items:center; gap:.65rem; min-width:0; }
+.brand-logo{
+  width:40px; height:40px; flex:0 0 40px; border-radius:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#fff; display:grid; place-items:center; font-size:1.15rem;
+  box-shadow:0 8px 20px -8px var(--accent);
+}
+.brand-name{ font-weight:800; font-size:1.05rem; letter-spacing:-.02em; line-height:1.1; }
+.brand-sub{ font-size:.72rem; color:var(--muted); font-weight:500; white-space:nowrap; }
+.header-actions{ margin-left:auto; display:flex; align-items:center; gap:.4rem; }
+
+.btn-ghost{
+  background:var(--card); border:1px solid var(--border); color:var(--text);
+  border-radius:var(--r-sm); font-weight:600; box-shadow:var(--shadow-sm);
+}
+.btn-ghost:hover{ background:var(--card-2); border-color:var(--border-strong); color:var(--text); }
+.btn-icon{ width:38px; height:38px; display:inline-grid; place-items:center; padding:0; }
+
+.conn{
+  display:inline-flex; align-items:center; gap:.4rem;
+  font-size:.72rem; font-weight:600; color:var(--muted);
+  padding:.35rem .6rem; border-radius:999px;
+  border:1px solid var(--border); background:var(--card);
+}
+.conn .dot{ width:7px; height:7px; border-radius:50%; background:var(--muted); }
+.conn.online .dot{ background:var(--good); box-shadow:0 0 0 3px var(--good-soft); }
+.conn.offline .dot{ background:var(--warn); box-shadow:0 0 0 3px rgba(217,119,6,.15); }
+.conn.local .dot{ background:var(--bad); box-shadow:0 0 0 3px var(--bad-soft); }
+@media (max-width:575.98px){ .conn .label{ display:none; } .conn{ padding:.35rem; } }
+
+/* ============================================================
+   Sidebar / app shell
+   ============================================================ */
+.app-shell{ display:flex; align-items:flex-start; min-height:100dvh; }
+.content-col{ flex:1 1 auto; min-width:0; }
+
+.sidebar{
+  flex:0 0 232px; width:232px;
+  position:sticky; top:0; align-self:flex-start;
+  height:100dvh;
+  background:var(--card); border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  z-index:1045;
+  transition:width .2s ease, flex-basis .2s ease, transform .25s ease;
+}
+.sidebar-head{ display:flex; align-items:center; gap:.65rem; padding:1.1rem 1rem; border-bottom:1px solid var(--border); min-width:0; }
+.sidebar-brand-text{ min-width:0; overflow:hidden; white-space:nowrap; }
+.sidebar-nav{ padding:.75rem; display:flex; flex-direction:column; gap:.2rem; overflow-y:auto; flex:1 1 auto; }
+.sidebar-link{
+  display:flex; align-items:center; gap:.75rem; width:100%;
+  padding:.62rem .7rem; border-radius:var(--r-sm); border:none; background:transparent;
+  color:var(--muted); font-weight:600; font-size:.87rem; text-align:left; white-space:nowrap;
+  text-decoration:none;
+}
+.sidebar-link i{ font-size:1.05rem; width:20px; flex:0 0 20px; text-align:center; }
+.sidebar-link:hover{ background:var(--card-2); color:var(--text); }
+.sidebar-link.active{ background:var(--accent-soft); color:var(--accent); }
+.sidebar-divider{ height:1px; background:var(--border); margin:.5rem .2rem; flex:0 0 auto; }
+.sidebar.collapsed .sidebar-divider{ margin:.5rem .35rem; }
+
+.sidebar.collapsed{ flex-basis:76px; width:76px; }
+.sidebar.collapsed .sidebar-brand-text,
+.sidebar.collapsed .sidebar-link span{ display:none; }
+.sidebar.collapsed .sidebar-link{ justify-content:center; }
+.sidebar.collapsed .sidebar-head{ justify-content:center; padding:1.1rem .5rem; }
+
+.sidebar-backdrop{ display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:1044; }
+.sidebar-backdrop.show{ display:block; }
+
+@media (max-width:767.98px){
+  .sidebar{
+    position:fixed; left:0; top:0; height:100dvh; width:250px; flex:0 0 250px;
+    transform:translateX(-100%);
+    box-shadow:var(--shadow-lg);
+  }
+  .sidebar.mobile-open{ transform:translateX(0); }
+  .sidebar.collapsed{ width:250px; flex-basis:250px; }
+  .sidebar.collapsed .sidebar-brand-text,
+  .sidebar.collapsed .sidebar-link span{ display:block; }
+  .sidebar.collapsed .sidebar-link{ justify-content:flex-start; }
+  .sidebar.collapsed .sidebar-head{ justify-content:flex-start; padding:1.1rem 1rem; }
+}
+
+/* View tabs */
+.tabs{ display:inline-flex; gap:.25rem; padding:.25rem; background:var(--card); border:1px solid var(--border); border-radius:999px; box-shadow:var(--shadow-sm); flex-wrap:wrap; }
+.tabs button{
+  border:none; background:transparent; color:var(--muted); font-weight:700; font-size:.83rem;
+  padding:.42rem .95rem; border-radius:999px; white-space:nowrap;
+}
+.tabs button.active{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; box-shadow:0 6px 16px -8px var(--accent); }
+.tabs-wrap{ margin:1.15rem 0; }
+
+/* Cards */
+.card-x{ background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg); box-shadow:var(--shadow); }
+.card-x + .card-x{ margin-top:1rem; }
+.card-x-head{ display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; padding:1rem 1.15rem; border-bottom:1px solid var(--border); }
+.card-x-title{ font-weight:700; font-size:.98rem; letter-spacing:-.01em; margin:0; display:flex; align-items:center; gap:.5rem; }
+.card-x-title i{ color:var(--accent); }
+.card-x-body{ padding:1.15rem; }
+.section-label{ font-size:.7rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
+
+/* Stats */
+.stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:.75rem; margin-top:1rem; }
+.stat{ background:var(--card); border:1px solid var(--border); border-radius:var(--r-md); padding:.85rem .95rem; box-shadow:var(--shadow-sm); }
+.stat-label{ font-size:.68rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:.3rem; }
+.stat-value{ font-size:1.4rem; font-weight:800; letter-spacing:-.03em; margin-top:.25rem; line-height:1.15; font-variant-numeric:tabular-nums; }
+.stat-sub{ font-size:.74rem; color:var(--muted); font-weight:500; margin-top:.1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Day nav / period nav */
+.day-nav, .period-nav{ display:flex; align-items:center; gap:.6rem; margin:1.15rem 0; flex-wrap:wrap; }
+.nav-arrow{ width:38px; height:38px; flex:0 0 38px; border-radius:var(--r-sm); display:grid; place-items:center; border:1px solid var(--border); background:var(--card); color:var(--text); box-shadow:var(--shadow-sm); }
+.nav-arrow:hover{ background:var(--card-2); border-color:var(--border-strong); }
+.day-nav-date{ min-width:0; }
+.day-date-big{ font-size:1.25rem; font-weight:800; letter-spacing:-.02em; line-height:1.15; }
+.day-date-sub{ font-size:.78rem; color:var(--muted); font-weight:600; }
+.period-label{ font-weight:800; font-size:1.1rem; letter-spacing:-.02em; min-width:0; }
+.day-nav .btn-ghost, .period-nav .btn-ghost{ margin-left:auto; }
+
+/* Add row */
+.add-row{ display:flex; gap:.5rem; margin-top:.85rem; flex-wrap:wrap; }
+.add-row input[type=text]{ flex:1 1 200px; min-width:0; }
+.add-row .exp-price-wrap{ flex:0 0 150px; }
+.add-row input, .add-row .exp-price-wrap input{
+  border:1px solid var(--border); background:var(--card-2); color:var(--text);
+  border-radius:var(--r-sm); padding:.62rem .8rem; font-weight:600; width:100%;
+}
+.add-row input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); background:var(--card); }
+.btn-primary-x{
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  border:none; color:#fff; font-weight:700; border-radius:var(--r-md);
+  padding:.62rem 1.05rem; box-shadow:0 10px 24px -12px var(--accent);
+  white-space:nowrap;
+}
+.btn-primary-x:hover{ color:#fff; filter:brightness(1.06); }
+.btn-primary-x:active{ transform:translateY(1px); }
+
+/* Expense rows */
+.exp-list{ display:flex; flex-direction:column; gap:.55rem; }
+.exp-row{ display:grid; grid-template-columns:1fr 140px 38px; gap:.55rem; align-items:center; background:var(--card-2); border:1px solid var(--border); border-radius:var(--r-md); padding:.6rem .7rem; }
+.exp-row:hover{ border-color:var(--border-strong); }
+.exp-item-input{ border:1px solid transparent; background:transparent; color:var(--text); font-weight:700; font-size:.92rem; border-radius:8px; padding:.4rem .5rem; width:100%; min-width:0; }
+.exp-item-input:hover{ background:var(--card); border-color:var(--border); }
+.exp-item-input:focus{ outline:none; background:var(--card); border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.exp-price-wrap{ position:relative; }
+.exp-price-wrap .exp-prefix{ position:absolute; left:.6rem; top:50%; transform:translateY(-50%); color:var(--muted); font-weight:700; font-size:.85rem; pointer-events:none; }
+.exp-price-input{
+  width:100%; border:1px solid var(--border); background:var(--card); color:var(--text);
+  border-radius:var(--r-sm); padding:.5rem .5rem .5rem 1.4rem; font-weight:700; font-size:.92rem;
+  font-variant-numeric:tabular-nums; -moz-appearance:textfield;
+}
+.exp-price-input::-webkit-outer-spin-button, .exp-price-input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.exp-price-input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.btn-trash{ width:34px; height:34px; border-radius:9px; display:grid; place-items:center; border:1px solid transparent; background:transparent; color:var(--muted); }
+.btn-trash:hover{ background:var(--bad-soft); color:var(--bad); border-color:color-mix(in srgb,var(--bad) 25%, transparent); }
+@media (max-width:480px){ .exp-row{ grid-template-columns:1fr 104px 34px; } }
+
+/* Calendar */
+.cal-head-row{ display:grid; grid-template-columns:repeat(7,1fr); gap:.4rem; margin-bottom:.4rem; }
+.cal-head-row span{ text-align:center; font-size:.66rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:.4rem; }
+.cal-cell{
+  min-height:64px; border-radius:var(--r-sm); border:1px solid var(--border);
+  background:var(--card-2); padding:.4rem; display:flex; flex-direction:column; gap:.2rem;
+  cursor:pointer; transition:border-color .15s, background .15s;
+}
+.cal-cell:hover{ border-color:var(--border-strong); background:var(--card); }
+.cal-cell.empty{ visibility:hidden; cursor:default; }
+.cal-cell.today{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+.cal-cell.has-spend{ background:var(--accent-soft); }
+.cal-day-num{ font-weight:700; font-size:.85rem; }
+.cal-day-total{ font-size:.72rem; font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums; margin-top:auto; }
+@media (max-width:575.98px){ .cal-cell{ min-height:48px; padding:.3rem; } .cal-day-total{ font-size:.62rem; } }
+
+/* List rows (week days / year months) */
+.list-rows{ display:flex; flex-direction:column; gap:.4rem; }
+.list-row{ display:flex; align-items:center; justify-content:space-between; padding:.6rem .75rem; border-radius:var(--r-sm); border:1px solid var(--border); background:var(--card-2); cursor:pointer; }
+.list-row:hover{ border-color:var(--border-strong); background:var(--card); }
+.list-row.is-today{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+.list-row-label{ font-weight:700; font-size:.88rem; }
+.list-row-val{ font-weight:800; font-variant-numeric:tabular-nums; font-size:.9rem; color:var(--accent); }
+
+/* Chart */
+.chart-wrap{ height:220px; margin-top:.5rem; }
+.chart-wrap canvas{ width:100% !important; height:100% !important; }
+
+/* Empty state */
+.empty{ text-align:center; padding:2.5rem 1.25rem; background:var(--card); border:1px dashed var(--border-strong); border-radius:var(--r-lg); }
+.empty-icon{ width:56px; height:56px; margin:0 auto .85rem; border-radius:18px; display:grid; place-items:center; font-size:1.5rem; color:var(--accent); background:var(--accent-soft); }
+.empty h3{ font-weight:800; letter-spacing:-.02em; font-size:1.05rem; }
+.empty p{ color:var(--muted); max-width:380px; margin:.4rem auto 0; font-size:.87rem; }
+
+.toast-wrap{ position:fixed; left:50%; transform:translateX(-50%); bottom:calc(1.1rem + env(safe-area-inset-bottom)); z-index:2000; display:flex; flex-direction:column; gap:.5rem; align-items:center; pointer-events:none; }
+.toast-x{ background:var(--text); color:var(--bg); font-weight:700; font-size:.85rem; padding:.6rem 1rem; border-radius:999px; box-shadow:var(--shadow-lg); display:flex; align-items:center; gap:.5rem; animation:tin .25s ease; }
+.toast-x.bad{ background:var(--bad); color:#fff; }
+@keyframes tin{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:none;} }
+.fade-in{ animation:fi .3s ease both; }
+@keyframes fi{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:none;} }
+@media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-head">
+      <div class="brand-logo" style="width:34px;height:34px;flex:0 0 34px;font-size:1rem"><i class="bi bi-wallet2"></i></div>
+      <div class="sidebar-brand-text">
+        <div class="brand-name" style="font-size:.92rem">Spendly</div>
+        <div class="brand-sub">Daily spending tracker</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="sidebar-link" title="Dashboard"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
+      <div class="sidebar-divider"></div>
+      <a href="weight.html" class="sidebar-link" title="Weight Tracker"><i class="bi bi-activity"></i><span>Weight Tracker</span></a>
+      <a href="spending.html" class="sidebar-link active" title="Spending Tracker"><i class="bi bi-wallet2"></i><span>Spending Tracker</span></a>
+    </nav>
+  </aside>
+  <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+  <div class="content-col">
+
+<header class="app-header">
+  <div class="container">
+    <button id="menuBtn" class="btn btn-ghost btn-sm btn-icon" title="Toggle menu"><i class="bi bi-list"></i></button>
+    <div class="brand">
+      <div class="brand-logo"><i class="bi bi-wallet2"></i></div>
+      <div>
+        <div class="brand-name">Spendly</div>
+        <div class="brand-sub">Daily spending tracker</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span id="conn" class="conn"><span class="dot"></span><span class="label">Connecting</span></span>
+      <button id="themeBtn" class="btn btn-ghost btn-sm btn-icon" title="Toggle theme"><i class="bi bi-moon-stars"></i></button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- View tabs -->
+  <div class="tabs-wrap">
+    <div class="tabs" id="viewTabs">
+      <button type="button" data-view="day" class="active">Day</button>
+      <button type="button" data-view="calendar">Calendar</button>
+      <button type="button" data-view="week">Week</button>
+      <button type="button" data-view="month">Month</button>
+      <button type="button" data-view="year">Year</button>
+    </div>
+  </div>
+
+  <!-- ================= DAY VIEW ================= -->
+  <div id="pageDay" class="page">
+    <div class="day-nav">
+      <button class="nav-arrow" id="dayPrev" title="Previous day"><i class="bi bi-chevron-left"></i></button>
+      <div class="day-nav-date">
+        <div id="dayDateBig" class="day-date-big">—</div>
+        <div id="dayDateSub" class="day-date-sub">—</div>
+      </div>
+      <button class="nav-arrow" id="dayNext" title="Next day"><i class="bi bi-chevron-right"></i></button>
+      <button class="btn btn-ghost btn-sm d-none" id="dayTodayBtn">Today</button>
+    </div>
+
+    <section class="stats">
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-cash-coin"></i>Total spent</div>
+        <div class="stat-value" id="dayTotal">₱0.00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-receipt"></i>Items</div>
+        <div class="stat-value" id="dayCount">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-graph-up"></i>Avg / item</div>
+        <div class="stat-value" id="dayAvgItem">—</div>
+      </div>
+    </section>
+
+    <section class="card-x mt-3">
+      <div class="card-x-head">
+        <h2 class="card-x-title"><i class="bi bi-plus-circle"></i>Expenses</h2>
+      </div>
+      <div class="card-x-body">
+        <form id="addForm" class="add-row">
+          <input id="addItem" type="text" placeholder="Item name…" autocomplete="off" required>
+          <div class="exp-price-wrap">
+            <span class="exp-prefix">₱</span>
+            <input id="addPrice" type="number" step="0.01" min="0" placeholder="0.00" required>
+          </div>
+          <button type="submit" class="btn btn-primary-x"><i class="bi bi-plus-lg me-1"></i>Add</button>
+        </form>
+
+        <div id="dayEmpty" class="empty d-none fade-in mt-3">
+          <div class="empty-icon"><i class="bi bi-receipt"></i></div>
+          <h3>No expenses yet</h3>
+          <p>Add what you spent today above — item name and price.</p>
+        </div>
+
+        <div id="dayList" class="exp-list mt-3"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= CALENDAR VIEW ================= -->
+  <div id="pageCalendar" class="page d-none">
+    <div class="period-nav">
+      <button class="nav-arrow" id="calPrev" title="Previous month"><i class="bi bi-chevron-left"></i></button>
+      <div id="calLabel" class="period-label">—</div>
+      <button class="nav-arrow" id="calNext" title="Next month"><i class="bi bi-chevron-right"></i></button>
+      <button class="btn btn-ghost btn-sm" id="calTodayBtn">This month</button>
+    </div>
+
+    <section class="stats">
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-cash-coin"></i>Month total</div>
+        <div class="stat-value" id="calTotal">₱0.00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-graph-up"></i>Avg / day</div>
+        <div class="stat-value" id="calAvg">—</div>
+      </div>
+    </section>
+
+    <section class="card-x mt-3">
+      <div class="card-x-body">
+        <div class="cal-head-row">
+          <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+        </div>
+        <div id="calGrid" class="cal-grid"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= WEEK VIEW ================= -->
+  <div id="pageWeek" class="page d-none">
+    <div class="period-nav">
+      <button class="nav-arrow" id="weekPrev" title="Previous week"><i class="bi bi-chevron-left"></i></button>
+      <div id="weekLabel" class="period-label">—</div>
+      <button class="nav-arrow" id="weekNext" title="Next week"><i class="bi bi-chevron-right"></i></button>
+      <button class="btn btn-ghost btn-sm" id="weekTodayBtn">This week</button>
+    </div>
+
+    <section class="stats">
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-cash-coin"></i>Week total</div>
+        <div class="stat-value" id="weekTotal">₱0.00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-graph-up"></i>Avg / day</div>
+        <div class="stat-value" id="weekAvg">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-arrow-up-circle"></i>Highest day</div>
+        <div class="stat-value" id="weekHigh" style="font-size:1.05rem">—</div>
+      </div>
+    </section>
+
+    <section class="card-x mt-3">
+      <div class="card-x-head"><h2 class="card-x-title"><i class="bi bi-bar-chart-line"></i>Daily breakdown</h2></div>
+      <div class="card-x-body">
+        <div class="chart-wrap"><canvas id="weekChartCanvas"></canvas></div>
+        <div id="weekList" class="list-rows mt-3"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= MONTH VIEW ================= -->
+  <div id="pageMonth" class="page d-none">
+    <div class="period-nav">
+      <button class="nav-arrow" id="monthPrev" title="Previous month"><i class="bi bi-chevron-left"></i></button>
+      <div id="monthLabel" class="period-label">—</div>
+      <button class="nav-arrow" id="monthNext" title="Next month"><i class="bi bi-chevron-right"></i></button>
+      <button class="btn btn-ghost btn-sm" id="monthTodayBtn">This month</button>
+    </div>
+
+    <section class="stats">
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-cash-coin"></i>Month total</div>
+        <div class="stat-value" id="monthTotal">₱0.00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-graph-up"></i>Avg / day</div>
+        <div class="stat-value" id="monthAvg">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-calendar-check"></i>Days tracked</div>
+        <div class="stat-value" id="monthTracked">0 / 0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-arrow-up-circle"></i>Highest day</div>
+        <div class="stat-value" id="monthHigh" style="font-size:1.05rem">—</div>
+      </div>
+    </section>
+
+    <section class="card-x mt-3">
+      <div class="card-x-head"><h2 class="card-x-title"><i class="bi bi-bar-chart-line"></i>Daily breakdown</h2></div>
+      <div class="card-x-body">
+        <div class="chart-wrap"><canvas id="monthChartCanvas"></canvas></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= YEAR VIEW ================= -->
+  <div id="pageYear" class="page d-none">
+    <div class="period-nav">
+      <button class="nav-arrow" id="yearPrev" title="Previous year"><i class="bi bi-chevron-left"></i></button>
+      <div id="yearLabel" class="period-label">—</div>
+      <button class="nav-arrow" id="yearNext" title="Next year"><i class="bi bi-chevron-right"></i></button>
+      <button class="btn btn-ghost btn-sm" id="yearTodayBtn">This year</button>
+    </div>
+
+    <section class="stats">
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-cash-coin"></i>Year total</div>
+        <div class="stat-value" id="yearTotal">₱0.00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-graph-up"></i>Avg / month</div>
+        <div class="stat-value" id="yearAvgMonth">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-graph-up"></i>Avg / day</div>
+        <div class="stat-value" id="yearAvgDay">—</div>
+      </div>
+    </section>
+
+    <section class="card-x mt-3">
+      <div class="card-x-head"><h2 class="card-x-title"><i class="bi bi-bar-chart-line"></i>Monthly breakdown</h2></div>
+      <div class="card-x-body">
+        <div class="chart-wrap"><canvas id="yearChartCanvas"></canvas></div>
+        <div id="yearList" class="list-rows mt-3"></div>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+<script>
+/* ============================================================
+   Firebase configuration (same project as weight.html, separate root)
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDjgrtAtTbnsiqlkQasi2GD7xBufE2AUSY",
+  authDomain: "tracker-8dcc0.firebaseapp.com",
+  databaseURL: "https://tracker-8dcc0-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "tracker-8dcc0",
+  storageBucket: "tracker-8dcc0.firebasestorage.app",
+  messagingSenderId: "686440896820",
+  appId: "1:686440896820:web:e4a2b3b18f4b7d94cb2d61",
+  measurementId: "G-E5Q5ENMH0B"
+};
+
+const ROOT = 'spendingTracker';   // change to run a second, separate tracker
+const LS_KEY = 'spendly.cache.v1';
+
+/* ============================================================
+   State
+   ============================================================ */
+const state = {
+  expenses: {},              // id -> { date, item, price, createdAt }
+  view: 'day',
+  dayDate: todayISO(),
+  calMonth: todayISO().slice(0, 7),
+  weekAnchor: todayISO(),
+  monthAnchor: todayISO().slice(0, 7),
+  yearAnchor: todayISO().slice(0, 4)
+};
+
+let db = null, connRef = null, usingLocal = false, ready = false;
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+function uid(prefix){
+  return prefix + '_' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+}
+function num(v){
+  if (v === '' || v === null || v === undefined) return null;
+  const n = parseFloat(v);
+  return isFinite(n) ? n : null;
+}
+function fmtMoney(n){
+  if (n === null || n === undefined || !isFinite(n)) return '₱0.00';
+  return '₱' + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/* --- dates: parsed as LOCAL to avoid timezone drift --- */
+function parseDate(s){
+  if (!s) return null;
+  const p = String(s).split('-').map(Number);
+  if (p.length !== 3 || p.some(isNaN)) return null;
+  return new Date(p[0], p[1] - 1, p[2]);
+}
+function toISO(d){
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function addDays(iso, n){
+  const d = parseDate(iso); if (!d) return '';
+  d.setDate(d.getDate() + n);
+  return toISO(d);
+}
+function todayISO(){ return toISO(new Date()); }
+function daysBetween(a, b){
+  const A = parseDate(a), B = parseDate(b);
+  if (!A || !B) return 0;
+  return Math.round((B - A) / 86400000);
+}
+function fmtDate(iso, opts){
+  const d = parseDate(iso); if (!d) return '—';
+  return d.toLocaleDateString(undefined, opts || { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function fmtRangeShort(a, b){
+  const A = parseDate(a), B = parseDate(b);
+  if (!A || !B) return '—';
+  const sameYear = A.getFullYear() === B.getFullYear();
+  const l = A.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const r = B.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: sameYear ? undefined : 'numeric' });
+  return l + ' – ' + r + (sameYear ? ', ' + B.getFullYear() : '');
+}
+function weekdayShort(iso){
+  const d = parseDate(iso); return d ? d.toLocaleDateString(undefined, { weekday: 'short' }) : '—';
+}
+function monthLabel(ym){
+  const [y, m] = ym.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
+function daysInMonth(ym){
+  const [y, m] = ym.split('-').map(Number);
+  return new Date(y, m, 0).getDate();
+}
+function daysInYear(y){
+  const yy = Number(y);
+  return ((yy % 4 === 0 && yy % 100 !== 0) || yy % 400 === 0) ? 366 : 365;
+}
+function startOfWeek(iso){
+  const d = parseDate(iso);
+  const dow = (d.getDay() + 6) % 7;   // Monday = 0
+  d.setDate(d.getDate() - dow);
+  return toISO(d);
+}
+function shiftMonth(ym, n){
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(y, m - 1 + n, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function toast(msg, bad){
+  const el = document.createElement('div');
+  el.className = 'toast-x' + (bad ? ' bad' : '');
+  el.innerHTML = '<i class="bi ' + (bad ? 'bi-exclamation-circle' : 'bi-check-circle') + '"></i>' + escapeHtml(msg);
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.style.transition = 'opacity .25s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 260); }, 2200);
+}
+
+/* ============================================================
+   Persistence layer (Firebase Realtime DB + localStorage mirror)
+   ============================================================ */
+function cacheLocal(){
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ expenses: state.expenses })); } catch (e) {}
+}
+function readLocal(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) { return null; }
+}
+
+function setConn(cls, label){
+  const el = $('#conn');
+  el.className = 'conn ' + cls;
+  $('.label', el).textContent = label;
+}
+
+function initStore(){
+  const cached = readLocal();
+  if (cached) state.expenses = cached.expenses || {};
+
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  } catch (e) {
+    usingLocal = true;
+    setConn('local', 'Local only');
+    ready = true;
+    render();
+    toast('Firebase unavailable — saving to this device only', true);
+    return;
+  }
+
+  connRef = db.ref('.info/connected');
+  connRef.on('value', snap => {
+    if (usingLocal) return;
+    if (snap.val() === true) setConn('online', 'Synced');
+    else setConn('offline', 'Offline');
+  });
+
+  db.ref(ROOT + '/expenses').on('value', snap => {
+    state.expenses = snap.val() || {};
+    ready = true;
+    normalize();
+    applyPending();
+    cacheLocal();
+    requestRender();
+  }, err => {
+    usingLocal = true;
+    setConn('local', 'Local only');
+    ready = true;
+    render();
+    toast('Database read denied — check your rules', true);
+    console.error(err);
+  });
+
+  db.ref(ROOT + '/settings/theme').on('value', snap => {
+    const t = snap.val();
+    if ((t === 'dark' || t === 'light') && t !== document.documentElement.getAttribute('data-bs-theme')) {
+      applyTheme(t);
+    }
+  });
+}
+
+function normalize(){
+  Object.keys(state.expenses).forEach(id => {
+    const e = state.expenses[id];
+    if (!e || !e.date) { delete state.expenses[id]; return; }
+    e.id = id;
+  });
+}
+
+function write(path, value){
+  cacheLocal();
+  if (usingLocal || !db) return Promise.resolve();
+  return db.ref(ROOT + '/' + path).set(value).catch(err => {
+    console.error(err);
+    toast('Could not save to server', true);
+  });
+}
+function update(path, patch){
+  cacheLocal();
+  if (usingLocal || !db) return Promise.resolve();
+  return db.ref(ROOT + '/' + path).update(patch).catch(err => {
+    console.error(err);
+    toast('Could not save to server', true);
+  });
+}
+function remove(path){
+  cacheLocal();
+  if (usingLocal || !db) return Promise.resolve();
+  return db.ref(ROOT + '/' + path).remove().catch(err => {
+    console.error(err);
+    toast('Could not delete on server', true);
+  });
+}
+
+/* ============================================================
+   Pending-edit reconciliation (mirrors weight.html's participant editing)
+   ============================================================ */
+const pending = {};
+const saveTimers = {};
+
+function applyPending(){
+  Object.keys(pending).forEach(key => {
+    const e = pending[key];
+    const exp = state.expenses[e.id];
+    if (!exp) { delete pending[key]; return; }
+    exp[e.field] = e.value;
+  });
+}
+function queueSave(id, field, value){
+  const key = id + '/' + field;
+  pending[key] = { id: id, field: field, value: value };
+  clearTimeout(saveTimers[key]);
+  saveTimers[key] = setTimeout(() => {
+    const patch = {}; patch[field] = value;
+    update('expenses/' + id, patch).then(() => {
+      if (pending[key] && pending[key].value === value) delete pending[key];
+    });
+  }, 450);
+}
+function flushSaves(){
+  Object.keys(saveTimers).forEach(key => {
+    if (!saveTimers[key]) return;
+    clearTimeout(saveTimers[key]);
+    saveTimers[key] = null;
+    const e = pending[key];
+    if (!e) return;
+    const patch = {}; patch[e.field] = e.value;
+    update('expenses/' + e.id, patch).then(() => {
+      if (pending[key] && pending[key].value === e.value) delete pending[key];
+    });
+  });
+}
+
+/* ============================================================
+   Derived data
+   ============================================================ */
+function expensesArr(){ return Object.values(state.expenses); }
+function expensesOnDate(iso){
+  return expensesArr().filter(e => e.date === iso).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+}
+function totalOf(list){ return list.reduce((s, e) => s + (num(e.price) || 0), 0); }
+function dayTotal(iso){ return totalOf(expensesOnDate(iso)); }
+function expensesInRange(startIso, endIso){
+  return expensesArr().filter(e => e.date >= startIso && e.date <= endIso);
+}
+
+/* ============================================================
+   Render
+   ============================================================ */
+let pendingRender = false;
+
+function isEditing(){
+  const ae = document.activeElement;
+  return !!(ae && ae.matches && ae.matches('input') && ae.closest('#dayList'));
+}
+function requestRender(){
+  if (isEditing()) { pendingRender = true; return; }
+  render();
+}
+document.addEventListener('focusout', e => {
+  if (e.target.closest && e.target.closest('#dayList')) flushSaves();
+  setTimeout(() => {
+    if (pendingRender && !isEditing()) { pendingRender = false; render(); }
+  }, 60);
+});
+
+function render(){
+  if (!ready) return;
+  $$('.page').forEach(p => p.classList.add('d-none'));
+  $$('#viewTabs button').forEach(b => b.classList.toggle('active', b.dataset.view === state.view));
+  if (state.view === 'day') { $('#pageDay').classList.remove('d-none'); renderDay(); }
+  else if (state.view === 'calendar') { $('#pageCalendar').classList.remove('d-none'); renderCalendar(); }
+  else if (state.view === 'week') { $('#pageWeek').classList.remove('d-none'); renderWeek(); }
+  else if (state.view === 'month') { $('#pageMonth').classList.remove('d-none'); renderMonth(); }
+  else if (state.view === 'year') { $('#pageYear').classList.remove('d-none'); renderYear(); }
+}
+
+function expenseRowHtml(e){
+  return '<div class="exp-row" data-id="' + e.id + '">'
+    + '<input class="exp-item-input" data-field="item" data-id="' + e.id + '" value="' + escapeHtml(e.item) + '" placeholder="Item">'
+    + '<div class="exp-price-wrap"><span class="exp-prefix">₱</span>'
+    + '<input class="exp-price-input" data-field="price" data-id="' + e.id + '" type="number" step="0.01" min="0" value="' + (e.price != null ? e.price : '') + '"></div>'
+    + '<button type="button" class="btn-trash" data-del="' + e.id + '" title="Delete"><i class="bi bi-trash3"></i></button>'
+    + '</div>';
+}
+
+function renderDay(){
+  const iso = state.dayDate;
+  $('#dayDateBig').textContent = fmtDate(iso, { weekday: 'long', month: 'long', day: 'numeric' });
+  $('#dayDateSub').textContent = String(parseDate(iso).getFullYear());
+  $('#dayTodayBtn').classList.toggle('d-none', iso === todayISO());
+
+  const list = expensesOnDate(iso);
+  $('#dayEmpty').classList.toggle('d-none', list.length > 0);
+  $('#dayList').innerHTML = list.map(expenseRowHtml).join('');
+  refreshDayTotals();
+}
+function refreshDayTotals(){
+  const list = expensesOnDate(state.dayDate);
+  const total = totalOf(list);
+  $('#dayTotal').textContent = fmtMoney(total);
+  $('#dayCount').textContent = list.length;
+  $('#dayAvgItem').textContent = list.length ? fmtMoney(total / list.length) : '—';
+}
+
+function renderCalendar(){
+  const ym = state.calMonth;
+  $('#calLabel').textContent = monthLabel(ym);
+  const [y, m] = ym.split('-').map(Number);
+  const startDow = (new Date(y, m - 1, 1).getDay() + 6) % 7;
+  const dim = daysInMonth(ym);
+  const cells = [];
+  for (let i = 0; i < startDow; i++) cells.push(null);
+  for (let d = 1; d <= dim; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const todayIso = todayISO();
+  $('#calGrid').innerHTML = cells.map(d => {
+    if (d === null) return '<div class="cal-cell empty"></div>';
+    const iso = ym + '-' + String(d).padStart(2, '0');
+    const total = dayTotal(iso);
+    const cls = ['cal-cell'];
+    if (iso === todayIso) cls.push('today');
+    if (total > 0) cls.push('has-spend');
+    return '<div class="' + cls.join(' ') + '" data-date="' + iso + '">'
+      + '<div class="cal-day-num">' + d + '</div>'
+      + (total > 0 ? '<div class="cal-day-total">' + fmtMoney(total) + '</div>' : '')
+      + '</div>';
+  }).join('');
+
+  const start = ym + '-01', end = ym + '-' + String(dim).padStart(2, '0');
+  const total = totalOf(expensesInRange(start, end));
+  const isCurrentMonth = ym === todayIso.slice(0, 7);
+  const daysCounted = isCurrentMonth ? Number(todayIso.slice(8, 10)) : dim;
+  $('#calTotal').textContent = fmtMoney(total);
+  $('#calAvg').textContent = fmtMoney(total / daysCounted);
+}
+
+const charts = {};
+function renderBarChart(canvasId, labels, data){
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || typeof Chart === 'undefined') return;
+  const styles = getComputedStyle(document.documentElement);
+  const accent = styles.getPropertyValue('--accent').trim();
+  const muted = styles.getPropertyValue('--muted').trim();
+  const border = styles.getPropertyValue('--border').trim();
+  if (charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId] = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: { labels: labels, datasets: [{ data: data, backgroundColor: accent, borderRadius: 6, maxBarThickness: 42 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmtMoney(ctx.parsed.y) } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: muted, font: { weight: 600, size: 11 } } },
+        y: { beginAtZero: true, grid: { color: border }, ticks: { color: muted, callback: v => '₱' + v } }
+      }
+    }
+  });
+}
+
+function renderWeek(){
+  const start = startOfWeek(state.weekAnchor);
+  const end = addDays(start, 6);
+  $('#weekLabel').textContent = fmtRangeShort(start, end);
+
+  const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  const totals = days.map(dayTotal);
+  const total = totals.reduce((a, b) => a + b, 0);
+  const todayIso = todayISO();
+  const inCurrentWeek = todayIso >= start && todayIso <= end;
+  const daysCounted = inCurrentWeek ? (daysBetween(start, todayIso) + 1) : 7;
+  $('#weekTotal').textContent = fmtMoney(total);
+  $('#weekAvg').textContent = fmtMoney(total / daysCounted);
+
+  const maxIdx = totals.reduce((best, v, i) => v > totals[best] ? i : best, 0);
+  $('#weekHigh').textContent = totals[maxIdx] > 0
+    ? (parseDate(days[maxIdx]).toLocaleDateString(undefined, { weekday: 'short' }) + ' · ' + fmtMoney(totals[maxIdx]))
+    : '—';
+
+  $('#weekList').innerHTML = days.map((d, i) => {
+    const isToday = d === todayIso;
+    return '<div class="list-row' + (isToday ? ' is-today' : '') + '" data-date="' + d + '">'
+      + '<span class="list-row-label">' + parseDate(d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + '</span>'
+      + '<span class="list-row-val">' + fmtMoney(totals[i]) + '</span>'
+      + '</div>';
+  }).join('');
+
+  renderBarChart('weekChartCanvas', days.map(weekdayShort), totals);
+}
+
+function renderMonth(){
+  const ym = state.monthAnchor;
+  $('#monthLabel').textContent = monthLabel(ym);
+  const dim = daysInMonth(ym);
+  const days = Array.from({ length: dim }, (_, i) => ym + '-' + String(i + 1).padStart(2, '0'));
+  const totals = days.map(dayTotal);
+  const total = totals.reduce((a, b) => a + b, 0);
+  const todayIso = todayISO();
+  const isCurrentMonth = ym === todayIso.slice(0, 7);
+  const daysCounted = isCurrentMonth ? Number(todayIso.slice(8, 10)) : dim;
+  const trackedDays = totals.filter(t => t > 0).length;
+  const maxIdx = totals.reduce((best, v, i) => v > totals[best] ? i : best, 0);
+
+  $('#monthTotal').textContent = fmtMoney(total);
+  $('#monthAvg').textContent = fmtMoney(total / daysCounted);
+  $('#monthTracked').textContent = trackedDays + ' / ' + dim;
+  $('#monthHigh').textContent = totals[maxIdx] > 0 ? ('Day ' + (maxIdx + 1) + ' · ' + fmtMoney(totals[maxIdx])) : '—';
+
+  renderBarChart('monthChartCanvas', days.map((_, i) => String(i + 1)), totals);
+}
+
+function renderYear(){
+  const y = state.yearAnchor;
+  $('#yearLabel').textContent = y;
+  const ymList = Array.from({ length: 12 }, (_, i) => y + '-' + String(i + 1).padStart(2, '0'));
+  const totals = ymList.map(ym => {
+    const dim = daysInMonth(ym);
+    return totalOf(expensesInRange(ym + '-01', ym + '-' + String(dim).padStart(2, '0')));
+  });
+  const total = totals.reduce((a, b) => a + b, 0);
+  const todayIso = todayISO();
+  const isCurrentYear = y === todayIso.slice(0, 4);
+  const monthsCounted = isCurrentYear ? Number(todayIso.slice(5, 7)) : 12;
+  const daysCounted = isCurrentYear ? (daysBetween(y + '-01-01', todayIso) + 1) : daysInYear(y);
+
+  $('#yearTotal').textContent = fmtMoney(total);
+  $('#yearAvgMonth').textContent = fmtMoney(total / monthsCounted);
+  $('#yearAvgDay').textContent = fmtMoney(total / daysCounted);
+
+  const labels = ymList.map((_, i) => new Date(Number(y), i, 1).toLocaleDateString(undefined, { month: 'short' }));
+  renderBarChart('yearChartCanvas', labels, totals);
+
+  $('#yearList').innerHTML = ymList.map((ym, i) => {
+    const label = new Date(Number(y), i, 1).toLocaleDateString(undefined, { month: 'long' });
+    return '<div class="list-row" data-month="' + ym + '">'
+      + '<span class="list-row-label">' + label + '</span>'
+      + '<span class="list-row-val">' + fmtMoney(totals[i]) + '</span>'
+      + '</div>';
+  }).join('');
+}
+
+/* ============================================================
+   Sidebar navigation
+   ============================================================ */
+function isMobileView(){ return window.matchMedia('(max-width:767.98px)').matches; }
+
+function closeMobileSidebar(){
+  $('#sidebar').classList.remove('mobile-open');
+  $('#sidebarBackdrop').classList.remove('show');
+}
+
+function toggleSidebar(){
+  const sb = $('#sidebar');
+  if (isMobileView()) {
+    sb.classList.toggle('mobile-open');
+    $('#sidebarBackdrop').classList.toggle('show');
+  } else {
+    sb.classList.toggle('collapsed');
+    try { localStorage.setItem('spendly.sidebar', sb.classList.contains('collapsed') ? '1' : '0'); } catch (e) {}
+  }
+}
+$('#menuBtn').addEventListener('click', toggleSidebar);
+$('#sidebarBackdrop').addEventListener('click', closeMobileSidebar);
+
+(function initSidebar(){
+  let collapsed = null;
+  try { collapsed = localStorage.getItem('spendly.sidebar'); } catch (e) {}
+  if (collapsed === '1' && !isMobileView()) $('#sidebar').classList.add('collapsed');
+})();
+
+/* ============================================================
+   Events
+   ============================================================ */
+$('#viewTabs').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-view]');
+  if (!btn) return;
+  state.view = btn.dataset.view;
+  render();
+});
+
+// Day view
+$('#dayPrev').addEventListener('click', () => { state.dayDate = addDays(state.dayDate, -1); render(); });
+$('#dayNext').addEventListener('click', () => { state.dayDate = addDays(state.dayDate, 1); render(); });
+$('#dayTodayBtn').addEventListener('click', () => { state.dayDate = todayISO(); render(); });
+
+$('#addForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const itemEl = $('#addItem'), priceEl = $('#addPrice');
+  const item = itemEl.value.trim();
+  const price = num(priceEl.value);
+  if (!item) { itemEl.focus(); return; }
+  if (price === null || price < 0) { priceEl.focus(); return; }
+  const id = uid('e');
+  const exp = { date: state.dayDate, item: item, price: price, createdAt: Date.now() };
+  state.expenses[id] = exp;
+  write('expenses/' + id, exp);
+  itemEl.value = ''; priceEl.value = '';
+  itemEl.focus();
+  render();
+  toast('Expense added');
+});
+
+$('#dayList').addEventListener('input', e => {
+  const t = e.target;
+  if (!t.matches('input')) return;
+  const id = t.dataset.id, field = t.dataset.field;
+  const exp = state.expenses[id];
+  if (!exp) return;
+  let value = field === 'price' ? (num(t.value) || 0) : t.value;
+  exp[field] = value;
+  queueSave(id, field, value);
+  if (field === 'price') refreshDayTotals();
+});
+$('#dayList').addEventListener('click', e => {
+  const btn = e.target.closest('[data-del]');
+  if (!btn) return;
+  const id = btn.dataset.del;
+  delete state.expenses[id];
+  remove('expenses/' + id);
+  toast('Expense deleted');
+  render();
+});
+
+// Calendar view
+$('#calGrid').addEventListener('click', e => {
+  const cell = e.target.closest('.cal-cell[data-date]');
+  if (!cell) return;
+  state.dayDate = cell.dataset.date;
+  state.view = 'day';
+  render();
+});
+$('#calPrev').addEventListener('click', () => { state.calMonth = shiftMonth(state.calMonth, -1); render(); });
+$('#calNext').addEventListener('click', () => { state.calMonth = shiftMonth(state.calMonth, 1); render(); });
+$('#calTodayBtn').addEventListener('click', () => { state.calMonth = todayISO().slice(0, 7); render(); });
+
+// Week view
+$('#weekPrev').addEventListener('click', () => { state.weekAnchor = addDays(state.weekAnchor, -7); render(); });
+$('#weekNext').addEventListener('click', () => { state.weekAnchor = addDays(state.weekAnchor, 7); render(); });
+$('#weekTodayBtn').addEventListener('click', () => { state.weekAnchor = todayISO(); render(); });
+$('#weekList').addEventListener('click', e => {
+  const row = e.target.closest('.list-row[data-date]');
+  if (!row) return;
+  state.dayDate = row.dataset.date;
+  state.view = 'day';
+  render();
+});
+
+// Month view
+$('#monthPrev').addEventListener('click', () => { state.monthAnchor = shiftMonth(state.monthAnchor, -1); render(); });
+$('#monthNext').addEventListener('click', () => { state.monthAnchor = shiftMonth(state.monthAnchor, 1); render(); });
+$('#monthTodayBtn').addEventListener('click', () => { state.monthAnchor = todayISO().slice(0, 7); render(); });
+
+// Year view
+$('#yearPrev').addEventListener('click', () => { state.yearAnchor = String(Number(state.yearAnchor) - 1); render(); });
+$('#yearNext').addEventListener('click', () => { state.yearAnchor = String(Number(state.yearAnchor) + 1); render(); });
+$('#yearTodayBtn').addEventListener('click', () => { state.yearAnchor = todayISO().slice(0, 4); render(); });
+$('#yearList').addEventListener('click', e => {
+  const row = e.target.closest('.list-row[data-month]');
+  if (!row) return;
+  state.monthAnchor = row.dataset.month;
+  state.view = 'month';
+  render();
+});
+
+/* ============================================================
+   Theme
+   ============================================================ */
+const themeBtn = $('#themeBtn');
+function applyTheme(t){
+  document.documentElement.setAttribute('data-bs-theme', t);
+  themeBtn.innerHTML = '<i class="bi ' + (t === 'dark' ? 'bi-sun' : 'bi-moon-stars') + '"></i>';
+  try { localStorage.setItem('spendly.theme', t); } catch (e) {}
+  if (ready) render();   // re-theme chart colors
+}
+themeBtn.addEventListener('click', () => {
+  const t = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(t);
+  if (!usingLocal && db) db.ref(ROOT + '/settings/theme').set(t);
+});
+(function initTheme(){
+  let t = null;
+  try { t = localStorage.getItem('spendly.theme'); } catch (e) {}
+  if (!t) t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-bs-theme', t);
+  themeBtn.innerHTML = '<i class="bi ' + (t === 'dark' ? 'bi-sun' : 'bi-moon-stars') + '"></i>';
+})();
+
+initStore();
+</script>
+</body>
+</html>

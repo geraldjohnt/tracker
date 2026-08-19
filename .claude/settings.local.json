@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(cd \"d:/New folder/My Files/tracker\" && ls -la && echo \"---\" && find . -maxdepth 3 -iname \"*.cursorrules*\" -o -iname \"copilot-instructions.md\" 2>/dev/null && echo \"---codex/gemini---\" && ls -la .codex .gemini GEMINI.md 2>/dev/null; ls ~/.codex/config.toml ~/.gemini/settings.json 2>/dev/null; echo done)",
+      "Read(//c/Users/IG7/.codex/**)",
+      "Bash(chromium-cli --help)",
+      "Bash(where chromium-cli *)",
+      "Bash(where npx *)",
+      "Bash(where node *)",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\" \"https://tracker-8dcc0-default-rtdb.asia-southeast1.firebasedatabase.app/weightTracker.json\")",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\" -X PUT -d '\"kg\"' \"https://tracker-8dcc0-default-rtdb.asia-southeast1.firebasedatabase.app/weightTracker/settings/unit.json\")",
+      "Bash(node -e \"new Function\\(require\\('fs'\\).readFileSync\\('weight.html','utf8'\\).match\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/\\)[1]\\)\")",
+      "Bash(node -e \"new Function\\(require\\('fs'\\).readFileSync\\('spending.html','utf8'\\).match\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/\\)[1]\\)\")",
+      "Bash(start \"\" \"d:\\\\New folder\\\\My Files\\\\tracker\\\\spending.html\")",
+      "Bash(node -e \"require.resolve\\('playwright'\\)\")",
+      "Bash(npm ls *)",
+      "PowerShell(Start-Process \"d:\\\\New folder\\\\My Files\\\\tracker\\\\index.html\")"
+    ]
+  }
+}

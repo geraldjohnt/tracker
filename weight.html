@@ -1,0 +1,1678 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6366f1">
+<title>WeighIn · Weekly Weight Tracker</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+<style>
+/* ============================================================
+   Design tokens
+   ============================================================ */
+:root{
+  --bg:#f4f5fb;
+  --bg-grad-1:rgba(99,102,241,.16);
+  --bg-grad-2:rgba(236,72,153,.12);
+  --card:#ffffff;
+  --card-2:#fafbff;
+  --text:#0f172a;
+  --muted:#6b7280;
+  --border:#e7e9f2;
+  --border-strong:#d7dae8;
+  --accent:#6366f1;
+  --accent-2:#8b5cf6;
+  --accent-soft:rgba(99,102,241,.10);
+  --good:#059669;
+  --good-soft:rgba(16,185,129,.12);
+  --bad:#dc2626;
+  --bad-soft:rgba(239,68,68,.12);
+  --warn:#d97706;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+  --shadow:0 6px 24px -12px rgba(16,24,40,.20), 0 2px 6px -3px rgba(16,24,40,.08);
+  --shadow-lg:0 24px 60px -28px rgba(16,24,40,.34);
+  --r-lg:20px;
+  --r-md:14px;
+  --r-sm:10px;
+}
+[data-bs-theme="dark"]{
+  --bg:#080b14;
+  --bg-grad-1:rgba(99,102,241,.22);
+  --bg-grad-2:rgba(217,70,239,.14);
+  --card:#111726;
+  --card-2:#161d2f;
+  --text:#e8ecf6;
+  --muted:#94a1b8;
+  --border:#232c42;
+  --border-strong:#2f3a55;
+  --accent:#818cf8;
+  --accent-2:#a78bfa;
+  --accent-soft:rgba(129,140,248,.14);
+  --good:#34d399;
+  --good-soft:rgba(52,211,153,.14);
+  --bad:#f87171;
+  --bad-soft:rgba(248,113,113,.14);
+  --warn:#fbbf24;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow:0 8px 30px -14px rgba(0,0,0,.7);
+  --shadow-lg:0 30px 70px -30px rgba(0,0,0,.85);
+}
+
+*{ -webkit-tap-highlight-color:transparent; }
+html,body{ height:100%; }
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-feature-settings:'cv02','cv03','cv04','tnum';
+  min-height:100dvh;
+  padding-bottom:calc(2.5rem + env(safe-area-inset-bottom));
+  overflow-x:hidden;
+}
+body::before{
+  content:'';
+  position:fixed; inset:-30% -10% auto -10%; height:70vh;
+  background:
+    radial-gradient(60% 60% at 20% 20%, var(--bg-grad-1), transparent 70%),
+    radial-gradient(50% 50% at 85% 10%, var(--bg-grad-2), transparent 70%);
+  pointer-events:none; z-index:0;
+}
+.container{ position:relative; z-index:1; max-width:1120px; }
+
+::selection{ background:var(--accent); color:#fff; }
+
+/* ============================================================
+   Header
+   ============================================================ */
+.app-header{
+  position:sticky; top:0; z-index:1030;
+  backdrop-filter:saturate(180%) blur(14px);
+  -webkit-backdrop-filter:saturate(180%) blur(14px);
+  background:color-mix(in srgb, var(--bg) 78%, transparent);
+  border-bottom:1px solid var(--border);
+}
+.app-header .container{
+  display:flex; align-items:center; gap:.75rem;
+  padding-top:.7rem; padding-bottom:.7rem;
+}
+.brand{ display:flex; align-items:center; gap:.65rem; min-width:0; }
+.brand-logo{
+  width:40px; height:40px; flex:0 0 40px; border-radius:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#fff; display:grid; place-items:center; font-size:1.15rem;
+  box-shadow:0 8px 20px -8px var(--accent);
+}
+.brand-name{ font-weight:800; font-size:1.05rem; letter-spacing:-.02em; line-height:1.1; }
+.brand-sub{ font-size:.72rem; color:var(--muted); font-weight:500; white-space:nowrap; }
+.header-actions{ margin-left:auto; display:flex; align-items:center; gap:.4rem; }
+
+.btn-ghost{
+  background:var(--card); border:1px solid var(--border); color:var(--text);
+  border-radius:var(--r-sm); font-weight:600; box-shadow:var(--shadow-sm);
+}
+.btn-ghost:hover{ background:var(--card-2); border-color:var(--border-strong); color:var(--text); }
+.btn-icon{ width:38px; height:38px; display:inline-grid; place-items:center; padding:0; }
+
+.conn{
+  display:inline-flex; align-items:center; gap:.4rem;
+  font-size:.72rem; font-weight:600; color:var(--muted);
+  padding:.35rem .6rem; border-radius:999px;
+  border:1px solid var(--border); background:var(--card);
+}
+.conn .dot{ width:7px; height:7px; border-radius:50%; background:var(--muted); }
+.conn.online .dot{ background:var(--good); box-shadow:0 0 0 3px var(--good-soft); }
+.conn.offline .dot{ background:var(--warn); box-shadow:0 0 0 3px rgba(217,119,6,.15); }
+.conn.local .dot{ background:var(--bad); box-shadow:0 0 0 3px var(--bad-soft); }
+@media (max-width:575.98px){ .conn .label{ display:none; } .conn{ padding:.35rem; } }
+
+/* ============================================================
+   Sidebar / app shell
+   ============================================================ */
+.app-shell{ display:flex; align-items:flex-start; min-height:100dvh; }
+.content-col{ flex:1 1 auto; min-width:0; }
+
+.sidebar{
+  flex:0 0 232px; width:232px;
+  position:sticky; top:0; align-self:flex-start;
+  height:100dvh;
+  background:var(--card); border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  z-index:1045;
+  transition:width .2s ease, flex-basis .2s ease, transform .25s ease;
+}
+.sidebar-head{ display:flex; align-items:center; gap:.65rem; padding:1.1rem 1rem; border-bottom:1px solid var(--border); min-width:0; }
+.sidebar-brand-text{ min-width:0; overflow:hidden; white-space:nowrap; }
+.sidebar-nav{ padding:.75rem; display:flex; flex-direction:column; gap:.2rem; overflow-y:auto; flex:1 1 auto; }
+.sidebar-link{
+  display:flex; align-items:center; gap:.75rem; width:100%;
+  padding:.62rem .7rem; border-radius:var(--r-sm); border:none; background:transparent;
+  color:var(--muted); font-weight:600; font-size:.87rem; text-align:left; white-space:nowrap;
+  text-decoration:none;
+}
+.sidebar-link i{ font-size:1.05rem; width:20px; flex:0 0 20px; text-align:center; }
+.sidebar-link:hover{ background:var(--card-2); color:var(--text); }
+.sidebar-link.active{ background:var(--accent-soft); color:var(--accent); }
+.sidebar-divider{ height:1px; background:var(--border); margin:.5rem .2rem; flex:0 0 auto; }
+.sidebar.collapsed .sidebar-divider{ margin:.5rem .35rem; }
+
+.sidebar.collapsed{ flex-basis:76px; width:76px; }
+.sidebar.collapsed .sidebar-brand-text,
+.sidebar.collapsed .sidebar-link span{ display:none; }
+.sidebar.collapsed .sidebar-link{ justify-content:center; }
+.sidebar.collapsed .sidebar-head{ justify-content:center; padding:1.1rem .5rem; }
+
+.sidebar-backdrop{ display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:1044; }
+.sidebar-backdrop.show{ display:block; }
+
+@media (max-width:767.98px){
+  .sidebar{
+    position:fixed; left:0; top:0; height:100dvh; width:250px; flex:0 0 250px;
+    transform:translateX(-100%);
+    box-shadow:var(--shadow-lg);
+  }
+  .sidebar.mobile-open{ transform:translateX(0); }
+  .sidebar.collapsed{ width:250px; flex-basis:250px; }
+  .sidebar.collapsed .sidebar-brand-text,
+  .sidebar.collapsed .sidebar-link span{ display:block; }
+  .sidebar.collapsed .sidebar-link{ justify-content:flex-start; }
+  .sidebar.collapsed .sidebar-head{ justify-content:flex-start; padding:1.1rem 1rem; }
+}
+
+/* ============================================================
+   Cards / shells
+   ============================================================ */
+.card-x{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow);
+}
+.card-x + .card-x{ margin-top:1rem; }
+.card-x-head{
+  display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;
+  padding:1rem 1.15rem; border-bottom:1px solid var(--border);
+}
+.card-x-title{ font-weight:700; font-size:.98rem; letter-spacing:-.01em; margin:0; display:flex; align-items:center; gap:.5rem; }
+.card-x-title i{ color:var(--accent); }
+.card-x-body{ padding:1.15rem; }
+
+.section-label{
+  font-size:.7rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--muted);
+}
+
+/* ============================================================
+   Week toolbar
+   ============================================================ */
+.toolbar{
+  display:flex; gap:.6rem; align-items:center; flex-wrap:wrap;
+  margin:1.15rem 0;
+}
+.week-select{
+  background:var(--card); border:1px solid var(--border); color:var(--text);
+  border-radius:var(--r-md); font-weight:600; padding:.62rem .85rem;
+  box-shadow:var(--shadow-sm); min-width:0; flex:1 1 240px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%236b7280'%3E%3Cpath d='M8 11 3.5 6h9z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right .7rem center; background-size:14px;
+  -webkit-appearance:none; appearance:none; padding-right:2rem;
+}
+.week-select:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft); }
+.btn-primary-x{
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  border:none; color:#fff; font-weight:700; border-radius:var(--r-md);
+  padding:.62rem 1.05rem; box-shadow:0 10px 24px -12px var(--accent);
+  white-space:nowrap;
+}
+.btn-primary-x:hover{ color:#fff; filter:brightness(1.06); }
+.btn-primary-x:active{ transform:translateY(1px); }
+
+/* ============================================================
+   Week hero
+   ============================================================ */
+.hero{
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--card)) 0%, var(--card) 55%);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:1.25rem;
+  box-shadow:var(--shadow);
+  position:relative; overflow:hidden;
+}
+.hero::after{
+  content:''; position:absolute; right:-60px; top:-60px; width:220px; height:220px; border-radius:50%;
+  background:radial-gradient(circle, var(--accent-soft), transparent 70%); pointer-events:none;
+}
+.hero-top{ display:flex; align-items:flex-start; gap:.75rem; flex-wrap:wrap; }
+.hero-range{ font-size:1.35rem; font-weight:800; letter-spacing:-.03em; line-height:1.2; }
+.hero-meta{ color:var(--muted); font-size:.85rem; font-weight:500; margin-top:.15rem; }
+.hero-actions{ margin-left:auto; display:flex; gap:.4rem; }
+@media (max-width:575.98px){
+  .hero-range{ font-size:1.15rem; }
+  .hero-actions{ margin-left:0; width:100%; }
+  .hero-actions .btn{ flex:1; }
+}
+
+.chip{
+  display:inline-flex; align-items:center; gap:.35rem;
+  font-size:.72rem; font-weight:700; letter-spacing:.02em;
+  padding:.3rem .6rem; border-radius:999px; border:1px solid transparent;
+}
+.chip-live{ background:var(--accent-soft); color:var(--accent); border-color:color-mix(in srgb,var(--accent) 30%, transparent); }
+.chip-soon{ background:rgba(217,119,6,.12); color:var(--warn); border-color:rgba(217,119,6,.3); }
+.chip-done{ background:var(--good-soft); color:var(--good); border-color:color-mix(in srgb,var(--good) 30%, transparent); }
+.chip-open{ background:var(--bad-soft); color:var(--bad); border-color:color-mix(in srgb,var(--bad) 30%, transparent); }
+
+.track{ height:8px; border-radius:999px; background:var(--border); overflow:hidden; margin-top:1rem; }
+.track > span{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); transition:width .5s cubic-bezier(.4,0,.2,1); }
+.track-legend{ display:flex; justify-content:space-between; font-size:.72rem; color:var(--muted); font-weight:600; margin-top:.4rem; }
+
+/* ============================================================
+   Stats
+   ============================================================ */
+.stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:.75rem; margin-top:1rem; }
+@media (max-width:767.98px){ .stats{ grid-template-columns:repeat(2,1fr); } }
+.stat{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
+  padding:.85rem .95rem; box-shadow:var(--shadow-sm);
+}
+.stat-label{ font-size:.68rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:.3rem; }
+.stat-value{ font-size:1.4rem; font-weight:800; letter-spacing:-.03em; margin-top:.25rem; line-height:1.15; }
+.stat-sub{ font-size:.74rem; color:var(--muted); font-weight:500; margin-top:.1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* ============================================================
+   Participant rows
+   ============================================================ */
+.p-list{ display:flex; flex-direction:column; gap:.6rem; }
+.p-row{
+  background:var(--card-2);
+  border:1px solid var(--border);
+  border-radius:var(--r-md);
+  padding:.75rem .8rem;
+  display:grid;
+  grid-template-columns:minmax(0,1.7fr) 132px 132px minmax(140px,1.15fr) 38px;
+  gap:.6rem; align-items:center;
+  transition:border-color .15s, box-shadow .15s, transform .15s;
+}
+.p-row:hover{ border-color:var(--border-strong); box-shadow:var(--shadow-sm); }
+.p-name{ grid-area:name; display:flex; align-items:center; gap:.6rem; min-width:0; }
+.p-start{ grid-area:start; }
+.p-end{ grid-area:end; }
+.p-delta{ grid-area:delta; }
+.p-act{ grid-area:act; justify-self:end; }
+
+.avatar{
+  width:38px; height:38px; flex:0 0 38px; border-radius:12px;
+  display:grid; place-items:center; font-weight:800; font-size:.82rem; color:#fff;
+  letter-spacing:-.02em; box-shadow:var(--shadow-sm);
+}
+.name-input{
+  border:1px solid transparent; background:transparent; color:var(--text);
+  font-weight:700; font-size:.95rem; letter-spacing:-.01em;
+  border-radius:8px; padding:.3rem .4rem; width:100%; min-width:0;
+}
+.name-input:hover{ background:var(--card); border-color:var(--border); }
+.name-input:focus{ outline:none; background:var(--card); border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+
+.field{ position:relative; }
+.field > input{
+  width:100%; border:1px solid var(--border); background:var(--card); color:var(--text);
+  border-radius:var(--r-sm); padding:1.15rem .65rem .35rem .65rem;
+  font-weight:700; font-size:.95rem; font-variant-numeric:tabular-nums;
+  -moz-appearance:textfield; appearance:textfield;
+}
+.field > input::-webkit-outer-spin-button,
+.field > input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.field > input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.field > label{
+  position:absolute; top:.28rem; left:.68rem;
+  font-size:.62rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);
+  pointer-events:none;
+}
+.field.is-empty > input{ border-style:dashed; }
+
+.delta{
+  display:flex; align-items:center; gap:.5rem;
+  padding:.45rem .6rem; border-radius:var(--r-sm); font-weight:800;
+  font-variant-numeric:tabular-nums; font-size:.95rem; letter-spacing:-.02em;
+  border:1px solid transparent; justify-content:center;
+}
+.delta small{ font-weight:600; font-size:.72rem; opacity:.8; }
+.delta.gain{ background:var(--bad-soft); color:var(--bad); border-color:color-mix(in srgb,var(--bad) 25%, transparent); }
+.delta.loss{ background:var(--good-soft); color:var(--good); border-color:color-mix(in srgb,var(--good) 25%, transparent); }
+.delta.same{ background:var(--border); color:var(--muted); }
+.delta.pending{ background:transparent; color:var(--muted); border:1px dashed var(--border-strong); font-weight:600; font-size:.78rem; }
+
+.btn-trash{
+  width:34px; height:34px; border-radius:9px; display:grid; place-items:center;
+  border:1px solid transparent; background:transparent; color:var(--muted);
+}
+.btn-trash:hover{ background:var(--bad-soft); color:var(--bad); border-color:color-mix(in srgb,var(--bad) 25%, transparent); }
+
+@media (max-width:860px){
+  .p-row{
+    grid-template-columns:1fr 1fr;
+    grid-template-areas:
+      "name act"
+      "start end"
+      "delta delta";
+    row-gap:.55rem;
+  }
+}
+@media (min-width:861px){
+  .p-row{ grid-template-areas:"name start end delta act"; }
+}
+
+.add-row{ display:flex; gap:.5rem; margin-top:.85rem; flex-wrap:wrap; }
+.add-row input{
+  flex:1 1 200px; min-width:0; border:1px solid var(--border); background:var(--card-2);
+  color:var(--text); border-radius:var(--r-sm); padding:.6rem .8rem; font-weight:600;
+}
+.add-row input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); background:var(--card); }
+
+/* ============================================================
+   Leaderboard / chart
+   ============================================================ */
+.lb{ display:flex; flex-direction:column; gap:.55rem; }
+.lb-row{ display:grid; grid-template-columns:28px minmax(0,1fr) auto; gap:.7rem; align-items:center; }
+.lb-rank{
+  width:28px; height:28px; border-radius:9px; display:grid; place-items:center;
+  font-weight:800; font-size:.78rem; background:var(--border); color:var(--muted);
+}
+.lb-rank.r1{ background:linear-gradient(135deg,#f59e0b,#fbbf24); color:#3b2500; }
+.lb-rank.r2{ background:linear-gradient(135deg,#94a3b8,#cbd5e1); color:#1e293b; }
+.lb-rank.r3{ background:linear-gradient(135deg,#b45309,#d97706); color:#fff; }
+.lb-name{ font-weight:700; font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lb-bar{ height:7px; border-radius:999px; background:var(--border); overflow:hidden; margin-top:.25rem; }
+.lb-bar > span{ display:block; height:100%; border-radius:999px; transition:width .5s cubic-bezier(.4,0,.2,1); }
+.lb-bar > span.loss{ background:linear-gradient(90deg,var(--good),color-mix(in srgb,var(--good) 55%, #fff)); }
+.lb-bar > span.gain{ background:linear-gradient(90deg,var(--bad),color-mix(in srgb,var(--bad) 55%, #fff)); }
+.lb-val{ font-weight:800; font-variant-numeric:tabular-nums; font-size:.9rem; white-space:nowrap; }
+.lb-val.loss{ color:var(--good); } .lb-val.gain{ color:var(--bad); } .lb-val.same{ color:var(--muted); }
+
+/* All-time table */
+.at-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+table.at{ width:100%; border-collapse:separate; border-spacing:0; min-width:520px; }
+table.at th{
+  font-size:.68rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
+  font-weight:700; padding:.5rem .7rem; text-align:right; white-space:nowrap;
+}
+table.at th:first-child, table.at td:first-child{ text-align:left; }
+table.at td{
+  padding:.65rem .7rem; text-align:right; font-weight:600; font-size:.9rem;
+  border-top:1px solid var(--border); font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+table.at tbody tr:hover td{ background:var(--card-2); }
+.t-loss{ color:var(--good); font-weight:800; }
+.t-gain{ color:var(--bad); font-weight:800; }
+.t-same{ color:var(--muted); }
+
+/* ============================================================
+   Tabs, empty state, modal, toast
+   ============================================================ */
+.tabs{ display:inline-flex; gap:.25rem; padding:.25rem; background:var(--card); border:1px solid var(--border); border-radius:999px; box-shadow:var(--shadow-sm); }
+.tabs button{
+  border:none; background:transparent; color:var(--muted); font-weight:700; font-size:.83rem;
+  padding:.42rem .95rem; border-radius:999px; white-space:nowrap;
+}
+.tabs button.active{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; box-shadow:0 6px 16px -8px var(--accent); }
+
+.empty{
+  text-align:center; padding:3.5rem 1.25rem;
+  background:var(--card); border:1px dashed var(--border-strong); border-radius:var(--r-lg);
+}
+.empty-icon{
+  width:68px; height:68px; margin:0 auto 1rem; border-radius:20px; display:grid; place-items:center;
+  font-size:1.8rem; color:var(--accent); background:var(--accent-soft);
+}
+.empty h3{ font-weight:800; letter-spacing:-.02em; font-size:1.15rem; }
+.empty p{ color:var(--muted); max-width:420px; margin:.4rem auto 1.2rem; font-size:.9rem; }
+
+.modal-content{ background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg); box-shadow:var(--shadow-lg); }
+.modal-header,.modal-footer{ border-color:var(--border); }
+.modal-title{ font-weight:800; letter-spacing:-.02em; font-size:1.05rem; }
+.form-label{ font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:.3rem; }
+.form-control,.form-select{
+  background:var(--card-2); border:1px solid var(--border); color:var(--text);
+  border-radius:var(--r-sm); font-weight:600; padding:.6rem .75rem;
+}
+.form-control:focus,.form-select:focus{ background:var(--card); border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); color:var(--text); }
+.form-control::placeholder{ color:var(--muted); font-weight:500; opacity:.75; }
+.form-check-input:checked{ background-color:var(--accent); border-color:var(--accent); }
+.hint{ font-size:.76rem; color:var(--muted); margin-top:.35rem; display:flex; align-items:center; gap:.35rem; }
+.hint i{ color:var(--accent); }
+
+.np-row{ display:flex; gap:.5rem; align-items:center; margin-bottom:.5rem; }
+.np-row .np-name{ flex:1 1 auto; min-width:0; }
+.np-row .np-w{ width:110px; flex:0 0 110px; }
+
+.toast-wrap{ position:fixed; left:50%; transform:translateX(-50%); bottom:calc(1.1rem + env(safe-area-inset-bottom)); z-index:2000; display:flex; flex-direction:column; gap:.5rem; align-items:center; pointer-events:none; }
+.toast-x{
+  background:var(--text); color:var(--bg); font-weight:700; font-size:.85rem;
+  padding:.6rem 1rem; border-radius:999px; box-shadow:var(--shadow-lg);
+  display:flex; align-items:center; gap:.5rem; animation:tin .25s ease;
+}
+.toast-x.bad{ background:var(--bad); color:#fff; }
+@keyframes tin{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:none;} }
+
+.fade-in{ animation:fi .3s ease both; }
+@keyframes fi{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:none;} }
+
+@media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-head">
+      <div class="brand-logo" style="width:34px;height:34px;flex:0 0 34px;font-size:1rem"><i class="bi bi-activity"></i></div>
+      <div class="sidebar-brand-text">
+        <div class="brand-name" style="font-size:.92rem">WeighIn</div>
+        <div class="brand-sub">Weekly weight challenge</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="sidebar-link" title="Dashboard"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
+      <div class="sidebar-divider"></div>
+      <button type="button" class="sidebar-link active" data-page="week" title="This Week"><i class="bi bi-calendar2-week"></i><span>This Week</span></button>
+      <button type="button" class="sidebar-link" data-page="weeks" title="All Weeks"><i class="bi bi-collection"></i><span>All Weeks</span></button>
+      <div class="sidebar-divider"></div>
+      <a href="spending.html" class="sidebar-link" title="Spending Tracker"><i class="bi bi-wallet2"></i><span>Spending Tracker</span></a>
+    </nav>
+  </aside>
+  <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+  <div class="content-col">
+
+    <!-- ================= HEADER ================= -->
+    <header class="app-header">
+      <div class="container">
+        <button id="menuBtn" class="btn btn-ghost btn-sm btn-icon" title="Toggle menu"><i class="bi bi-list"></i></button>
+        <div class="brand">
+          <div class="brand-logo"><i class="bi bi-activity"></i></div>
+          <div>
+            <div class="brand-name">WeighIn</div>
+            <div class="brand-sub">Weekly weight challenge</div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <span id="conn" class="conn"><span class="dot"></span><span class="label">Connecting</span></span>
+          <button id="unitBtn" class="btn btn-ghost btn-sm" title="Toggle unit" style="min-width:44px">kg</button>
+          <button id="themeBtn" class="btn btn-ghost btn-sm btn-icon" title="Toggle theme"><i class="bi bi-moon-stars"></i></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+
+    <!-- ================= PAGE: THIS WEEK ================= -->
+    <div id="pageWeek" class="page">
+
+      <!-- ================= TOOLBAR ================= -->
+      <div class="toolbar">
+        <select id="weekSelect" class="week-select" aria-label="Select week"></select>
+        <button id="newWeekBtn" class="btn btn-primary-x"><i class="bi bi-plus-lg me-1"></i>New week</button>
+        <button id="exportBtn" class="btn btn-ghost btn-sm btn-icon" title="Export CSV"><i class="bi bi-download"></i></button>
+      </div>
+
+      <!-- ================= EMPTY ================= -->
+      <div id="emptyState" class="empty d-none fade-in">
+        <div class="empty-icon"><i class="bi bi-calendar2-week"></i></div>
+        <h3>No weeks yet</h3>
+        <p>Start a challenge week, add everyone who's joining, and log their starting weight. At the end of the week you'll fill in the new numbers and see who moved the most.</p>
+        <button class="btn btn-primary-x" onclick="openWeekModal('new')"><i class="bi bi-plus-lg me-1"></i>Start first week</button>
+      </div>
+
+      <!-- ================= WEEK VIEW ================= -->
+      <div id="weekView" class="d-none">
+
+    <!-- Hero -->
+    <section class="hero fade-in">
+      <div class="hero-top">
+        <div style="min-width:0">
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+            <span class="section-label">Challenge week</span>
+            <span id="statusChip" class="chip chip-live">—</span>
+          </div>
+          <div id="heroRange" class="hero-range">—</div>
+          <div id="heroMeta" class="hero-meta">—</div>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openWeekModal('edit')"><i class="bi bi-pencil me-1"></i>Edit dates</button>
+          <button class="btn btn-ghost btn-sm" onclick="confirmDeleteWeek()"><i class="bi bi-trash3"></i></button>
+        </div>
+      </div>
+      <div class="track"><span id="trackFill" style="width:0%"></span></div>
+      <div class="track-legend">
+        <span id="trackStart">—</span>
+        <span id="trackNow">—</span>
+        <span id="trackEnd">—</span>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats">
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-people"></i>Participants</div>
+        <div class="stat-value" id="sPeople">0</div>
+        <div class="stat-sub" id="sPeopleSub">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-arrow-left-right"></i>Group net</div>
+        <div class="stat-value" id="sNet">—</div>
+        <div class="stat-sub" id="sNetSub">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-trophy"></i>Top loser</div>
+        <div class="stat-value" id="sBest">—</div>
+        <div class="stat-sub" id="sBestSub">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><i class="bi bi-clipboard-check"></i>Logged</div>
+        <div class="stat-value" id="sDone">0/0</div>
+        <div class="stat-sub" id="sDoneSub">final weights entered</div>
+      </div>
+    </section>
+
+    <!-- Participants -->
+    <section class="card-x mt-3">
+      <div class="card-x-head">
+        <h2 class="card-x-title"><i class="bi bi-clipboard2-pulse"></i>Weigh-ins</h2>
+        <span class="section-label ms-auto d-none d-md-inline">Green = lost · Red = gained</span>
+      </div>
+      <div class="card-x-body">
+        <div id="pList" class="p-list"></div>
+        <div id="pEmpty" class="text-center d-none" style="padding:1.5rem 0;color:var(--muted);font-size:.9rem">
+          <i class="bi bi-person-plus" style="font-size:1.5rem;display:block;margin-bottom:.4rem;color:var(--accent)"></i>
+          No one is in this week yet — add a name below.
+        </div>
+        <div class="add-row">
+          <input id="addName" type="text" placeholder="Add a participant's name…" autocomplete="off">
+          <button id="addBtn" class="btn btn-primary-x"><i class="bi bi-person-plus me-1"></i>Add</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section class="card-x">
+      <div class="card-x-head">
+        <h2 class="card-x-title"><i class="bi bi-bar-chart-line"></i>Progress</h2>
+        <div class="tabs ms-auto">
+          <button id="tabWeek" class="active" onclick="setTab('week')">This week</button>
+          <button id="tabAll" onclick="setTab('all')">All time</button>
+        </div>
+      </div>
+      <div class="card-x-body">
+        <div id="paneWeek"><div id="lb" class="lb"></div></div>
+        <div id="paneAll" class="d-none"><div class="at-wrap"><table class="at" id="atTable"></table></div></div>
+      </div>
+    </section>
+
+      </div>
+    </div>
+
+    <!-- ================= PAGE: ALL WEEKS ================= -->
+    <div id="pageAllWeeks" class="page d-none">
+      <div class="d-flex align-items-center mb-1" style="margin:1.15rem 0 0">
+        <div>
+          <div class="section-label">Overview</div>
+          <h2 style="font-weight:800;letter-spacing:-.02em;font-size:1.25rem;margin:.2rem 0 0">All Weeks</h2>
+        </div>
+      </div>
+
+      <div id="allWeeksEmpty" class="empty d-none fade-in mt-3">
+        <div class="empty-icon"><i class="bi bi-collection"></i></div>
+        <h3>No weeks yet</h3>
+        <p>Once you create a challenge week, it'll show up here with everyone's start weight, final weight, and change.</p>
+        <button class="btn btn-primary-x" onclick="setPage('week'); openWeekModal('new')"><i class="bi bi-plus-lg me-1"></i>Start first week</button>
+      </div>
+
+      <div id="allWeeksList"></div>
+    </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ================= WEEK MODAL ================= -->
+<div class="modal fade" id="weekModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="weekModalTitle">New challenge week</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label" for="mStart">Start date</label>
+            <input type="date" class="form-control" id="mStart">
+          </div>
+          <div class="col-6">
+            <label class="form-label" for="mEnd">End date</label>
+            <input type="date" class="form-control" id="mEnd">
+          </div>
+        </div>
+        <div class="hint" id="mDateHint"><i class="bi bi-info-circle"></i><span>End date auto-fills to 7 days after the start — you can still change it.</span></div>
+        <div id="mDateErr" class="hint d-none" style="color:var(--bad)"><i class="bi bi-exclamation-triangle" style="color:var(--bad)"></i><span>End date must be after the start date.</span></div>
+
+        <div id="mPeopleSection">
+          <hr style="border-color:var(--border);margin:1.1rem 0">
+          <div class="d-flex align-items-center mb-2">
+            <span class="section-label">Participants</span>
+            <button type="button" class="btn btn-ghost btn-sm ms-auto" id="mAddPerson"><i class="bi bi-plus-lg me-1"></i>Add</button>
+          </div>
+          <div id="mCarryWrap" class="d-none mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="mCarry" checked>
+              <label class="form-check-label" for="mCarry" style="font-size:.85rem;font-weight:600">
+                Carry over everyone from the previous week
+                <span class="d-block" style="font-size:.76rem;color:var(--muted);font-weight:500">Their final weight becomes this week's starting weight.</span>
+              </label>
+            </div>
+          </div>
+          <div id="mPeople"></div>
+          <div class="hint"><i class="bi bi-lightbulb"></i><span>Starting weights are optional here — you can fill them in later.</span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary-x" id="mSave">Save week</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= CONFIRM MODAL ================= -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-body text-center p-4">
+        <div style="width:52px;height:52px;border-radius:16px;background:var(--bad-soft);color:var(--bad);display:grid;place-items:center;margin:0 auto 1rem;font-size:1.4rem"><i class="bi bi-exclamation-triangle"></i></div>
+        <div id="confirmText" style="font-weight:600;font-size:.95rem">Are you sure?</div>
+      </div>
+      <div class="modal-footer border-0 pt-0 justify-content-center">
+        <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger fw-bold" id="confirmYes" style="border-radius:var(--r-md)">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
+<script>
+/* ============================================================
+   Firebase configuration
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDjgrtAtTbnsiqlkQasi2GD7xBufE2AUSY",
+  authDomain: "tracker-8dcc0.firebaseapp.com",
+  databaseURL: "https://tracker-8dcc0-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "tracker-8dcc0",
+  storageBucket: "tracker-8dcc0.firebasestorage.app",
+  messagingSenderId: "686440896820",
+  appId: "1:686440896820:web:e4a2b3b18f4b7d94cb2d61",
+  measurementId: "G-E5Q5ENMH0B"
+};
+
+const ROOT = 'weightTracker';       // change to run a second, separate tracker
+const LS_KEY = 'weighin.cache.v1';
+
+/* ============================================================
+   State
+   ============================================================ */
+const state = {
+  weeks: {},          // id -> week
+  currentId: null,
+  unit: 'kg',
+  tab: 'week',
+  page: 'week'         // 'week' | 'weeks' — which sidebar page is showing
+};
+
+let db = null, connRef = null, usingLocal = false, ready = false;
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+function uid(prefix){
+  return prefix + '_' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+}
+function num(v){
+  if (v === '' || v === null || v === undefined) return null;
+  const n = parseFloat(v);
+  return isFinite(n) ? n : null;
+}
+function fmtNum(n, d){
+  if (n === null || n === undefined || !isFinite(n)) return '—';
+  const s = Math.abs(n).toFixed(d === undefined ? 1 : d);
+  return (n > 0 ? '+' : n < 0 ? '−' : '') + s;
+}
+function plain(n, d){
+  if (n === null || !isFinite(n)) return '—';
+  return n.toFixed(d === undefined ? 1 : d);
+}
+
+/* --- dates: parsed as LOCAL to avoid timezone drift --- */
+function parseDate(s){
+  if (!s) return null;
+  const p = String(s).split('-').map(Number);
+  if (p.length !== 3 || p.some(isNaN)) return null;
+  return new Date(p[0], p[1] - 1, p[2]);
+}
+function toISO(d){
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function addDays(iso, n){
+  const d = parseDate(iso); if (!d) return '';
+  d.setDate(d.getDate() + n);
+  return toISO(d);
+}
+function todayISO(){ return toISO(new Date()); }
+function daysBetween(a, b){
+  const A = parseDate(a), B = parseDate(b);
+  if (!A || !B) return 0;
+  return Math.round((B - A) / 86400000);
+}
+function fmtDate(iso, opts){
+  const d = parseDate(iso); if (!d) return '—';
+  return d.toLocaleDateString(undefined, opts || { month:'short', day:'numeric', year:'numeric' });
+}
+function fmtRange(a, b){
+  const A = parseDate(a), B = parseDate(b);
+  if (!A || !B) return '—';
+  const sameYear = A.getFullYear() === B.getFullYear();
+  const l = A.toLocaleDateString(undefined, { month:'short', day:'numeric', year: sameYear ? undefined : 'numeric' });
+  const r = B.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+  return l + ' – ' + r;
+}
+
+function avatarColor(name){
+  let h = 0;
+  const s = String(name || '?');
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+  return 'linear-gradient(135deg, hsl(' + h + ' 70% 55%), hsl(' + ((h + 40) % 360) + ' 72% 46%))';
+}
+function initials(name){
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function toast(msg, bad){
+  const el = document.createElement('div');
+  el.className = 'toast-x' + (bad ? ' bad' : '');
+  el.innerHTML = '<i class="bi ' + (bad ? 'bi-exclamation-circle' : 'bi-check-circle') + '"></i>' + escapeHtml(msg);
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.style.transition = 'opacity .25s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 260); }, 2200);
+}
+
+/* ============================================================
+   Persistence layer (Firebase Realtime DB + localStorage mirror)
+   ============================================================ */
+function cacheLocal(){
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ weeks: state.weeks, unit: state.unit })); } catch (e) {}
+}
+function readLocal(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) { return null; }
+}
+
+function setConn(cls, label){
+  const el = $('#conn');
+  el.className = 'conn ' + cls;
+  $('.label', el).textContent = label;
+}
+
+function initStore(){
+  const cached = readLocal();
+  if (cached) {
+    state.weeks = cached.weeks || {};
+    state.unit = cached.unit || 'kg';
+  }
+
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  } catch (e) {
+    usingLocal = true;
+    setConn('local', 'Local only');
+    ready = true;
+    render();
+    toast('Firebase unavailable — saving to this device only', true);
+    return;
+  }
+
+  connRef = db.ref('.info/connected');
+  connRef.on('value', snap => {
+    if (usingLocal) return;
+    if (snap.val() === true) setConn('online', 'Synced');
+    else setConn('offline', 'Offline');
+  });
+
+  db.ref(ROOT + '/weeks').on('value', snap => {
+    state.weeks = snap.val() || {};
+    ready = true;
+    normalize();
+    applyPending();     // keep un-flushed local edits on top of the incoming snapshot
+    cacheLocal();
+    requestRender();
+  }, err => {
+    usingLocal = true;
+    setConn('local', 'Local only');
+    ready = true;
+    render();
+    toast('Database read denied — check your rules', true);
+    console.error(err);
+  });
+
+  db.ref(ROOT + '/settings/unit').on('value', snap => {
+    const u = snap.val();
+    if (u && u !== state.unit) { state.unit = u; cacheLocal(); requestRender(); }
+    $('#unitBtn').textContent = state.unit;
+  });
+
+  db.ref(ROOT + '/settings/theme').on('value', snap => {
+    const t = snap.val();
+    if ((t === 'dark' || t === 'light') && t !== document.documentElement.getAttribute('data-bs-theme')) {
+      applyTheme(t);
+    }
+  });
+}
+
+function normalize(){
+  Object.keys(state.weeks).forEach(id => {
+    const w = state.weeks[id];
+    if (!w) { delete state.weeks[id]; return; }
+    w.id = id;
+    if (!w.participants) w.participants = {};
+  });
+}
+
+function write(path, value){
+  cacheLocal();
+  if (usingLocal || !db) return Promise.resolve();
+  return db.ref(ROOT + '/' + path).set(value).catch(err => {
+    console.error(err);
+    toast('Could not save to server', true);
+  });
+}
+function update(path, patch){
+  cacheLocal();
+  if (usingLocal || !db) return Promise.resolve();
+  return db.ref(ROOT + '/' + path).update(patch).catch(err => {
+    console.error(err);
+    toast('Could not save to server', true);
+  });
+}
+function remove(path){
+  cacheLocal();
+  if (usingLocal || !db) return Promise.resolve();
+  return db.ref(ROOT + '/' + path).remove().catch(err => {
+    console.error(err);
+    toast('Could not delete on server', true);
+  });
+}
+
+/* ============================================================
+   Derived data
+   ============================================================ */
+function sortedWeeks(){
+  return Object.values(state.weeks).sort((a, b) => {
+    const d = String(b.startDate || '').localeCompare(String(a.startDate || ''));
+    return d !== 0 ? d : (b.createdAt || 0) - (a.createdAt || 0);
+  });
+}
+function currentWeek(){
+  return state.weeks[state.currentId] || null;
+}
+function peopleOf(w){
+  if (!w || !w.participants) return [];
+  return Object.keys(w.participants).map(id => {
+    const p = w.participants[id] || {};
+    return { id: id, name: p.name || '', startWeight: p.startWeight ?? null, endWeight: p.endWeight ?? null, order: p.order ?? 0 };
+  }).sort((a, b) => (a.order - b.order) || a.name.localeCompare(b.name));
+}
+function delta(p){
+  const s = num(p.startWeight), e = num(p.endWeight);
+  if (s === null || e === null) return { has:false, diff:null, pct:null };
+  const diff = e - s;
+  const pct = s !== 0 ? (diff / s) * 100 : null;
+  return { has:true, diff:diff, pct:pct };
+}
+function weekStatus(w){
+  const t = todayISO();
+  if (!w.startDate || !w.endDate) return { key:'live', text:'Active', cls:'chip-live' };
+  const people = peopleOf(w);
+  const withBoth = people.filter(p => delta(p).has).length;
+  if (people.length && withBoth === people.length) return { key:'done', text:'Completed', cls:'chip-done' };
+  if (t < w.startDate) return { key:'soon', text:'Upcoming', cls:'chip-soon' };
+  if (t > w.endDate)  return { key:'open', text:'Awaiting final weights', cls:'chip-open' };
+  return { key:'live', text:'In progress', cls:'chip-live' };
+}
+
+/* ============================================================
+   Render
+   ============================================================ */
+let pendingRender = false;
+
+function isEditing(){
+  const ae = document.activeElement;
+  return !!(ae && ae.matches && ae.matches('input') && ae.closest('#pList'));
+}
+function requestRender(){
+  if (isEditing()) { pendingRender = true; return; }
+  render();
+}
+document.addEventListener('focusout', e => {
+  if (e.target.closest && e.target.closest('#pList')) flushSaves();
+  setTimeout(() => {
+    if (pendingRender && !isEditing()) { pendingRender = false; render(); }
+  }, 60);
+});
+
+function render(){
+  if (!ready) return;
+  const weeks = sortedWeeks();
+  renderAllWeeksPage();
+
+  if (!weeks.length) {
+    state.currentId = null;
+    $('#emptyState').classList.remove('d-none');
+    $('#weekView').classList.add('d-none');
+    $('#weekSelect').innerHTML = '<option>No weeks yet</option>';
+    $('#weekSelect').disabled = true;
+    $('#unitBtn').textContent = state.unit;
+    return;
+  }
+  $('#weekSelect').disabled = false;
+  $('#emptyState').classList.add('d-none');
+  $('#weekView').classList.remove('d-none');
+
+  if (!state.currentId || !state.weeks[state.currentId]) state.currentId = weeks[0].id;
+
+  renderSelect(weeks);
+  renderHero();
+  renderStats();
+  renderPeople();
+  renderProgress();
+  $('#unitBtn').textContent = state.unit;
+}
+
+function renderSelect(weeks){
+  const sel = $('#weekSelect');
+  sel.innerHTML = weeks.map(w => {
+    const st = weekStatus(w);
+    const n = Object.keys(w.participants || {}).length;
+    return '<option value="' + w.id + '"' + (w.id === state.currentId ? ' selected' : '') + '>'
+      + escapeHtml(fmtRange(w.startDate, w.endDate)) + '  ·  ' + n + ' ' + (n === 1 ? 'person' : 'people') + '  ·  ' + st.text
+      + '</option>';
+  }).join('');
+}
+
+function renderHero(){
+  const w = currentWeek(); if (!w) return;
+  const st = weekStatus(w);
+  const chip = $('#statusChip');
+  chip.className = 'chip ' + st.cls;
+  chip.innerHTML = '<i class="bi bi-circle-fill" style="font-size:.5rem"></i>' + escapeHtml(st.text);
+
+  $('#heroRange').textContent = fmtRange(w.startDate, w.endDate);
+
+  const total = daysBetween(w.startDate, w.endDate);
+  const elapsed = daysBetween(w.startDate, todayISO());
+  const left = total - elapsed;
+  let meta = total + '-day challenge';
+  if (elapsed < 0) meta += ' · starts in ' + Math.abs(elapsed) + ' day' + (Math.abs(elapsed) === 1 ? '' : 's');
+  else if (left > 0) meta += ' · ' + left + ' day' + (left === 1 ? '' : 's') + ' to go';
+  else if (left === 0) meta += ' · final day — weigh in!';
+  else meta += ' · ended ' + Math.abs(left) + ' day' + (Math.abs(left) === 1 ? '' : 's') + ' ago';
+  $('#heroMeta').textContent = meta;
+
+  const pct = total > 0 ? Math.max(0, Math.min(100, (elapsed / total) * 100)) : 0;
+  $('#trackFill').style.width = pct + '%';
+  $('#trackStart').textContent = fmtDate(w.startDate, { month:'short', day:'numeric' });
+  $('#trackNow').textContent = elapsed < 0 ? 'Not started' : (left < 0 ? 'Finished' : 'Day ' + Math.max(0, elapsed) + ' of ' + total);
+  $('#trackEnd').textContent = fmtDate(w.endDate, { month:'short', day:'numeric' });
+}
+
+function renderStats(){
+  const w = currentWeek(); if (!w) return;
+  const people = peopleOf(w);
+  const done = people.filter(p => delta(p).has);
+  const u = state.unit;
+
+  $('#sPeople').textContent = people.length;
+  const losers = done.filter(p => delta(p).diff < 0).length;
+  const gainers = done.filter(p => delta(p).diff > 0).length;
+  $('#sPeopleSub').textContent = done.length ? (losers + ' lost · ' + gainers + ' gained') : 'awaiting results';
+
+  const net = done.reduce((a, p) => a + delta(p).diff, 0);
+  const netEl = $('#sNet');
+  if (!done.length) { netEl.textContent = '—'; netEl.style.color = ''; $('#sNetSub').textContent = 'no results yet'; }
+  else {
+    netEl.textContent = fmtNum(net) + ' ' + u;
+    netEl.style.color = net < 0 ? 'var(--good)' : net > 0 ? 'var(--bad)' : '';
+    $('#sNetSub').textContent = 'avg ' + fmtNum(net / done.length) + ' ' + u + ' each';
+  }
+
+  const best = done.slice().sort((a, b) => delta(a).diff - delta(b).diff)[0];
+  const bEl = $('#sBest');
+  if (!best || delta(best).diff >= 0) { bEl.textContent = '—'; bEl.style.color = ''; $('#sBestSub').textContent = done.length ? 'nobody lost yet' : 'no results yet'; }
+  else {
+    const d = delta(best);
+    bEl.textContent = fmtNum(d.diff) + ' ' + u;
+    bEl.style.color = 'var(--good)';
+    $('#sBestSub').textContent = best.name + (d.pct !== null ? ' · ' + fmtNum(d.pct) + '%' : '');
+  }
+
+  $('#sDone').textContent = done.length + '/' + people.length;
+  $('#sDoneSub').textContent = 'final weights entered';
+}
+
+function renderPeople(){
+  const w = currentWeek(); if (!w) return;
+  const people = peopleOf(w);
+  const list = $('#pList');
+  $('#pEmpty').classList.toggle('d-none', people.length > 0);
+
+  list.innerHTML = people.map(p => {
+    const d = delta(p);
+    let deltaHtml;
+    if (!d.has) {
+      const need = num(p.startWeight) === null ? 'Enter start weight' : 'Awaiting final weight';
+      deltaHtml = '<div class="delta pending"><i class="bi bi-hourglass-split"></i>' + need + '</div>';
+    } else if (d.diff === 0) {
+      deltaHtml = '<div class="delta same"><i class="bi bi-dash-lg"></i>No change</div>';
+    } else {
+      const gain = d.diff > 0;
+      deltaHtml = '<div class="delta ' + (gain ? 'gain' : 'loss') + '">'
+        + '<i class="bi ' + (gain ? 'bi-arrow-up-right' : 'bi-arrow-down-right') + '"></i>'
+        + '<span>' + fmtNum(d.diff) + ' ' + escapeHtml(state.unit) + '</span>'
+        + (d.pct !== null ? '<small>' + fmtNum(d.pct) + '%</small>' : '')
+        + '</div>';
+    }
+
+    return '<div class="p-row" data-pid="' + p.id + '">'
+      + '<div class="p-name">'
+        + '<div class="avatar" style="background:' + avatarColor(p.name) + '">' + escapeHtml(initials(p.name)) + '</div>'
+        + '<input class="name-input" data-field="name" value="' + escapeHtml(p.name) + '" placeholder="Name" aria-label="Name">'
+      + '</div>'
+      + '<div class="p-start field' + (num(p.startWeight) === null ? ' is-empty' : '') + '">'
+        + '<label>Start (' + escapeHtml(state.unit) + ')</label>'
+        + '<input type="number" step="0.1" min="0" inputmode="decimal" data-field="startWeight" value="' + (p.startWeight ?? '') + '" placeholder="0.0">'
+      + '</div>'
+      + '<div class="p-end field' + (num(p.endWeight) === null ? ' is-empty' : '') + '">'
+        + '<label>Final (' + escapeHtml(state.unit) + ')</label>'
+        + '<input type="number" step="0.1" min="0" inputmode="decimal" data-field="endWeight" value="' + (p.endWeight ?? '') + '" placeholder="0.0">'
+      + '</div>'
+      + '<div class="p-delta">' + deltaHtml + '</div>'
+      + '<button class="btn-trash p-act" data-action="del" title="Remove"><i class="bi bi-trash3"></i></button>'
+      + '</div>';
+  }).join('');
+}
+
+/* Update one row's delta live while typing (no full re-render) */
+function refreshRow(pid){
+  const w = currentWeek(); if (!w) return;
+  const p = w.participants[pid]; if (!p) return;
+  const row = $('.p-row[data-pid="' + pid + '"]'); if (!row) return;
+  const cell = $('.p-delta', row);
+  const d = delta(p);
+
+  if (!d.has) {
+    const need = num(p.startWeight) === null ? 'Enter start weight' : 'Awaiting final weight';
+    cell.innerHTML = '<div class="delta pending"><i class="bi bi-hourglass-split"></i>' + need + '</div>';
+  } else if (d.diff === 0) {
+    cell.innerHTML = '<div class="delta same"><i class="bi bi-dash-lg"></i>No change</div>';
+  } else {
+    const gain = d.diff > 0;
+    cell.innerHTML = '<div class="delta ' + (gain ? 'gain' : 'loss') + '">'
+      + '<i class="bi ' + (gain ? 'bi-arrow-up-right' : 'bi-arrow-down-right') + '"></i>'
+      + '<span>' + fmtNum(d.diff) + ' ' + escapeHtml(state.unit) + '</span>'
+      + (d.pct !== null ? '<small>' + fmtNum(d.pct) + '%</small>' : '')
+      + '</div>';
+  }
+  $('.p-start', row).classList.toggle('is-empty', num(p.startWeight) === null);
+  $('.p-end', row).classList.toggle('is-empty', num(p.endWeight) === null);
+  renderStats();
+  renderProgress();
+}
+
+function renderProgress(){
+  if (state.tab === 'week') renderLeaderboard(); else renderAllTime();
+}
+
+function renderLeaderboard(){
+  const w = currentWeek(); if (!w) return;
+  const done = peopleOf(w).filter(p => delta(p).has)
+    .sort((a, b) => delta(a).diff - delta(b).diff);
+  const box = $('#lb');
+
+  if (!done.length) {
+    box.innerHTML = '<div class="text-center" style="padding:1.5rem 0;color:var(--muted);font-size:.9rem">'
+      + '<i class="bi bi-graph-down-arrow" style="font-size:1.5rem;display:block;margin-bottom:.4rem;color:var(--accent)"></i>'
+      + 'Results appear once both a start and a final weight are entered.</div>';
+    return;
+  }
+
+  const max = Math.max.apply(null, done.map(p => Math.abs(delta(p).diff))) || 1;
+  box.innerHTML = done.map((p, i) => {
+    const d = delta(p);
+    const cls = d.diff < 0 ? 'loss' : d.diff > 0 ? 'gain' : 'same';
+    const width = Math.max(4, (Math.abs(d.diff) / max) * 100);
+    return '<div class="lb-row">'
+      + '<div class="lb-rank ' + (i < 3 && d.diff < 0 ? 'r' + (i + 1) : '') + '">' + (i + 1) + '</div>'
+      + '<div style="min-width:0">'
+        + '<div class="lb-name">' + escapeHtml(p.name || 'Unnamed') + '</div>'
+        + '<div class="lb-bar"><span class="' + cls + '" style="width:' + width + '%"></span></div>'
+      + '</div>'
+      + '<div class="lb-val ' + cls + '">' + fmtNum(d.diff) + ' ' + escapeHtml(state.unit)
+        + (d.pct !== null ? '<div style="font-size:.72rem;font-weight:600;opacity:.75;text-align:right">' + fmtNum(d.pct) + '%</div>' : '')
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function renderAllTime(){
+  const agg = {};   // key -> { name, weeks, net, best, first, last }
+  sortedWeeks().slice().reverse().forEach(w => {
+    peopleOf(w).forEach(p => {
+      const key = (p.name || '').trim().toLowerCase();
+      if (!key) return;
+      const d = delta(p);
+      if (!agg[key]) agg[key] = { name: p.name.trim(), weeks: 0, net: 0, best: null, first: null, last: null };
+      const a = agg[key];
+      if (a.first === null && num(p.startWeight) !== null) a.first = num(p.startWeight);
+      if (num(p.endWeight) !== null) a.last = num(p.endWeight);
+      else if (num(p.startWeight) !== null) a.last = num(p.startWeight);
+      if (d.has) {
+        a.weeks++;
+        a.net += d.diff;
+        if (a.best === null || d.diff < a.best) a.best = d.diff;
+      }
+    });
+  });
+
+  const rows = Object.values(agg).sort((a, b) => a.net - b.net);
+  const t = $('#atTable');
+  if (!rows.length) {
+    t.innerHTML = '<tbody><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1.5rem;border:0">No history yet.</td></tr></tbody>';
+    return;
+  }
+  const u = escapeHtml(state.unit);
+  const cls = n => n < 0 ? 't-loss' : n > 0 ? 't-gain' : 't-same';
+
+  t.innerHTML =
+    '<thead><tr>'
+      + '<th>Participant</th><th>Weeks</th><th>First</th><th>Latest</th><th>Best week</th><th>Net change</th>'
+    + '</tr></thead><tbody>'
+    + rows.map(r => {
+        const overall = (r.first !== null && r.last !== null) ? (r.last - r.first) : null;
+        return '<tr>'
+          + '<td><div style="display:flex;align-items:center;gap:.55rem">'
+            + '<div class="avatar" style="width:30px;height:30px;flex:0 0 30px;border-radius:9px;font-size:.7rem;background:' + avatarColor(r.name) + '">' + escapeHtml(initials(r.name)) + '</div>'
+            + '<span style="font-weight:700">' + escapeHtml(r.name) + '</span></div></td>'
+          + '<td>' + r.weeks + '</td>'
+          + '<td>' + plain(r.first) + '</td>'
+          + '<td>' + plain(r.last) + '</td>'
+          + '<td class="' + (r.best === null ? 't-same' : cls(r.best)) + '">' + (r.best === null ? '—' : fmtNum(r.best) + ' ' + u) + '</td>'
+          + '<td class="' + (overall === null ? 't-same' : cls(overall)) + '">' + (overall === null ? '—' : fmtNum(overall) + ' ' + u) + '</td>'
+          + '</tr>';
+      }).join('')
+    + '</tbody>';
+}
+
+function setTab(t){
+  state.tab = t;
+  $('#tabWeek').classList.toggle('active', t === 'week');
+  $('#tabAll').classList.toggle('active', t === 'all');
+  $('#paneWeek').classList.toggle('d-none', t !== 'week');
+  $('#paneAll').classList.toggle('d-none', t !== 'all');
+  renderProgress();
+}
+
+/* ============================================================
+   All Weeks page — every week created, with its participants,
+   start/final weights and gain/loss
+   ============================================================ */
+function renderAllWeeksPage(){
+  const list = $('#allWeeksList');
+  const weeks = sortedWeeks();
+  $('#allWeeksEmpty').classList.toggle('d-none', weeks.length > 0);
+  list.classList.toggle('d-none', weeks.length === 0);
+  if (!weeks.length) { list.innerHTML = ''; return; }
+
+  const u = escapeHtml(state.unit);
+  const cls = n => n < 0 ? 't-loss' : n > 0 ? 't-gain' : 't-same';
+
+  list.innerHTML = weeks.map(w => {
+    const st = weekStatus(w);
+    const people = peopleOf(w);
+    const rows = people.length
+      ? people.map(p => {
+          const d = delta(p);
+          return '<tr>'
+            + '<td><div style="display:flex;align-items:center;gap:.55rem">'
+              + '<div class="avatar" style="width:30px;height:30px;flex:0 0 30px;border-radius:9px;font-size:.7rem;background:' + avatarColor(p.name) + '">' + escapeHtml(initials(p.name)) + '</div>'
+              + '<span style="font-weight:700">' + escapeHtml(p.name || 'Unnamed') + '</span></div></td>'
+            + '<td>' + plain(num(p.startWeight)) + '</td>'
+            + '<td>' + plain(num(p.endWeight)) + '</td>'
+            + '<td class="' + (d.has ? cls(d.diff) : 't-same') + '">' + (d.has ? fmtNum(d.diff) + ' ' + u : '—') + '</td>'
+          + '</tr>';
+        }).join('')
+      : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1.25rem;border:0">No participants added yet.</td></tr>';
+
+    return '<section class="card-x mt-3 fade-in">'
+      + '<div class="card-x-head">'
+        + '<h2 class="card-x-title"><i class="bi bi-calendar2-week"></i>' + escapeHtml(fmtRange(w.startDate, w.endDate)) + '</h2>'
+        + '<span class="chip ' + st.cls + '">' + escapeHtml(st.text) + '</span>'
+        + '<span class="section-label ms-auto d-none d-sm-inline">' + people.length + ' ' + (people.length === 1 ? 'person' : 'people') + '</span>'
+        + '<button class="btn btn-ghost btn-sm btn-icon" data-open-week="' + w.id + '" title="Open this week"><i class="bi bi-arrow-right"></i></button>'
+      + '</div>'
+      + '<div class="card-x-body">'
+        + '<div class="at-wrap"><table class="at">'
+          + '<thead><tr><th>Participant</th><th>Start (' + u + ')</th><th>Final (' + u + ')</th><th>Change</th></tr></thead>'
+          + '<tbody>' + rows + '</tbody>'
+        + '</table></div>'
+      + '</div>'
+    + '</section>';
+  }).join('');
+}
+
+$('#allWeeksList').addEventListener('click', e => {
+  const btn = e.target.closest('[data-open-week]'); if (!btn) return;
+  state.currentId = btn.dataset.openWeek;
+  setPage('week');
+  render();
+});
+
+/* ============================================================
+   Sidebar / page navigation
+   ============================================================ */
+function isMobileView(){ return window.matchMedia('(max-width:767.98px)').matches; }
+
+function closeMobileSidebar(){
+  $('#sidebar').classList.remove('mobile-open');
+  $('#sidebarBackdrop').classList.remove('show');
+}
+
+function toggleSidebar(){
+  const sb = $('#sidebar');
+  if (isMobileView()) {
+    sb.classList.toggle('mobile-open');
+    $('#sidebarBackdrop').classList.toggle('show');
+  } else {
+    sb.classList.toggle('collapsed');
+    try { localStorage.setItem('weighin.sidebar', sb.classList.contains('collapsed') ? '1' : '0'); } catch (e) {}
+  }
+}
+$('#menuBtn').addEventListener('click', toggleSidebar);
+$('#sidebarBackdrop').addEventListener('click', closeMobileSidebar);
+
+function setPage(page){
+  state.page = page;
+  $$('.sidebar-link[data-page]').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+  $('#pageWeek').classList.toggle('d-none', page !== 'week');
+  $('#pageAllWeeks').classList.toggle('d-none', page !== 'weeks');
+  if (page === 'weeks') renderAllWeeksPage();
+  if (isMobileView()) closeMobileSidebar();
+  try { localStorage.setItem('weighin.page', page); } catch (e) {}
+}
+window.setPage = setPage;
+
+$$('.sidebar-link[data-page]').forEach(btn => btn.addEventListener('click', () => setPage(btn.dataset.page)));
+
+(function initSidebar(){
+  let collapsed = null;
+  try { collapsed = localStorage.getItem('weighin.sidebar'); } catch (e) {}
+  if (collapsed === '1' && !isMobileView()) $('#sidebar').classList.add('collapsed');
+
+  let page = 'week';
+  try { page = localStorage.getItem('weighin.page') || 'week'; } catch (e) {}
+  setPage(page === 'weeks' ? 'weeks' : 'week');
+})();
+
+/* ============================================================
+   Participant editing
+   ============================================================ */
+const saveTimers = {};
+/* Edits typed but not yet confirmed by the server. A snapshot can arrive mid-keystroke and
+   replace state.weeks wholesale, so these get re-applied on top of every incoming snapshot. */
+const pending = {};
+
+function applyPending(){
+  Object.keys(pending).forEach(key => {
+    const e = pending[key];
+    const w = state.weeks[e.weekId];
+    if (!w || !w.participants || !w.participants[e.pid]) { delete pending[key]; return; }
+    w.participants[e.pid][e.field] = e.value;
+  });
+}
+
+function queueSave(weekId, pid, field, value){
+  const key = weekId + '/' + pid + '/' + field;
+  pending[key] = { weekId: weekId, pid: pid, field: field, value: value };
+  clearTimeout(saveTimers[key]);
+  saveTimers[key] = setTimeout(() => {
+    const patch = {}; patch[field] = value;
+    update('weeks/' + weekId + '/participants/' + pid, patch).then(() => {
+      if (pending[key] && pending[key].value === value) delete pending[key];
+    });
+  }, 450);
+}
+
+function flushSaves(){
+  Object.keys(saveTimers).forEach(key => {
+    if (!saveTimers[key]) return;
+    clearTimeout(saveTimers[key]);
+    saveTimers[key] = null;
+    const e = pending[key];
+    if (!e) return;
+    const patch = {}; patch[e.field] = e.value;
+    update('weeks/' + e.weekId + '/participants/' + e.pid, patch).then(() => {
+      if (pending[key] && pending[key].value === e.value) delete pending[key];
+    });
+  });
+}
+
+$('#pList').addEventListener('input', e => {
+  const input = e.target.closest('input[data-field]'); if (!input) return;
+  const row = input.closest('.p-row'); if (!row) return;
+  const pid = row.dataset.pid;
+  const field = input.dataset.field;
+  const w = currentWeek(); if (!w || !w.participants[pid]) return;
+
+  let value;
+  if (field === 'name') {
+    value = input.value;
+    const av = $('.avatar', row);
+    av.textContent = initials(value);
+    av.style.background = avatarColor(value);
+  } else {
+    value = num(input.value);
+  }
+
+  w.participants[pid][field] = value;
+  if (field !== 'name') refreshRow(pid);
+  cacheLocal();
+  queueSave(w.id, pid, field, value);
+});
+
+$('#pList').addEventListener('click', e => {
+  const btn = e.target.closest('[data-action="del"]'); if (!btn) return;
+  const pid = btn.closest('.p-row').dataset.pid;
+  const w = currentWeek(); if (!w) return;
+  const name = (w.participants[pid] || {}).name || 'this participant';
+  askConfirm('Remove ' + name + ' from this week?', () => {
+    delete w.participants[pid];
+    remove('weeks/' + w.id + '/participants/' + pid);
+    render();
+    toast('Removed');
+  });
+});
+
+function addParticipant(name){
+  const w = currentWeek(); if (!w) return;
+  const clean = String(name || '').trim();
+  if (!clean) { toast('Enter a name first', true); return; }
+  const id = uid('p');
+  const order = Object.values(w.participants || {}).reduce((m, p) => Math.max(m, p.order || 0), 0) + 1;
+  const rec = { name: clean, startWeight: null, endWeight: null, order: order };
+  w.participants[id] = rec;
+  update('weeks/' + w.id + '/participants/' + id, rec);
+  render();
+  toast(clean + ' added');
+  const el = $('.p-row[data-pid="' + id + '"] input[data-field="startWeight"]');
+  if (el) el.focus();
+}
+
+$('#addBtn').addEventListener('click', () => { addParticipant($('#addName').value); $('#addName').value = ''; });
+$('#addName').addEventListener('keydown', e => { if (e.key === 'Enter') { addParticipant(e.target.value); e.target.value = ''; } });
+
+/* ============================================================
+   Week modal (new / edit dates)
+   ============================================================ */
+const weekModal = new bootstrap.Modal($('#weekModal'));
+let modalMode = 'new';
+let endTouched = false;
+
+function newPersonRow(name, weight){
+  const wrap = document.createElement('div');
+  wrap.className = 'np-row';
+  wrap.innerHTML =
+      '<input type="text" class="form-control np-name" placeholder="Name" value="' + escapeHtml(name || '') + '">'
+    + '<input type="number" step="0.1" min="0" inputmode="decimal" class="form-control np-w" placeholder="Start" value="' + (weight ?? '') + '">'
+    + '<button type="button" class="btn-trash" data-x><i class="bi bi-x-lg"></i></button>';
+  $('[data-x]', wrap).addEventListener('click', () => wrap.remove());
+  return wrap;
+}
+
+function openWeekModal(mode){
+  modalMode = mode;
+  endTouched = false;
+  const editing = mode === 'edit';
+  const w = currentWeek();
+
+  $('#weekModalTitle').textContent = editing ? 'Edit week dates' : 'New challenge week';
+  $('#mSave').textContent = editing ? 'Save changes' : 'Create week';
+  $('#mPeopleSection').classList.toggle('d-none', editing);
+  $('#mDateErr').classList.add('d-none');
+
+  if (editing && w) {
+    $('#mStart').value = w.startDate || todayISO();
+    $('#mEnd').value = w.endDate || addDays(todayISO(), 7);
+    endTouched = true;
+  } else {
+    const prev = sortedWeeks()[0];
+    const start = prev && prev.endDate ? prev.endDate : todayISO();
+    $('#mStart').value = start;
+    $('#mEnd').value = addDays(start, 7);
+
+    const people = $('#mPeople');
+    people.innerHTML = '';
+    $('#mCarryWrap').classList.toggle('d-none', !prev);
+    if (prev) {
+      $('#mCarry').checked = true;
+      fillCarry(prev);
+    } else {
+      people.appendChild(newPersonRow('', ''));
+      people.appendChild(newPersonRow('', ''));
+    }
+  }
+  weekModal.show();
+  setTimeout(() => $('#mStart').focus(), 200);
+}
+window.openWeekModal = openWeekModal;
+
+function fillCarry(prev){
+  const people = $('#mPeople');
+  people.innerHTML = '';
+  if ($('#mCarry').checked && prev) {
+    peopleOf(prev).forEach(p => {
+      const carried = num(p.endWeight) !== null ? num(p.endWeight) : num(p.startWeight);
+      people.appendChild(newPersonRow(p.name, carried));
+    });
+  }
+  if (!people.children.length) people.appendChild(newPersonRow('', ''));
+}
+
+$('#mCarry').addEventListener('change', () => fillCarry(sortedWeeks()[0]));
+$('#mAddPerson').addEventListener('click', () => {
+  const row = newPersonRow('', '');
+  $('#mPeople').appendChild(row);
+  $('.np-name', row).focus();
+});
+
+$('#mStart').addEventListener('change', () => {
+  const s = $('#mStart').value;
+  if (!s) return;
+  if (!endTouched || modalMode === 'new') $('#mEnd').value = addDays(s, 7);
+  validateDates();
+});
+$('#mEnd').addEventListener('change', () => { endTouched = true; validateDates(); });
+
+function validateDates(){
+  const s = $('#mStart').value, e = $('#mEnd').value;
+  const ok = !!(s && e && parseDate(e) > parseDate(s));
+  $('#mDateErr').classList.toggle('d-none', ok);
+  if (s && e && ok) {
+    const n = daysBetween(s, e);
+    $('#mDateHint').querySelector('span').textContent =
+      n === 7 ? 'A standard 7-day week. You can still change the end date.'
+              : n + '-day week (default is 7 days).';
+  }
+  return ok;
+}
+
+$('#mSave').addEventListener('click', () => {
+  if (!validateDates()) return;
+  const startDate = $('#mStart').value, endDate = $('#mEnd').value;
+
+  if (modalMode === 'edit') {
+    const w = currentWeek(); if (!w) return;
+    w.startDate = startDate; w.endDate = endDate;
+    update('weeks/' + w.id, { startDate: startDate, endDate: endDate });
+    weekModal.hide(); render(); toast('Dates updated');
+    return;
+  }
+
+  const participants = {};
+  let order = 0;
+  $$('#mPeople .np-row').forEach(row => {
+    const name = $('.np-name', row).value.trim();
+    if (!name) return;
+    participants[uid('p')] = {
+      name: name,
+      startWeight: num($('.np-w', row).value),
+      endWeight: null,
+      order: order++
+    };
+  });
+
+  const id = uid('w');
+  const week = { id: id, startDate: startDate, endDate: endDate, createdAt: Date.now(), participants: participants };
+  state.weeks[id] = week;
+  state.currentId = id;
+  write('weeks/' + id, week);
+  weekModal.hide();
+  render();
+  toast('Week created');
+});
+
+/* ============================================================
+   Confirm dialog
+   ============================================================ */
+const confirmModal = new bootstrap.Modal($('#confirmModal'));
+let confirmFn = null;
+function askConfirm(text, fn){
+  $('#confirmText').textContent = text;
+  confirmFn = fn;
+  confirmModal.show();
+}
+$('#confirmYes').addEventListener('click', () => {
+  confirmModal.hide();
+  if (confirmFn) confirmFn();
+  confirmFn = null;
+});
+
+function confirmDeleteWeek(){
+  const w = currentWeek(); if (!w) return;
+  askConfirm('Delete the week of ' + fmtRange(w.startDate, w.endDate) + '? This removes all its weigh-ins.', () => {
+    delete state.weeks[w.id];
+    remove('weeks/' + w.id);
+    state.currentId = null;
+    render();
+    toast('Week deleted');
+  });
+}
+window.confirmDeleteWeek = confirmDeleteWeek;
+
+/* ============================================================
+   Toolbar wiring
+   ============================================================ */
+$('#weekSelect').addEventListener('change', e => { state.currentId = e.target.value; render(); });
+$('#newWeekBtn').addEventListener('click', () => openWeekModal('new'));
+
+$('#unitBtn').addEventListener('click', () => {
+  state.unit = state.unit === 'kg' ? 'lb' : 'kg';
+  cacheLocal();
+  if (!usingLocal && db) db.ref(ROOT + '/settings/unit').set(state.unit);
+  render();
+  toast('Unit set to ' + state.unit);
+});
+
+const themeBtn = $('#themeBtn');
+function applyTheme(t){
+  document.documentElement.setAttribute('data-bs-theme', t);
+  themeBtn.innerHTML = '<i class="bi ' + (t === 'dark' ? 'bi-sun' : 'bi-moon-stars') + '"></i>';
+  try { localStorage.setItem('weighin.theme', t); } catch (e) {}
+}
+themeBtn.addEventListener('click', () => {
+  const t = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(t);
+  if (!usingLocal && db) db.ref(ROOT + '/settings/theme').set(t);
+});
+(function initTheme(){
+  let t = null;
+  try { t = localStorage.getItem('weighin.theme'); } catch (e) {}
+  if (!t) t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  applyTheme(t);
+})();
+
+$('#exportBtn').addEventListener('click', () => {
+  const rows = [['Week start','Week end','Participant','Start (' + state.unit + ')','Final (' + state.unit + ')','Change','Change %']];
+  sortedWeeks().slice().reverse().forEach(w => {
+    peopleOf(w).forEach(p => {
+      const d = delta(p);
+      rows.push([
+        w.startDate || '', w.endDate || '', p.name || '',
+        p.startWeight ?? '', p.endWeight ?? '',
+        d.has ? d.diff.toFixed(1) : '',
+        d.has && d.pct !== null ? d.pct.toFixed(1) : ''
+      ]);
+    });
+  });
+  if (rows.length === 1) { toast('Nothing to export yet', true); return; }
+  const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+  const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = 'weighin-' + todayISO() + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('CSV exported');
+});
+
+/* ============================================================
+   Boot
+   ============================================================ */
+initStore();
+if (!ready) { /* first render happens on the first Firebase snapshot */ }
+setTimeout(() => { if (!ready) { ready = true; render(); } }, 4000);  // offline-first fallback
+</script>
+</body>
+</html>
