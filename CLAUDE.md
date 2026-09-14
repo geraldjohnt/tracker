@@ -145,6 +145,42 @@ Firebase at `settings/theme` (same pattern as `settings/unit`), so toggling the 
 syncs it to others; the Firebase listener in `initStore` only calls `applyTheme` when the incoming
 value differs from the current DOM state, to avoid redundant re-renders.
 
+`weight.html` and `spending.html` also carry a **design template** (`data-template` on `<html>`,
+one of `default`/`neomorphism`/`glassmorphism`/`claymorphism`/`minimalism`/`liquidglass`/`spatial`)
+and a **color palette** (`data-palette`, one of `indigo`/`rose`/`emerald`/`amber`/`ocean`/`violet`/
+`slate`/`sunset`), each following the exact same `apply*`/`localStorage`/`settings/*` pattern as
+theme (`applyTemplate`/`weighin.template`/`settings/template`, `applyPalette`/`weighin.palette`/
+`settings/palette` — `spendly.*` in `spending.html`). Templates only redefine *shape* tokens
+(`--card`, `--card-2`, `--border`, `--border-strong`, `--shadow*`, `--r-*`, `--surface-backdrop`,
+`--header-backdrop`); palettes only redefine *accent* tokens (`--accent`, `--accent-2`,
+`--accent-soft`, `--bg-grad-1`, `--bg-grad-2`). `default`/`indigo` intentionally define no CSS
+overrides at all, so the original look is reproduced exactly rather than approximated — never add a
+`[data-template="default"]` or `[data-palette="indigo"]` rule. Palette colors are fixed, curated
+pairs (`PALETTES` array); there is no free color picker, by design, so users can't produce broken
+contrast. `settings/theme|template|palette` are validated in `database.rules.json` against the
+allowed enum for each. The `#appearanceBtn` dropdown (`data-bs-toggle="dropdown"
+data-bs-auto-close="outside"`) replaces the old standalone `#themeBtn` in the header; `#themeBtn`
+itself now lives inside that dropdown as the light/dark row, alongside the generated
+`#templateGrid`/`#paletteGrid` option buttons (`renderAppearanceOptions`).
+
+`index.html` (the combined dashboard) has its own **independent, local-only** copy of this system
+(`dashboard.theme`/`dashboard.template`/`dashboard.palette` in `localStorage`, `TEMPLATES`/
+`PALETTES` duplicated verbatim) — it never reads or writes either tracker's `settings/*`, matching
+the pre-existing "each tracker syncs its own theme independently" design. `bootstrap.bundle.min.js`
+had to be added to both `index.html` and `spending.html` (previously only Bootstrap's CSS was
+loaded on either — neither had ever needed a Bootstrap JS component before this dropdown; only
+`weight.html`, via its modals, already loaded it).
+
+Because `weight.html`/`spending.html`/`index.html` share byte-identical `:root`/`[data-bs-theme=
+"dark"]` token blocks (this is relied upon — verify with `diff` before assuming a change applies
+everywhere), template/palette rules, the `.appearance-menu`/`.tpl-opt`/`.pal-opt` CSS, and the
+`TEMPLATES`/`PALETTES` JS arrays are duplicated near-verbatim across all three files; keep them in
+sync by hand when adding/editing a template or palette. The one place they legitimately differ is
+the "surfaces that pick up a template's blur" selector list right before `*{ -webkit-tap-highlight-
+color:transparent; }` in each file's `<style>` — it enumerates that file's own surface classes (e.g.
+`.p-row` only exists in `weight.html`; `.exp-row`/`.cal-cell` only in `spending.html`) so glass-style
+templates blur every real card, not just the generic ones.
+
 ## Notes
 
 - No authentication: `database.rules.json` is open read/write for both root nodes. Anyone with the
@@ -152,6 +188,8 @@ value differs from the current DOM state, to avoid redundant re-renders.
   README.md for how to lock this down with anonymous/Google auth if needed.
 - Firebase Analytics is intentionally omitted from both apps — it needs no configuration here and
   errors when the page is opened via `file://`.
-- The kg/lb unit toggle in `weight.html` only changes the displayed label; it does not convert
-  stored numeric values. `spending.html` has no currency toggle — all prices are plain numbers
-  displayed with a hardcoded `$` prefix.
+- The kg/lb unit toggle in `weight.html` converts everything shown (input values, deltas,
+  leaderboard, all-time table, CSV export) via `cw`/`unitToKg`/`inputValue`, but all stored values
+  (state, localStorage, Firebase) stay in kg regardless of the toggle — only the display and what
+  a user types are ever in lb. `spending.html` has no currency toggle — all prices are plain
+  numbers displayed with a hardcoded `$` prefix.

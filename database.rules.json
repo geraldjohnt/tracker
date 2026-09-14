@@ -23,8 +23,10 @@
         }
       },
       "settings": {
-        "unit":  { ".validate": "newData.isString() && (newData.val() === 'kg' || newData.val() === 'lb')" },
-        "theme": { ".validate": "newData.isString() && (newData.val() === 'dark' || newData.val() === 'light')" }
+        "unit":     { ".validate": "newData.isString() && (newData.val() === 'kg' || newData.val() === 'lb')" },
+        "theme":    { ".validate": "newData.isString() && (newData.val() === 'dark' || newData.val() === 'light')" },
+        "template": { ".validate": "newData.isString() && newData.val().matches(/^(default|neomorphism|glassmorphism|claymorphism|minimalism|liquidglass|spatial)$/)" },
+        "palette":  { ".validate": "newData.isString() && newData.val().matches(/^(indigo|rose|emerald|amber|ocean|violet|slate|sunset)$/)" }
       }
     },
     "spendingTracker": {
@@ -41,7 +43,9 @@
         }
       },
       "settings": {
-        "theme": { ".validate": "newData.isString() && (newData.val() === 'dark' || newData.val() === 'light')" }
+        "theme":    { ".validate": "newData.isString() && (newData.val() === 'dark' || newData.val() === 'light')" },
+        "template": { ".validate": "newData.isString() && newData.val().matches(/^(default|neomorphism|glassmorphism|claymorphism|minimalism|liquidglass|spatial)$/)" },
+        "palette":  { ".validate": "newData.isString() && newData.val().matches(/^(indigo|rose|emerald|amber|ocean|violet|slate|sunset)$/)" }
       }
     }
   }

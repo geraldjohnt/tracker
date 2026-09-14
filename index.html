@@ -41,6 +41,8 @@
   --r-lg:20px;
   --r-md:14px;
   --r-sm:10px;
+  --surface-backdrop:none;
+  --header-backdrop:saturate(180%) blur(14px);
 }
 [data-bs-theme="dark"]{
   --bg:#080b14;
@@ -63,6 +65,207 @@
   --shadow-sm:0 1px 2px rgba(0,0,0,.4);
   --shadow:0 8px 30px -14px rgba(0,0,0,.7);
   --shadow-lg:0 30px 70px -30px rgba(0,0,0,.85);
+}
+
+/* ============================================================
+   Design templates — restyle surface material (shape, shadow,
+   blur, radius) only; theme + palette still own every color.
+   "default" (no attribute) is the original look, untouched.
+   ============================================================ */
+[data-template="neomorphism"]{ --r-lg:28px; --r-md:20px; --r-sm:15px; }
+[data-template="neomorphism"][data-bs-theme="light"]{
+  --card:var(--bg); --card-2:color-mix(in srgb, var(--bg) 94%, #000);
+  --border:transparent; --border-strong:color-mix(in srgb, var(--bg) 88%, #000);
+  --shadow-sm:5px 5px 10px rgba(163,177,198,.5), -5px -5px 10px rgba(255,255,255,.8);
+  --shadow:9px 9px 18px rgba(163,177,198,.55), -9px -9px 18px rgba(255,255,255,.85);
+  --shadow-lg:16px 16px 32px rgba(163,177,198,.6), -14px -14px 30px rgba(255,255,255,.9);
+}
+[data-template="neomorphism"][data-bs-theme="dark"]{
+  --card:var(--bg); --card-2:color-mix(in srgb, var(--bg) 92%, #fff);
+  --border:transparent; --border-strong:color-mix(in srgb, var(--bg) 85%, #fff);
+  --shadow-sm:5px 5px 10px rgba(0,0,0,.6), -5px -5px 10px rgba(255,255,255,.035);
+  --shadow:9px 9px 20px rgba(0,0,0,.65), -9px -9px 20px rgba(255,255,255,.04);
+  --shadow-lg:18px 18px 36px rgba(0,0,0,.7), -14px -14px 30px rgba(255,255,255,.045);
+}
+
+[data-template="glassmorphism"]{
+  --r-lg:22px; --r-md:16px; --r-sm:13px;
+  --surface-backdrop:blur(16px) saturate(180%); --header-backdrop:blur(20px) saturate(180%);
+}
+[data-template="glassmorphism"][data-bs-theme="light"]{
+  --card:rgba(255,255,255,.55); --card-2:rgba(255,255,255,.35);
+  --border:rgba(255,255,255,.6); --border-strong:rgba(255,255,255,.85);
+  --shadow-sm:0 2px 8px rgba(31,38,135,.08);
+  --shadow:0 8px 32px -8px rgba(31,38,135,.18);
+  --shadow-lg:0 22px 55px -20px rgba(31,38,135,.3);
+}
+[data-template="glassmorphism"][data-bs-theme="dark"]{
+  --card:rgba(22,29,47,.55); --card-2:rgba(22,29,47,.4);
+  --border:rgba(255,255,255,.08); --border-strong:rgba(255,255,255,.16);
+  --shadow-sm:0 2px 8px rgba(0,0,0,.3);
+  --shadow:0 8px 32px -8px rgba(0,0,0,.55);
+  --shadow-lg:0 26px 65px -20px rgba(0,0,0,.7);
+}
+
+[data-template="claymorphism"]{ --r-lg:30px; --r-md:22px; --r-sm:16px; }
+[data-template="claymorphism"][data-bs-theme="light"]{
+  --card:#ffffff; --card-2:color-mix(in srgb, var(--card) 92%, var(--accent) 6%);
+  --border:transparent; --border-strong:color-mix(in srgb, var(--card) 85%, #000 6%);
+  --shadow-sm:inset 0 -2px 6px rgba(255,255,255,.6), inset 0 2px 5px rgba(0,0,0,.06), 0 4px 10px -4px rgba(0,0,0,.16);
+  --shadow:inset 0 -4px 10px rgba(255,255,255,.5), inset 0 3px 7px rgba(0,0,0,.05), 0 16px 28px -12px rgba(0,0,0,.22);
+  --shadow-lg:inset 0 -6px 14px rgba(255,255,255,.45), inset 0 3px 8px rgba(0,0,0,.05), 0 28px 52px -18px rgba(0,0,0,.3);
+}
+[data-template="claymorphism"][data-bs-theme="dark"]{
+  --card:color-mix(in srgb, var(--bg) 82%, #fff 6%); --card-2:color-mix(in srgb, var(--bg) 88%, #fff 4%);
+  --border:transparent; --border-strong:color-mix(in srgb, var(--bg) 70%, #fff 8%);
+  --shadow-sm:inset 0 -2px 6px rgba(255,255,255,.05), inset 0 2px 5px rgba(0,0,0,.35), 0 4px 10px -4px rgba(0,0,0,.5);
+  --shadow:inset 0 -4px 10px rgba(255,255,255,.04), inset 0 3px 7px rgba(0,0,0,.3), 0 18px 32px -14px rgba(0,0,0,.6);
+  --shadow-lg:inset 0 -6px 14px rgba(255,255,255,.035), inset 0 3px 8px rgba(0,0,0,.3), 0 32px 60px -20px rgba(0,0,0,.7);
+}
+
+[data-template="minimalism"]{ --r-lg:10px; --r-md:8px; --r-sm:6px; }
+[data-template="minimalism"][data-bs-theme="light"]{
+  --card:#ffffff; --card-2:#fafafa;
+  --border:#e5e5e5; --border-strong:#d4d4d4;
+  --shadow-sm:none; --shadow:none; --shadow-lg:0 2px 10px rgba(0,0,0,.1);
+}
+[data-template="minimalism"][data-bs-theme="dark"]{
+  --card:#0d1420; --card-2:#111826;
+  --border:#1f2734; --border-strong:#2a3444;
+  --shadow-sm:none; --shadow:none; --shadow-lg:0 2px 14px rgba(0,0,0,.5);
+}
+[data-template="minimalism"] body::before{ display:none; }
+[data-template="minimalism"] .hero::after{ display:none; }
+
+[data-template="liquidglass"]{
+  --r-lg:26px; --r-md:20px; --r-sm:16px;
+  --surface-backdrop:blur(24px) saturate(200%); --header-backdrop:blur(28px) saturate(200%);
+}
+[data-template="liquidglass"][data-bs-theme="light"]{
+  --card:rgba(255,255,255,.42); --card-2:rgba(255,255,255,.26);
+  --border:rgba(255,255,255,.8); --border-strong:rgba(255,255,255,.95);
+  --shadow-sm:inset 0 1px 0 rgba(255,255,255,.7), 0 4px 14px -6px rgba(31,38,135,.15);
+  --shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 12px 36px -12px rgba(31,38,135,.22);
+  --shadow-lg:inset 0 1px 0 rgba(255,255,255,.5), 0 26px 64px -20px rgba(31,38,135,.32);
+}
+[data-template="liquidglass"][data-bs-theme="dark"]{
+  --card:rgba(20,26,42,.45); --card-2:rgba(20,26,42,.28);
+  --border:rgba(255,255,255,.14); --border-strong:rgba(255,255,255,.22);
+  --shadow-sm:inset 0 1px 0 rgba(255,255,255,.07), 0 4px 14px -6px rgba(0,0,0,.4);
+  --shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 14px 40px -14px rgba(0,0,0,.6);
+  --shadow-lg:inset 0 1px 0 rgba(255,255,255,.05), 0 30px 68px -22px rgba(0,0,0,.75);
+}
+
+[data-template="spatial"]{ --r-lg:20px; --r-md:16px; --r-sm:12px; }
+[data-template="spatial"][data-bs-theme="light"]{
+  --card:#ffffff; --card-2:#f7f8fc;
+  --border:rgba(15,23,42,.06); --border-strong:rgba(15,23,42,.14);
+  --shadow-sm:0 1px 2px rgba(16,24,40,.06), 0 6px 16px -10px rgba(16,24,40,.16);
+  --shadow:0 2px 6px rgba(16,24,40,.08), 0 22px 44px -20px rgba(16,24,40,.3), 0 40px 80px -45px var(--accent-soft);
+  --shadow-lg:0 4px 12px rgba(16,24,40,.1), 0 46px 90px -35px rgba(16,24,40,.36);
+}
+[data-template="spatial"][data-bs-theme="dark"]{
+  --card:#121a2c; --card-2:#17203a;
+  --border:rgba(255,255,255,.06); --border-strong:rgba(255,255,255,.12);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4), 0 8px 20px -12px rgba(0,0,0,.55);
+  --shadow:0 4px 10px rgba(0,0,0,.5), 0 34px 64px -26px rgba(0,0,0,.65), 0 55px 100px -50px var(--accent-soft);
+  --shadow-lg:0 6px 18px rgba(0,0,0,.55), 0 56px 110px -35px rgba(0,0,0,.8);
+}
+
+/* ============================================================
+   Color palettes — accent hue only; good/bad/warn stay semantic.
+   "indigo" (no data-palette, or the literal value) = current colors.
+   ============================================================ */
+[data-palette="rose"]{
+  --accent:#f43f5e; --accent-2:#fb7185;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="rose"][data-bs-theme="dark"]{
+  --accent:#fb7185; --accent-2:#fda4af;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}
+[data-palette="emerald"]{
+  --accent:#10b981; --accent-2:#34d399;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="emerald"][data-bs-theme="dark"]{
+  --accent:#34d399; --accent-2:#6ee7b7;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}
+[data-palette="amber"]{
+  --accent:#d97706; --accent-2:#f59e0b;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="amber"][data-bs-theme="dark"]{
+  --accent:#fbbf24; --accent-2:#fcd34d;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}
+[data-palette="ocean"]{
+  --accent:#0284c7; --accent-2:#22d3ee;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="ocean"][data-bs-theme="dark"]{
+  --accent:#38bdf8; --accent-2:#67e8f9;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}
+[data-palette="violet"]{
+  --accent:#a855f7; --accent-2:#ec4899;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="violet"][data-bs-theme="dark"]{
+  --accent:#c084fc; --accent-2:#f472b6;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}
+[data-palette="slate"]{
+  --accent:#475569; --accent-2:#64748b;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="slate"][data-bs-theme="dark"]{
+  --accent:#94a3b8; --accent-2:#cbd5e1;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}
+[data-palette="sunset"]{
+  --accent:#ea580c; --accent-2:#ef4444;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="sunset"][data-bs-theme="dark"]{
+  --accent:#fb923c; --accent-2:#f87171;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}
+
+/* Surfaces that pick up a template's blur (glass/liquid-glass only; --surface-backdrop is "none" everywhere else) */
+.sidebar, .card-x, .hero, .stat, .recent-row, .wp-row,
+.btn-ghost, .conn, .dropdown-menu{
+  backdrop-filter:var(--surface-backdrop);
+  -webkit-backdrop-filter:var(--surface-backdrop);
 }
 
 *{ -webkit-tap-highlight-color:transparent; }
@@ -90,8 +293,8 @@ body::before{
 /* Header */
 .app-header{
   position:sticky; top:0; z-index:1030;
-  backdrop-filter:saturate(180%) blur(14px);
-  -webkit-backdrop-filter:saturate(180%) blur(14px);
+  backdrop-filter:var(--header-backdrop);
+  -webkit-backdrop-filter:var(--header-backdrop);
   background:color-mix(in srgb, var(--bg) 78%, transparent);
   border-bottom:1px solid var(--border);
 }
@@ -125,6 +328,51 @@ body::before{
 .conn.offline .dot{ background:var(--warn); box-shadow:0 0 0 3px rgba(217,119,6,.15); }
 .conn.local .dot{ background:var(--bad); box-shadow:0 0 0 3px var(--bad-soft); }
 @media (max-width:575.98px){ .conn .label{ display:none; } .conn{ padding:.35rem; } }
+
+/* ============================================================
+   Appearance menu (theme mode + design template + color palette)
+   ============================================================ */
+.appearance-menu{
+  /* Anchored toward the opaque --bg (not used bare) so this settings panel stays
+     legible even under a very translucent template, or if backdrop-filter is
+     unsupported/disabled — a page-level glass card can afford to be see-through,
+     a control you have to read and click can't. */
+  background:color-mix(in srgb, var(--card) 60%, var(--bg));
+  border:1px solid var(--border); border-radius:var(--r-md);
+  box-shadow:var(--shadow-lg); padding:.7rem; min-width:270px; max-width:min(320px,88vw);
+  max-height:min(75vh,560px); overflow-y:auto;
+}
+.appearance-label{
+  font-size:.68rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+  color:var(--muted); padding:.15rem .3rem .5rem;
+}
+.appearance-menu .dropdown-divider{ border-color:var(--border); margin:.6rem 0; }
+.appearance-mode-btn{
+  width:100%; display:flex; align-items:center; gap:.55rem; justify-content:flex-start;
+  padding:.55rem .7rem;
+}
+.template-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:.4rem; }
+.tpl-opt{
+  display:flex; flex-direction:column; align-items:center; gap:.32rem;
+  padding:.6rem .4rem; border-radius:var(--r-sm); border:1px solid var(--border);
+  background:var(--card-2); color:var(--text); font-size:.72rem; font-weight:600;
+  cursor:pointer; text-align:center;
+}
+.tpl-opt i{ font-size:1.1rem; color:var(--muted); }
+.tpl-opt:hover{ border-color:var(--border-strong); }
+.tpl-opt.active{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
+.tpl-opt.active i{ color:var(--accent); }
+.palette-grid{ display:flex; flex-wrap:wrap; gap:.55rem; padding:.1rem .3rem .2rem; }
+.pal-opt{
+  width:30px; height:30px; flex:0 0 30px; border-radius:50%; border:none; padding:0;
+  background:linear-gradient(135deg,var(--sw1),var(--sw2)); cursor:pointer; position:relative;
+}
+.pal-opt .pal-check{
+  display:none; position:absolute; inset:0; align-items:center; justify-content:center;
+  color:#fff; font-size:.85rem; text-shadow:0 1px 3px rgba(0,0,0,.6);
+}
+.pal-opt.active{ box-shadow:0 0 0 2px var(--card), 0 0 0 4px var(--text); }
+.pal-opt.active .pal-check{ display:flex; }
 
 /* ============================================================
    Sidebar / app shell
@@ -254,6 +502,14 @@ body::before{
 .chart-wrap{ height:150px; margin-top:1rem; }
 .chart-wrap canvas{ width:100% !important; height:100% !important; }
 
+/* Weight all-time participant list */
+.wp-list{ display:flex; flex-direction:column; gap:.4rem; margin-top:.9rem; }
+.wp-row{ display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:.6rem; align-items:center; padding:.45rem .6rem; border-radius:var(--r-sm); background:var(--card-2); border:1px solid var(--border); }
+.wp-name{ font-weight:700; font-size:.84rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wp-weights{ font-size:.76rem; color:var(--muted); font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.wp-diff{ font-weight:800; font-variant-numeric:tabular-nums; font-size:.86rem; white-space:nowrap; text-align:right; }
+.wp-diff.loss{ color:var(--good); } .wp-diff.gain{ color:var(--bad); } .wp-diff.same{ color:var(--muted); }
+
 .card-cta{ margin-top:1.1rem; display:flex; }
 .btn-primary-x{
   background:linear-gradient(135deg,var(--accent),var(--accent-2));
@@ -310,7 +566,19 @@ body::before{
         </div>
         <div class="header-actions">
           <span id="conn" class="conn"><span class="dot"></span><span class="label">Connecting</span></span>
-          <button id="themeBtn" class="btn btn-ghost btn-sm btn-icon" title="Toggle theme"><i class="bi bi-moon-stars"></i></button>
+          <div class="dropdown">
+            <button id="appearanceBtn" class="btn btn-ghost btn-sm btn-icon" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Appearance"><i class="bi bi-palette2"></i></button>
+            <div class="dropdown-menu dropdown-menu-end appearance-menu" aria-labelledby="appearanceBtn">
+              <div class="appearance-label">Mode</div>
+              <button type="button" id="themeBtn" class="btn btn-ghost btn-sm appearance-mode-btn"><i class="bi bi-moon-stars"></i><span>Dark</span></button>
+              <div class="dropdown-divider"></div>
+              <div class="appearance-label">Design</div>
+              <div class="template-grid" id="templateGrid"></div>
+              <div class="dropdown-divider"></div>
+              <div class="appearance-label">Color</div>
+              <div class="palette-grid" id="paletteGrid"></div>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -359,7 +627,8 @@ body::before{
                   <div class="stat-sub" id="wNetSub">—</div>
                 </div>
               </div>
-              <div id="wLb" class="lb"></div>
+              <div id="wLb" class="wp-list"></div>
+              <div class="chart-wrap" id="wChartWrap"><canvas id="wChart"></canvas></div>
             </div>
 
             <div class="card-cta"><a href="weight.html" class="btn-primary-x"><i class="bi bi-activity me-2"></i>Open Weight Tracker</a></div>
@@ -418,6 +687,7 @@ body::before{
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -463,6 +733,10 @@ function fmtNum(n, d){
   if (n === null || n === undefined || !isFinite(n)) return '—';
   const s = Math.abs(n).toFixed(d === undefined ? 1 : d);
   return (n > 0 ? '+' : n < 0 ? '−' : '') + s;
+}
+function plain(n, d){
+  if (n === null || n === undefined || !isFinite(n)) return '—';
+  return n.toFixed(d === undefined ? 1 : d);
 }
 function fmtMoney(n){
   if (n === null || n === undefined || !isFinite(n)) return '₱0.00';
@@ -591,16 +865,6 @@ function delta(p){
   const diff = e - s;
   return { has:true, diff:diff, pct: s !== 0 ? (diff / s) * 100 : null };
 }
-function weekStatus(w){
-  const t = todayISO();
-  const people = peopleOf(w);
-  const withBoth = people.filter(p => delta(p).has).length;
-  if (people.length && withBoth === people.length) return { text:'Completed', cls:'chip-done' };
-  if (t < w.startDate) return { text:'Upcoming', cls:'chip-soon' };
-  if (t > w.endDate)  return { text:'Awaiting final weights', cls:'chip-open' };
-  return { text:'In progress', cls:'chip-live' };
-}
-
 /* ============================================================
    Spending — derived data (mirrors spending.html)
    ============================================================ */
@@ -629,9 +893,76 @@ function render(){
   $('#heroSub').textContent = bits.length ? bits.join(' · ') : "Here's where things stand across both trackers.";
 }
 
+function weightAllTime(){
+  // Mirrors weight.html's renderAllTime aggregation: people are matched
+  // across weeks by case-insensitive name, oldest week first.
+  const weeksAsc = sortedWeeks().slice().reverse();
+  const agg = {};        // key -> { name, first, last }
+  const weekLabels = []; // one label per week that has at least one logged delta
+  const perWeekDiffs = {}; // key -> { label -> diff }
+
+  weeksAsc.forEach(w => {
+    const label = fmtDate(w.endDate || w.startDate);
+    let labelUsed = false;
+    peopleOf(w).forEach(p => {
+      const key = (p.name || '').trim().toLowerCase();
+      if (!key) return;
+      if (!agg[key]) agg[key] = { name: p.name.trim(), first: null, last: null };
+      const a = agg[key];
+      if (a.first === null && num(p.startWeight) !== null) a.first = num(p.startWeight);
+      if (num(p.endWeight) !== null) a.last = num(p.endWeight);
+      else if (num(p.startWeight) !== null) a.last = num(p.startWeight);
+
+      const d = delta(p);
+      if (d.has) {
+        if (!labelUsed) { weekLabels.push(label); labelUsed = true; }
+        if (!perWeekDiffs[key]) perWeekDiffs[key] = {};
+        perWeekDiffs[key][label] = d.diff;
+      }
+    });
+  });
+
+  const rows = Object.keys(agg).map(key => {
+    const a = agg[key];
+    const overall = (a.first !== null && a.last !== null) ? (a.last - a.first) : null;
+    return { key, name: a.name, first: a.first, last: a.last, overall, data: weekLabels.map(l => (perWeekDiffs[key] && (l in perWeekDiffs[key])) ? perWeekDiffs[key][l] : null) };
+  });
+
+  return { rows, weekLabels };
+}
+
+function lineColor(i){
+  const hues = [244, 330, 20, 160, 45, 200, 280, 5];
+  return 'hsl(' + hues[i % hues.length] + ', 72%, 55%)';
+}
+
+function renderLineChart(canvasId, labels, datasets){
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || typeof Chart === 'undefined') return;
+  const styles = getComputedStyle(document.documentElement);
+  const muted = styles.getPropertyValue('--muted').trim();
+  const border = styles.getPropertyValue('--border').trim();
+  if (charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId] = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: { labels: labels, datasets: datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: datasets.length > 1, position: 'bottom', labels: { color: muted, boxWidth: 10, font: { size: 10, weight: 600 } } },
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtNum(ctx.parsed.y) + ' kg' } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: muted, font: { weight: 600, size: 10 } } },
+        y: { grid: { color: border }, ticks: { color: muted, font: { size: 10 }, callback: v => fmtNum(v) } }
+      }
+    }
+  });
+}
+
 function renderWeightCard(){
-  const w = sortedWeeks()[0];
-  if (!w) {
+  const weeks = sortedWeeks();
+  if (!weeks.length) {
     $('#wEmpty').classList.remove('d-none');
     $('#wContent').classList.add('d-none');
     $('#wStatusChip').classList.add('d-none');
@@ -642,42 +973,61 @@ function renderWeightCard(){
   $('#wContent').classList.remove('d-none');
   $('#wStatusChip').classList.remove('d-none');
 
-  $('#wRangeLabel').textContent = fmtRange(w.startDate, w.endDate);
-  const st = weekStatus(w);
+  const first = weeks[weeks.length - 1], last = weeks[0];
+  $('#wRangeLabel').textContent = fmtRange(first.startDate, last.endDate);
   const chip = $('#wStatusChip');
-  chip.className = 'chip ms-auto ' + st.cls;
-  chip.textContent = st.text;
+  chip.className = 'chip ms-auto chip-live';
+  chip.textContent = weeks.length + (weeks.length === 1 ? ' week' : ' weeks');
 
-  const people = peopleOf(w);
-  const done = people.filter(p => delta(p).has);
-  $('#wPeople').textContent = people.length;
-  const losers = done.filter(p => delta(p).diff < 0).length;
-  const gainers = done.filter(p => delta(p).diff > 0).length;
+  const { rows, weekLabels } = weightAllTime();
+  const done = rows.filter(r => r.overall !== null);
+  $('#wPeople').textContent = rows.length;
+  const losers = done.filter(r => r.overall < 0).length;
+  const gainers = done.filter(r => r.overall > 0).length;
   $('#wPeopleSub').textContent = done.length ? (losers + ' lost · ' + gainers + ' gained') : 'awaiting results';
 
-  const net = done.reduce((a, p) => a + delta(p).diff, 0);
+  const net = done.reduce((a, r) => a + r.overall, 0);
   const netEl = $('#wNet');
   if (!done.length) { netEl.textContent = '—'; netEl.style.color = ''; $('#wNetSub').textContent = 'no results yet'; }
   else {
     netEl.textContent = fmtNum(net) + ' kg';
     netEl.style.color = net < 0 ? 'var(--good)' : net > 0 ? 'var(--bad)' : '';
-    $('#wNetSub').textContent = done.length + '/' + people.length + ' logged';
+    $('#wNetSub').textContent = done.length + '/' + rows.length + ' with results';
   }
 
-  const top = done.slice().sort((a, b) => delta(a).diff - delta(b).diff).slice(0, 3);
+  const sorted = rows.slice().sort((a, b) => (a.overall ?? Infinity) - (b.overall ?? Infinity));
   const lb = $('#wLb');
-  if (!top.length) {
+  if (!sorted.length) {
     lb.innerHTML = '<div style="text-align:center;padding:1rem 0;color:var(--muted);font-size:.84rem"><i class="bi bi-graph-down-arrow" style="font-size:1.3rem;display:block;margin-bottom:.35rem;color:var(--accent)"></i>No results logged yet.</div>';
   } else {
-    lb.innerHTML = top.map((p, i) => {
-      const d = delta(p);
-      const cls = d.diff < 0 ? 'loss' : d.diff > 0 ? 'gain' : 'same';
-      return '<div class="lb-row">'
-        + '<div class="lb-rank ' + (d.diff < 0 ? 'r' + (i + 1) : '') + '">' + (i + 1) + '</div>'
-        + '<div class="lb-name">' + escapeHtml(p.name || 'Unnamed') + '</div>'
-        + '<div class="lb-val ' + cls + '">' + fmtNum(d.diff) + ' kg</div>'
+    lb.innerHTML = sorted.map(r => {
+      const cls = r.overall === null ? 'same' : r.overall < 0 ? 'loss' : r.overall > 0 ? 'gain' : 'same';
+      const weights = plain(r.first) + ' → ' + plain(r.last) + ' kg';
+      return '<div class="wp-row">'
+        + '<div class="wp-name">' + escapeHtml(r.name || 'Unnamed') + '</div>'
+        + '<div class="wp-weights">' + weights + '</div>'
+        + '<div class="wp-diff ' + cls + '">' + (r.overall === null ? '—' : fmtNum(r.overall) + ' kg') + '</div>'
         + '</div>';
     }).join('');
+  }
+
+  const wrap = $('#wChartWrap');
+  if (!weekLabels.length) {
+    wrap.classList.add('d-none');
+  } else {
+    wrap.classList.remove('d-none');
+    const datasets = rows.map((r, i) => ({
+      label: r.name || 'Unnamed',
+      data: r.data,
+      borderColor: lineColor(i),
+      backgroundColor: lineColor(i),
+      spanGaps: true,
+      tension: .35,
+      pointRadius: 3,
+      pointHoverRadius: 4,
+      borderWidth: 2
+    }));
+    renderLineChart('wChart', weekLabels, datasets);
   }
 }
 
@@ -766,12 +1116,33 @@ $('#sidebarBackdrop').addEventListener('click', closeMobileSidebar);
 })();
 
 /* ============================================================
-   Theme (local-only; each tracker syncs its own theme independently)
+   Appearance (local-only; each tracker syncs its own appearance
+   independently — the dashboard keeps its own device-local pick)
    ============================================================ */
+const TEMPLATES = [
+  { id:'default',       name:'Default',       icon:'bi-square' },
+  { id:'neomorphism',   name:'Neomorphism',   icon:'bi-circle-square' },
+  { id:'glassmorphism', name:'Glassmorphism', icon:'bi-droplet-half' },
+  { id:'claymorphism',  name:'Claymorphism',  icon:'bi-cloud' },
+  { id:'minimalism',    name:'Minimalism',    icon:'bi-dash-square' },
+  { id:'liquidglass',   name:'Liquid Glass',  icon:'bi-moisture' },
+  { id:'spatial',       name:'Spatial UI',    icon:'bi-boxes' }
+];
+const PALETTES = [
+  { id:'indigo',  name:'Indigo',  c1:'#6366f1', c2:'#8b5cf6' },
+  { id:'rose',    name:'Rose',    c1:'#f43f5e', c2:'#fb7185' },
+  { id:'emerald', name:'Emerald', c1:'#10b981', c2:'#34d399' },
+  { id:'amber',   name:'Amber',   c1:'#d97706', c2:'#f59e0b' },
+  { id:'ocean',   name:'Ocean',   c1:'#0284c7', c2:'#22d3ee' },
+  { id:'violet',  name:'Violet',  c1:'#a855f7', c2:'#ec4899' },
+  { id:'slate',   name:'Slate',   c1:'#475569', c2:'#64748b' },
+  { id:'sunset',  name:'Sunset',  c1:'#ea580c', c2:'#ef4444' }
+];
+
 const themeBtn = $('#themeBtn');
 function applyTheme(t){
   document.documentElement.setAttribute('data-bs-theme', t);
-  themeBtn.innerHTML = '<i class="bi ' + (t === 'dark' ? 'bi-sun' : 'bi-moon-stars') + '"></i>';
+  themeBtn.innerHTML = '<i class="bi ' + (t === 'dark' ? 'bi-sun' : 'bi-moon-stars') + '"></i><span>' + (t === 'dark' ? 'Dark' : 'Light') + '</span>';
   try { localStorage.setItem('dashboard.theme', t); } catch (e) {}
   if (weightReady && spendReady) render();
 }
@@ -779,11 +1150,56 @@ themeBtn.addEventListener('click', () => {
   const t = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
   applyTheme(t);
 });
-(function initTheme(){
-  let t = null;
-  try { t = localStorage.getItem('dashboard.theme'); } catch (e) {}
+
+function applyTemplate(id){
+  if (!TEMPLATES.some(t => t.id === id)) id = 'default';
+  document.documentElement.setAttribute('data-template', id);
+  try { localStorage.setItem('dashboard.template', id); } catch (e) {}
+  renderAppearanceOptions();
+  if (weightReady && spendReady) render();
+}
+function applyPalette(id){
+  if (!PALETTES.some(p => p.id === id)) id = 'indigo';
+  document.documentElement.setAttribute('data-palette', id);
+  try { localStorage.setItem('dashboard.palette', id); } catch (e) {}
+  renderAppearanceOptions();
+  if (weightReady && spendReady) render();
+}
+function renderAppearanceOptions(){
+  const curT = document.documentElement.getAttribute('data-template') || 'default';
+  const curP = document.documentElement.getAttribute('data-palette') || 'indigo';
+  $('#templateGrid').innerHTML = TEMPLATES.map(t =>
+    '<button type="button" class="tpl-opt' + (t.id === curT ? ' active' : '') + '" data-id="' + t.id + '">'
+      + '<i class="bi ' + t.icon + '"></i><span>' + t.name + '</span>'
+    + '</button>'
+  ).join('');
+  $('#paletteGrid').innerHTML = PALETTES.map(p =>
+    '<button type="button" class="pal-opt' + (p.id === curP ? ' active' : '') + '" data-id="' + p.id + '" title="' + p.name + '" style="--sw1:' + p.c1 + ';--sw2:' + p.c2 + '">'
+      + '<i class="bi bi-check-lg pal-check"></i>'
+    + '</button>'
+  ).join('');
+}
+$('#templateGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-id]'); if (!b) return;
+  applyTemplate(b.dataset.id);
+});
+$('#paletteGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-id]'); if (!b) return;
+  applyPalette(b.dataset.id);
+});
+
+(function initAppearance(){
+  let t = null, tpl = null, pal = null;
+  try {
+    t = localStorage.getItem('dashboard.theme');
+    tpl = localStorage.getItem('dashboard.template');
+    pal = localStorage.getItem('dashboard.palette');
+  } catch (e) {}
   if (!t) t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   applyTheme(t);
+  document.documentElement.setAttribute('data-template', (tpl && TEMPLATES.some(x => x.id === tpl)) ? tpl : 'default');
+  document.documentElement.setAttribute('data-palette', (pal && PALETTES.some(x => x.id === pal)) ? pal : 'indigo');
+  renderAppearanceOptions();
 })();
 
 /* ============================================================
