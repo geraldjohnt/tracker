@@ -91,3 +91,72 @@ export function weightAllTime(weeks: WeeksMap): { rows: AllTimeRow[]; weekLabels
   });
   return { rows, weekLabels };
 }
+
+export interface WeekStatus { key: 'live' | 'done' | 'soon' | 'open'; text: string; cls: string }
+
+export function weekStatus(w: Week, today: string): WeekStatus {
+  if (!w.startDate || !w.endDate) return { key: 'live', text: 'Active', cls: 'chip-live' };
+  const people = peopleOf(w);
+  const withBoth = people.filter(p => delta(p).has).length;
+  if (people.length && withBoth === people.length) return { key: 'done', text: 'Completed', cls: 'chip-done' };
+  if (today < w.startDate) return { key: 'soon', text: 'Upcoming', cls: 'chip-soon' };
+  if (today > w.endDate) return { key: 'open', text: 'Awaiting final weights', cls: 'chip-open' };
+  return { key: 'live', text: 'In progress', cls: 'chip-live' };
+}
+
+export function avatarColor(name: string): string {
+  let h = 0;
+  const s = String(name || '?');
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+  return 'linear-gradient(135deg, hsl(' + h + ' 70% 55%), hsl(' + ((h + 40) % 360) + ' 72% 46%))';
+}
+
+export function initials(name: string): string {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+export interface AllTimeStat { name: string; weeks: number; net: number; best: number | null; first: number | null; last: number | null }
+
+/** The "All time" progress table: per person (case-insensitive name), sorted by net change. */
+export function allTimeStats(weeks: WeeksMap): AllTimeStat[] {
+  const agg: Record<string, AllTimeStat> = {};
+  sortedWeeks(weeks).slice().reverse().forEach(w => {
+    peopleOf(w).forEach(p => {
+      const key = (p.name || '').trim().toLowerCase();
+      if (!key) return;
+      const d = delta(p);
+      const a = (agg[key] ||= { name: p.name.trim(), weeks: 0, net: 0, best: null, first: null, last: null });
+      if (a.first === null && num(p.startWeight) !== null) a.first = num(p.startWeight);
+      if (num(p.endWeight) !== null) a.last = num(p.endWeight);
+      else if (num(p.startWeight) !== null) a.last = num(p.startWeight);
+      if (d.has) {
+        a.weeks++;
+        a.net += d.diff as number;
+        if (a.best === null || (d.diff as number) < a.best) a.best = d.diff;
+      }
+    });
+  });
+  return Object.values(agg).sort((a, b) => a.net - b.net);
+}
+
+/** CSV rows for export, oldest week first, in the display unit. */
+export function exportRows(weeks: WeeksMap, unit: 'kg' | 'lb', cw: (kg: number | null) => number | null): string[][] {
+  const rows = [['Week start', 'Week end', 'Participant', 'Start (' + unit + ')', 'Final (' + unit + ')', 'Change', 'Change %']];
+  sortedWeeks(weeks).slice().reverse().forEach(w => {
+    peopleOf(w).forEach(p => {
+      const d = delta(p);
+      const s = cw(num(p.startWeight)), e = cw(num(p.endWeight));
+      rows.push([
+        w.startDate || '', w.endDate || '', p.name || '',
+        s === null ? '' : s.toFixed(1),
+        e === null ? '' : e.toFixed(1),
+        d.has ? (cw(d.diff) as number).toFixed(1) : '',
+        d.has && d.pct !== null ? d.pct.toFixed(1) : '',
+      ]);
+    });
+  });
+  return rows;
+}

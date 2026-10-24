@@ -19,6 +19,13 @@ export interface Backend {
 
 const split = (path: string) => path.split('/').filter(Boolean);
 const clone = <T>(v: T): T => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
+/** Firebase drops null/undefined values anywhere inside a written object. */
+const stripNulls = (v: unknown): unknown => {
+  if (v === null || typeof v !== 'object') return v;
+  const out: Tree = {};
+  for (const [k, x] of Object.entries(v as Tree)) if (x !== null && x !== undefined) out[k] = stripNulls(x);
+  return out;
+};
 
 type Tree = Record<string, unknown>;
 
@@ -71,7 +78,7 @@ export class MemoryBackend implements Backend {
     }
     const last = keys[keys.length - 1];
     if (value === null || value === undefined) delete node[last];
-    else node[last] = clone(value);
+    else node[last] = stripNulls(clone(value));
     this.prune();
     this.changed();
   }

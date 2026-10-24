@@ -17,6 +17,17 @@ export default defineConfig({
         weight: resolve(__dirname, 'weight.html'),
         spending: resolve(__dirname, 'spending.html'),
       },
+      output: {
+        // Stable, shared vendor chunks so moving between pages reuses the browser cache.
+        manualChunks(id) {
+          if (/[\/]src[\/](shared|styles)[\/]|[\/]derive\.ts$/.test(id)) return 'app-shared';
+          if (!id.includes('node_modules')) return;
+          if (id.includes('firebase')) return 'vendor-firebase';
+          if (id.includes('chart.js')) return 'vendor-chart';
+          if (id.includes('react')) return 'vendor-react';
+          if (id.includes('bootstrap')) return 'vendor-bootstrap';
+        },
+      },
     },
   },
   test: {

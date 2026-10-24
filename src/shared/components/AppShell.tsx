@@ -1,16 +1,26 @@
 import { useState, type ReactNode } from 'react';
 import logoUrl from '../../../logo.png';
 
-export type PageKey = 'dashboard' | 'weight' | 'spending';
+/** A sidebar entry: a link to another page, or (with onClick) an in-page view switch. */
+export function SidebarLink({ href, onClick, icon, label, active }: {
+  href?: string; onClick?: () => void; icon: string; label: string; active?: boolean;
+}) {
+  const cls = 'sidebar-link' + (active ? ' active' : '');
+  const body = <><i className={'bi ' + icon}></i><span>{label}</span></>;
+  return href
+    ? <a href={href} className={cls} title={label}>{body}</a>
+    : <button type="button" className={cls} title={label} onClick={onClick}>{body}</button>;
+}
+
+export const SidebarDivider = () => <div className="sidebar-divider"></div>;
 
 interface Props {
-  page: PageKey;
   title: string;
   subtitle: string;
   /** localStorage key remembering the desktop collapsed state, e.g. "dashboard.sidebar". */
   sidebarKey: string;
-  /** Extra in-page links rendered above the cross-tracker links (e.g. a tracker's own sub-pages). */
-  sidebarExtra?: ReactNode;
+  /** Sidebar contents: SidebarLink / SidebarDivider elements. Clicking any closes the mobile drawer. */
+  nav: ReactNode;
   headerActions: ReactNode;
   containerClass?: string;
   children: ReactNode;
@@ -18,7 +28,7 @@ interface Props {
 
 const isMobile = () => matchMedia('(max-width:767.98px)').matches;
 
-export function AppShell({ page, title, subtitle, sidebarKey, sidebarExtra, headerActions, containerClass, children }: Props) {
+export function AppShell({ title, subtitle, sidebarKey, nav, headerActions, containerClass, children }: Props) {
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(sidebarKey) === '1' && !isMobile(); } catch { return false; }
   });
@@ -31,12 +41,6 @@ export function AppShell({ page, title, subtitle, sidebarKey, sidebarExtra, head
     setCollapsed(next);
     try { localStorage.setItem(sidebarKey, next ? '1' : '0'); } catch { /* ignore */ }
   };
-  const link = (key: PageKey, href: string, icon: string, label: string) => (
-    <a href={href} className={'sidebar-link' + (page === key ? ' active' : '')} title={label}>
-      <i className={'bi ' + icon}></i><span>{label}</span>
-    </a>
-  );
-
   return (
     <div className="app-shell">
       <aside id="sidebar" className={'sidebar' + (collapsed ? ' collapsed' : '') + (mobileOpen ? ' mobile-open' : '')}>
@@ -48,11 +52,7 @@ export function AppShell({ page, title, subtitle, sidebarKey, sidebarExtra, head
           </div>
         </div>
         <nav className="sidebar-nav" onClick={() => setMobileOpen(false)}>
-          {sidebarExtra}
-          {link('dashboard', 'index.html', 'bi-grid-1x2', 'Dashboard')}
-          <div className="sidebar-divider"></div>
-          {link('weight', 'weight.html', 'bi-activity', 'Weight Tracker')}
-          {link('spending', 'spending.html', 'bi-wallet2', 'Spending Tracker')}
+          {nav}
         </nav>
       </aside>
       <div id="sidebarBackdrop" className={'sidebar-backdrop' + (mobileOpen ? ' show' : '')} onClick={() => setMobileOpen(false)}></div>

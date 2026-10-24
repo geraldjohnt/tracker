@@ -41,3 +41,29 @@ describe('weight derive', () => {
     expect(bob.data).toEqual([null, 1]);
   });
 });
+
+describe('weight status / all-time stats / export', async () => {
+  const { weekStatus, allTimeStats, exportRows, initials } = await import('./derive');
+  it('derives week status', () => {
+    expect(weekStatus(weeks.w_a, '2026-01-05').text).toBe('In progress');
+    expect(weekStatus(weeks.w_a, '2025-12-31').text).toBe('Upcoming');
+    expect(weekStatus(weeks.w_a, '2026-02-01').text).toBe('Awaiting final weights');
+    expect(weekStatus(weeks.w_b, '2026-01-01').text).toBe('Completed');
+  });
+  it('aggregates all-time stats sorted by net', () => {
+    const s = allTimeStats(weeks);
+    expect(s.map(r => r.name)).toEqual(['Ann', 'bob']);
+    expect(s[0]).toMatchObject({ weeks: 2, net: -1.5, best: -1, first: 80, last: 78.5 });
+  });
+  it('builds CSV rows', () => {
+    const rows = exportRows(weeks, 'kg', kg => kg);
+    expect(rows[0][3]).toBe('Start (kg)');
+    expect(rows[1]).toEqual(['2026-01-01', '2026-01-08', 'Ann', '80.0', '79.0', '-1.0', '-1.3']);
+    expect(rows).toHaveLength(5);
+  });
+  it('makes initials', () => {
+    expect(initials('ann marie lee')).toBe('AL');
+    expect(initials('bob')).toBe('BO');
+    expect(initials('')).toBe('?');
+  });
+});

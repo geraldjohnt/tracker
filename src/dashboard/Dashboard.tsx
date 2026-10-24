@@ -1,7 +1,7 @@
 // Read-only overview of both trackers. Appearance is device-local
 // (dashboard.* in localStorage) and never synced to either tracker's settings.
 import { useEffect, useState } from 'react';
-import { AppShell } from '../shared/components/AppShell';
+import { AppShell, SidebarDivider, SidebarLink } from '../shared/components/AppShell';
 import { AppearanceMenu } from '../shared/components/AppearanceMenu';
 import { ConnPill } from '../shared/components/ConnPill';
 import { todayISO } from '../shared/dates';
@@ -44,10 +44,15 @@ export function Dashboard() {
 
   return (
     <AppShell
-      page="dashboard"
       title="Dashboard"
       subtitle="Tracker overview"
       sidebarKey="dashboard.sidebar"
+      nav={<>
+        <SidebarLink href="index.html" icon="bi-grid-1x2" label="Dashboard" active />
+        <SidebarDivider />
+        <SidebarLink href="weight.html" icon="bi-activity" label="Weight Tracker" />
+        <SidebarLink href="spending.html" icon="bi-wallet2" label="Spending Tracker" />
+      </>}
       headerActions={<>
         <ConnPill status={conn} localLabel={isSampleMode() ? 'Sample data' : 'Unavailable'} />
         <AppearanceMenu appearance={appearance} onChange={setAppearance} />

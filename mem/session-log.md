@@ -2,6 +2,14 @@
 
 Newest first. Keep each entry short.
 
+## 2026-10-24 — Phase 3 (weight.html)
+- Phase 2 merged (geraldjohnt/tracker#2).
+- WeighIn ported: `src/weight/` (store with pending-edit reconciliation, WeekView, AllWeeksPage, WeekModal, units, derive).
+- Shared additions: Toasts, ConfirmModal, useBsModal, DraftInput, SidebarLink/SidebarDivider (each page now passes its own `nav`).
+- MemoryBackend now strips nulls inside written objects (as Firebase does). 27 unit tests.
+- Vendor chunk splitting added.
+- Next: Phase 4 (spending.html), then Phase 5 cleanup (README, CLAUDE.md rewrite).
+
 ## 2026-10-24 — Phase 2 (dashboard)
 - Phase 1 merged to main (geraldjohnt/tracker#1); the Pages deploy runs from Actions.
 - Dashboard ported to React (`src/dashboard/`). Visual parity checked against legacy with identical sample data (see migration.md).
