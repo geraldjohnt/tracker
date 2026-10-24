@@ -1,89 +1,105 @@
-# WeighIn — Weekly Weight Tracker
+# Tracker: WeighIn + Spendly
 
-Two single-file, no-build trackers that share one Firebase project. Open either HTML file
-directly, or host the folder on GitHub Pages. Data syncs live through Firebase Realtime Database.
+Two trackers plus a dashboard that share one Firebase Realtime Database project and update live
+across devices. Built with **React + TypeScript + Vite** and deployed to **GitHub Pages** by
+GitHub Actions.
 
-## Files
-
-| File | Purpose |
+| Page | What it is |
 |---|---|
-| `weight.html` | Weekly weight-challenge tracker — markup, CSS and JS are all inline. Only Bootstrap 5.3, Bootstrap Icons, Inter and the Firebase SDK come from CDNs. |
-| `spending.html` | Daily spending tracker — same single-file approach, plus Chart.js from a CDN for the week/month/year charts. |
-| `database.rules.json` | Realtime Database security rules to paste into the Firebase console (covers both `weightTracker` and `spendingTracker` roots). |
+| `index.html` | Dashboard: an overview of both trackers |
+| `weight.html` | **WeighIn**: a weekly weight-challenge tracker |
+| `spending.html` | **Spendly**: a daily spending tracker |
+
+## Develop
+
+Requires Node 20.19+ (CI uses Node 22).
+
+```bash
+npm ci
+npm run dev        # http://localhost:5173/ — uses built-in SAMPLE DATA, never your real database
+npm test           # unit tests
+npm run build      # typecheck + production build into dist/
+npm run preview    # serve the production build; add ?sample=1 to use sample data
+```
+
+`npm run dev` and any page opened with `?sample=1` run on an in-memory sample database (saved in
+your browser's localStorage), so you can add, edit and delete freely without touching real data.
+To reset the sample data, clear the `tracker.sample.v1` key in localStorage.
+
+The built site needs to be served over HTTP. Opening `dist/*.html` straight from disk doesn't work.
 
 ## Hosting on GitHub Pages
 
-1. Push this folder to a repo.
-2. **Settings → Pages → Source: Deploy from branch**, pick your branch and `/ (root)`.
-3. Visit `https://<user>.github.io/<repo>/weight.html` or `.../spending.html`.
+1. Repo **Settings → Pages → Source: GitHub Actions**.
+2. Push to `main`. `.github/workflows/static.yml` runs typecheck, tests and build, then deploys
+   `dist/`. Pull requests run the same checks without deploying.
+3. Visit `https://<user>.github.io/<repo>/` (dashboard), `.../weight.html`, or `.../spending.html`.
 
-Rename either file to `index.html` if you'd rather it be served at the repo root URL (only one can
-own that name — pick whichever tracker is primary).
+Asset URLs are relative (`base: './'`), so the site works under any repo name.
 
 ## Firebase setup
 
-The config is already embedded near the top of the `<script>` block in `weight.html`.
+The project config lives in `src/shared/firebaseBackend.ts`.
 
-1. Firebase console → **Realtime Database** → make sure the instance in
-   `asia-southeast1` exists.
+1. Firebase console → **Realtime Database**: make sure the `asia-southeast1` instance exists.
 2. **Rules** tab → paste the contents of `database.rules.json` → **Publish**.
-3. **Authentication is not used**, so the rules above are open read/write. That is fine for a
-   private group tracker, but anyone with the URL can edit. To lock it down, enable Anonymous or
-   Google sign-in and change `.read`/`.write` to `"auth != null"`.
+3. **Authentication is not used**, so the rules are open read/write. That's fine for a private
+   group tracker, but anyone with the URL can edit. To lock it down, enable Anonymous or Google
+   sign-in and change `.read`/`.write` to `"auth != null"`.
 
-Each tracker lives under its own root node — `weightTracker` for `weight.html`,
-`spendingTracker` for `spending.html` — so they share one Firebase project without colliding.
-Change the `ROOT` constant in either file to run a further independent tracker off the same
-project.
+Each tracker lives under its own root node (`weightTracker`, `spendingTracker`), so they share one
+project without colliding. Change `ROOT` in `src/weight/store.ts` or `src/spending/store.ts` to run
+a further independent tracker off the same project.
 
 ### Data shape
 
 ```
 weightTracker/
-  settings/unit: "kg" | "lb"
-  settings/theme: "dark" | "light"
+  settings/ unit: "kg"|"lb", theme, template, palette
   weeks/
-    w_abc123/
-      id, startDate: "2026-08-19", endDate: "2026-08-26", createdAt: 1755...
-      participants/
-        p_xyz789/  { name, startWeight, endWeight, order }
+    w_abc123/  { id, startDate: "2026-08-19", endDate: "2026-08-26", createdAt: 1755...,
+                 participants/ p_xyz789/ { name, startWeight, endWeight, order } }
 
 spendingTracker/
-  settings/theme: "dark" | "light"
+  settings/ theme, template, palette
   expenses/
     e_abc123/  { date: "2026-08-19", item: "Coffee", price: 4.5, createdAt: 1755... }
 ```
 
 ## How it works
 
-- **New week** — start date defaults to the previous week's end date; the end date auto-fills to
-  exactly **+7 days** and stays editable. Participants can be carried over from the last week, with
-  each person's final weight becoming the new starting weight.
-- **Weigh-ins** — edit names and start/final weights inline. Every keystroke updates the local view
-  instantly and is written to Firebase after a short debounce.
-- **Change column** — <span style="color:#dc2626">gain is red</span>,
-  <span style="color:#059669">loss is green</span>, shown in both absolute units and percent.
-- **Progress** — "This week" ranks everyone by weight lost; "All time" aggregates every week by name
-  (case-insensitive) into weeks joined, first/latest weight, best week, and net change.
-- **Export** — the download button writes a CSV of every week and participant.
-- **Offline** — the last synced snapshot is cached in `localStorage`, so the app still opens and
-  renders without a connection. The status pill in the header shows Synced / Offline / Local only.
+### WeighIn
+- **New week**: the start date defaults to the previous week's end date, and the end date
+  auto-fills to **+7 days** but stays editable. You can carry participants over from the last
+  week, with each person's final weight becoming their new starting weight.
+- **Weigh-ins**: edit names and start/final weights inline. The view updates as you type, and
+  changes are saved to Firebase after a short pause, or as soon as you leave the field.
+- **Change column**: <span style="color:#dc2626">gain is red</span>,
+  <span style="color:#059669">loss is green</span>, shown in absolute units and in percent.
+- **Progress**: "This week" ranks everyone by weight lost. "All time" combines every week by name
+  (case-insensitive) into weeks joined, first/latest weight, best week and net change.
+- **All Weeks** page: every week with each participant's start weight, final weight and change.
+- **kg / lb**: the toggle converts everything shown, including CSV export. Stored values are
+  always kg.
+- **Export**: the download button saves a CSV of every week and participant.
 
-### `spending.html`
+### Spendly
+- **Day** (default view): add an expense (item + price) for the selected day, and edit or delete
+  it inline. Totals update as you type.
+- **Calendar**: a month grid showing each day's total. Click a day to open it.
+- **Week / Month / Year**: totals, averages, highest day or days tracked, and a bar chart.
+  Averages for the *current* period divide by the days or months elapsed so far. Click a day (in
+  Week) or a month (in Year) to drill in.
+- Prices are shown in pesos (₱).
 
-- **Day** (default view) — add an expense (item + price) for the currently selected day; the list
-  and running total update live as you type. Navigate with the prev/next arrows or jump back to
-  today.
-- **Calendar** — a month grid; each day shows its total if it has any expenses, click a day to jump
-  to it in Day view.
-- **Week / Month / Year** — each shows a total, an average (per day, or per day and per month for
-  Year), a highest-day/days-tracked stat where relevant, and a Chart.js bar chart of the breakdown.
-  Averages for the *current* period divide by days/months elapsed so far, not the full period.
-  Clicking a day row in Week or a month row in Year jumps to the corresponding Day/Month view.
+### Everywhere
+- **Offline**: the last synced data is cached in localStorage, so pages open and render without a
+  connection. The header pill shows Synced / Offline / Local only (or "Sample data").
+- **Appearance**: the palette button switches light/dark mode, a design template and a color
+  palette. The trackers sync this across devices; the dashboard keeps its own per-device choice.
 
-## Notes
+## Project memory
 
-- The `kg` / `lb` toggle in `weight.html` changes the displayed unit label only; it does not
-  convert stored numbers.
-- Analytics is intentionally left out of both apps — it needs no configuration here and would fail
-  when the page is opened straight from disk.
+`mem/` holds the project's portable working memory: owner rules, decisions, migration history and
+gotchas. `CLAUDE.md` loads it automatically for Claude Code; other assistants should start at
+`mem/MEMORY.md`.

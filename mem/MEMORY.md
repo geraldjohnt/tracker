@@ -3,10 +3,10 @@
 Two trackers + a dashboard sharing one Firebase Realtime Database project, hosted on GitHub Pages:
 `index.html` (dashboard), `weight.html` (WeighIn), `spending.html` (Spendly).
 
-**Status:** being converted from three self-contained HTML files to **React + TypeScript + Vite**,
-built by GitHub Actions and deployed from `dist/`. Phased; see [migration.md](migration.md) for
-what's ported. Pages not yet ported are still the legacy self-contained HTML (Vite passes them
-through unchanged).
+**Status:** fully migrated (Oct 2026) from three self-contained HTML files to **React 19 +
+TypeScript + Vite 7**, built by GitHub Actions and deployed from `dist/`. History and the
+parity-testing method are in [migration.md](migration.md). The pre-migration code is at commit
+`fe581ba`.
 
 ## Hard rules (details: [rules.md](rules.md))
 1. **Never touch the existing Firebase data.** No reads/writes against production for testing.
@@ -17,8 +17,8 @@ through unchanged).
 ## Where things are
 - `src/shared/` — types, dates, format, backend (Firebase vs in-memory sample), appearance, shell components
 - `src/styles/` — shared CSS (tokens, templates, palettes, base, appearance menu, sidebar shell)
-- `src/<page>/` — per-page React code (`dashboard/`, `weight/`, `spending/`)
-- `database.rules.json` — must match `src/shared/types.ts`
+- `src/<page>/` — per-page React code (`dashboard/`, `weight/`, `spending/`), each with `store.ts` (trackers), `derive.ts` (pure, tested)
+- `database.rules.json` — must match `src/shared/types.ts`; `src/shared/rules.test.ts` enforces it
 
 ## Commands
 `npm ci` · `npm run dev` (sample data only) · `npm test` · `npm run typecheck` · `npm run build`

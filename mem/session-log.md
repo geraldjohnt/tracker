@@ -2,6 +2,12 @@
 
 Newest first. Keep each entry short.
 
+## 2026-10-24 — Phase 5 (cleanup) — migration complete
+- CLAUDE.md and README rewritten for React/TS/Vite (removed the "single-file, no build" guidance; fixed the ₱ and kg/lb notes).
+- Added `src/shared/rules.test.ts`: a CRUD pass on both stores must only write keys allowed by `database.rules.json`. 35 tests.
+- Possible follow-ups (not started): lock the DB down with auth; add an ESLint config; e2e tests in CI using the
+  sample backend (Playwright is available locally, not in CI).
+
 ## 2026-10-24 — Phase 4 (spending.html)
 - Phase 3 merged (geraldjohnt/tracker#3).
 - Spendly ported: `src/spending/` (store, views.tsx with Day/Calendar/Week/Month/Year, BarChart, period summaries in derive.ts).

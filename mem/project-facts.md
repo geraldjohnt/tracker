@@ -1,9 +1,8 @@
 # Project facts & gotchas
 
-- **Currency is ₱ (peso)**, hardcoded in `fmtMoney`. The old CLAUDE.md said `$`, which was wrong.
-- **Weights are always stored in kg.** The kg/lb toggle only changes display/input (`cw`,
-  `unitToKg`, `inputValue` in legacy `weight.html`). Note that README's "Notes" section claims the
-  toggle doesn't convert, which is outdated.
+- **Currency is ₱ (peso)**, hardcoded in `fmtMoney`. The pre-migration CLAUDE.md said `$`, which was wrong; fixed in Phase 5.
+- **Weights are always stored in kg.** The kg/lb toggle only changes display/input
+  (`src/weight/units.ts`). The pre-migration README wrongly said it didn't convert; fixed in Phase 5.
 - **Dates are local**, never `new Date('YYYY-MM-DD')` (that's UTC). Use `src/shared/dates.ts`.
   Weeks start on Monday (`startOfWeek`).
 - **Pending-edit reconciliation** (`pending`/`applyPending`/`queueSave`/`flushSaves`, 450ms
@@ -36,3 +35,5 @@
   `store.start()` is called from `main.tsx`. Tests construct a store with an injected `MemoryBackend`.
 - Build output chunks: `vendor-{react,firebase,chart,bootstrap}`, `app-shared` (src/shared, src/styles, */derive.ts),
   plus one chunk per page.
+- **Expense records must not contain `id`** (the rules reject unknown keys). Stores add `id` only in memory/local
+  cache; `rules.test.ts` catches regressions.
