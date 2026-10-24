@@ -2,6 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Portable memory — read first
+
+@mem/MEMORY.md
+
+The `mem/` folder is the project memory and travels with the repo. Read it at session start,
+follow `mem/rules.md` (hard rules, including **never touch the existing Firebase data**), and
+update `mem/` (decisions, migration status, session log) before you finish.
+
+## Migration in progress (React + TypeScript + Vite)
+
+The project is moving from self-contained HTML files to a Vite multi-page React/TypeScript app
+(see `mem/migration.md` for which pages are ported). Where this file talks about "single-file, no
+build", that now applies **only to pages not yet ported**. Commands: `npm ci`, `npm run dev`
+(sample data only, never Firebase), `npm test`, `npm run typecheck`, `npm run build`.
+GitHub Actions builds and deploys `dist/` to Pages.
+
 ## What this is
 
 Two single-file, no-build trackers that share one Firebase project: `weight.html` ("WeighIn", a

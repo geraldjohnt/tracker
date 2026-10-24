@@ -1,0 +1,55 @@
+/* Shared across all trackers — extracted verbatim from the legacy single-file pages.
+   Keep in sync with any legacy page still inlining this block until it is ported. */
+/* ============================================================
+   Design tokens
+   ============================================================ */
+:root{
+  --bg:#f4f5fb;
+  --bg-grad-1:rgba(99,102,241,.16);
+  --bg-grad-2:rgba(236,72,153,.12);
+  --card:#ffffff;
+  --card-2:#fafbff;
+  --text:#0f172a;
+  --muted:#6b7280;
+  --border:#e7e9f2;
+  --border-strong:#d7dae8;
+  --accent:#6366f1;
+  --accent-2:#8b5cf6;
+  --accent-soft:rgba(99,102,241,.10);
+  --good:#059669;
+  --good-soft:rgba(16,185,129,.12);
+  --bad:#dc2626;
+  --bad-soft:rgba(239,68,68,.12);
+  --warn:#d97706;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+  --shadow:0 6px 24px -12px rgba(16,24,40,.20), 0 2px 6px -3px rgba(16,24,40,.08);
+  --shadow-lg:0 24px 60px -28px rgba(16,24,40,.34);
+  --r-lg:20px;
+  --r-md:14px;
+  --r-sm:10px;
+  --surface-backdrop:none;
+  --header-backdrop:saturate(180%) blur(14px);
+}
+[data-bs-theme="dark"]{
+  --bg:#080b14;
+  --bg-grad-1:rgba(99,102,241,.22);
+  --bg-grad-2:rgba(217,70,239,.14);
+  --card:#111726;
+  --card-2:#161d2f;
+  --text:#e8ecf6;
+  --muted:#94a1b8;
+  --border:#232c42;
+  --border-strong:#2f3a55;
+  --accent:#818cf8;
+  --accent-2:#a78bfa;
+  --accent-soft:rgba(129,140,248,.14);
+  --good:#34d399;
+  --good-soft:rgba(52,211,153,.14);
+  --bad:#f87171;
+  --bad-soft:rgba(248,113,113,.14);
+  --warn:#fbbf24;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow:0 8px 30px -14px rgba(0,0,0,.7);
+  --shadow-lg:0 30px 70px -30px rgba(0,0,0,.85);
+}
+
