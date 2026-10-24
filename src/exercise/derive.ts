@@ -6,14 +6,13 @@ import { CATALOG, DIFFICULTIES, MUSCLES, type Difficulty, type Exercise } from '
 
 /* ---------------- levels & ranks ---------------- */
 
-/** XP needed to go from level 0 to level 1. */
-export const FIRST_LEVEL_XP = 20;
-/** Each level needs 10% more XP than the one before, rounded up to a whole number. */
+/** XP each level needs in the first tier (Rookie 1: Levels 0–4). */
+export const FIRST_LEVEL_XP = 15;
+/** Every tier (5 levels) needs this much more XP per level: Rookie 1 15, Rookie 2 20, …, Mover 1 40. */
+export const XP_STEP_PER_TIER = 5;
+/** XP to go from `level` to the next one. */
 export function xpToNext(level: number): number {
-  let need = FIRST_LEVEL_XP;
-  // Integer maths: need*11 is a whole number, so /10 never produces 22.000000000000004.
-  for (let i = 0; i < level; i++) need = Math.ceil((need * 11) / 10);
-  return need;
+  return FIRST_LEVEL_XP + XP_STEP_PER_TIER * tierStep(level);
 }
 
 export interface LevelInfo {
@@ -28,7 +27,7 @@ export interface LevelInfo {
 /** Total XP an account needs to reach a level from 0. */
 export function xpForLevel(level: number): number {
   let sum = 0;
-  for (let l = 0, need = FIRST_LEVEL_XP; l < level; l++) { sum += need; need = Math.ceil((need * 11) / 10); }
+  for (let l = 0; l < level; l++) sum += xpToNext(l);
   return sum;
 }
 
@@ -36,7 +35,7 @@ export function levelInfo(total: number): LevelInfo {
   let level = 0;
   let left = Math.max(0, total);
   let need = xpToNext(0);
-  while (left >= need) { left -= need; level++; need = Math.ceil((need * 11) / 10); }
+  while (left >= need) { left -= need; level++; need = xpToNext(level); }
   return { level, into: left, need, total: Math.max(0, total) };
 }
 
@@ -59,7 +58,7 @@ export const RANKS = [
 
 export interface Rank { index: number; name: string; tier: number; label: string; icon: string }
 
-/** Tiers reached so far: one every 5 levels (Level 0–4 → 0, 5–9 → 1, …). XP bonuses and daily difficulty follow it. */
+/** Tiers reached so far: one every 5 levels (Level 0–4 → 0, 5–9 → 1, …). XP per level and daily difficulty follow it. */
 export const tierStep = (level: number) => Math.floor(Math.max(0, level) / LEVELS_PER_TIER);
 
 export function rankAt(index: number, tier: number): Rank {
@@ -100,11 +99,11 @@ export function questAmount(ex: Exercise, level: number, kind: QuestKind): numbe
   return kind === 'daily' ? amount : Math.ceil(amount * DIFFICULTY_INFO[ex.difficulty].amountMult);
 }
 
-/** XP for a quest: the difficulty's base XP, +10% per tier (every 5 levels), rounded up. */
+/** XP for a quest: the difficulty's base XP, +10% per rank (Mover +10%, Grinder +20%, …), rounded up. */
 export function questXp(difficulty: Difficulty, level: number, kind: QuestKind): number {
   const info = DIFFICULTY_INFO[difficulty];
   const base = kind === 'daily' ? info.dailyXp : info.optionalXp;
-  return Math.ceil((base * (10 + tierStep(level))) / 10);
+  return Math.ceil((base * (10 + rankOf(level).index)) / 10);
 }
 
 /** Hardest difficulty daily quests may use: easy until Level 10, medium from 10, hard from 20, elite from 30. */

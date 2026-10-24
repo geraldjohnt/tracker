@@ -59,7 +59,7 @@ describe('ExerciseStore (sample data only)', () => {
     s.completeOptional('hard');
     await flush();
     expect(s.xp()).toBe(30);
-    expect(levelInfo(s.xp()).level).toBe(1);
+    expect(levelInfo(s.xp()).level).toBe(2) // 15 XP per level in Rookie 1;
     s.acceptOptional('easy');
     s.abandonOptional('easy');
     await flush();
@@ -152,10 +152,10 @@ describe('ExerciseStore (sample data only)', () => {
     expect(backend.get(BOARD_PATH + '/u1')).toBeNull();
 
     await s.joinBoard();
-    expect(backend.get(BOARD_PATH + '/u1')).toMatchObject({ username: 'me', level: 1, xp: 30 });
+    expect(backend.get(BOARD_PATH + '/u1')).toMatchObject({ username: 'me', level: 2, xp: 30 });
     s.completeDaily('q0');
     await flush();
-    expect(backend.get(BOARD_PATH + '/u1')).toMatchObject({ level: 1, xp: 35 });
+    expect(backend.get(BOARD_PATH + '/u1')).toMatchObject({ level: 2, xp: 35 });
 
     await s.leaveBoard();
     expect(backend.get(BOARD_PATH + '/u1')).toBeNull();

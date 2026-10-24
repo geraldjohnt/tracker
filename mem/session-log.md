@@ -9,6 +9,11 @@ Newest first. Keep each entry short.
 - 67 tests. Owner rule added: PR + merge after each phase, then stop and wait.
 - **Owner to do:** re-publish the rules (adds `leaderboard/`).
 
+## 2026-10-24 — LevelUp phase 4: moderate XP curve
+- Phase 3 merged (geraldjohnt/tracker#10).
+- `xpToNext` = 15 + 5 per tier; quest XP bonus +10% per rank (was per tier). Numbers and simulation in `mem/exercise.md`.
+- No schema change; nothing for the owner to publish.
+
 ## 2026-10-24 — LevelUp phase 3: ranks, badges, weekly targets
 - Phase 2 merged (geraldjohnt/tracker#9).
 - Ranks: tier every 5 levels, rank every 25 (`rankOf`, `tierStep`, `rankLevel`, `nextRank`, `xpForLevel`).
