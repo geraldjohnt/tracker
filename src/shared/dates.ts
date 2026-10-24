@@ -53,3 +53,40 @@ export function fmtRange(a: ISODate, b: ISODate): string {
   const r = B.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
   return l + ' – ' + r;
 }
+
+/** "Oct 19 – Oct 25, 2026" (year shown once when both dates share it). */
+export function fmtRangeShort(a: ISODate, b: ISODate): string {
+  const A = parseDate(a), B = parseDate(b);
+  if (!A || !B) return '—';
+  const sameYear = A.getFullYear() === B.getFullYear();
+  const l = A.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const r = B.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: sameYear ? undefined : 'numeric' });
+  return l + ' – ' + r + (sameYear ? ', ' + B.getFullYear() : '');
+}
+
+export function weekdayShort(iso: ISODate): string {
+  const d = parseDate(iso);
+  return d ? d.toLocaleDateString(undefined, { weekday: 'short' }) : '—';
+}
+
+/** "YYYY-MM" → "October 2026" */
+export function monthLabel(ym: string): string {
+  const [y, m] = ym.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
+
+export function daysInMonth(ym: string): number {
+  const [y, m] = ym.split('-').map(Number);
+  return new Date(y, m, 0).getDate();
+}
+
+export function daysInYear(y: string | number): number {
+  const yy = Number(y);
+  return (yy % 4 === 0 && yy % 100 !== 0) || yy % 400 === 0 ? 366 : 365;
+}
+
+export function shiftMonth(ym: string, n: number): string {
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(y, m - 1 + n, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
