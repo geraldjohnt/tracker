@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { CATALOG, CATALOG_BY_ID, DIFFICULTIES, MUSCLES } from './catalog';
 import {
-  catalogRecord, dailyDone, dailyXpTotal, DAILY_SLOTS, generateDay, levelInfo, maxDailyDifficulty, normalizeCatalog, normalizeDays,
-  normalizeBoard, questAmount, questXp, rankBoard, rankOf, settle, streak, totalXp, xpToNext, type DaysMap,
+  catalogRecord, dailyDone, dailyXpTotal, DAILY_SLOTS, DEFAULT_TARGETS, FOCUSES, generateDay, levelInfo, maxDailyDifficulty, nextRank,
+  normalizeCatalog, normalizeDays, normalizeBoard, normalizeTargets, questAmount, questXp, rankBoard, rankLevel, rankOf, settle, streak,
+  totalXp, weekdayOf, xpForLevel, xpToNext, type DaysMap,
 } from './derive';
 
 const done = (xp: number) => ({ ex: 'air-squat', done: 1, amount: 10, xp });
@@ -25,12 +26,28 @@ describe('levels', () => {
     expect(levelInfo(-5).level).toBe(0);
   });
 
-  it('groups every 5 levels into a numbered rank', () => {
+  it('a new tier every 5 levels, a new rank every 25', () => {
     expect(rankOf(0).label).toBe('Rookie 1');
-    expect(rankOf(4).label).toBe('Rookie 5');
-    expect(rankOf(5).label).toBe('Mover 1');
-    expect(rankOf(49).label).toBe('Legend 5');
-    expect(rankOf(52).label).toBe('Legend 8');
+    expect(rankOf(4).label).toBe('Rookie 1');
+    expect(rankOf(5).label).toBe('Rookie 2');
+    expect(rankOf(10).label).toBe('Rookie 3');
+    expect(rankOf(15).label).toBe('Rookie 4');
+    expect(rankOf(24).label).toBe('Rookie 5');
+    expect(rankOf(25).label).toBe('Mover 1');
+    expect(rankOf(30).label).toBe('Mover 2');
+    expect(rankOf(249).label).toBe('Legend 5');
+    expect(rankOf(250).label).toBe('Legend 6'); // the last rank keeps counting
+    expect(rankLevel(1, 1)).toBe(25);
+    expect(rankLevel(0, 3)).toBe(10);
+    expect(nextRank(12)).toEqual({ level: 15, rank: rankOf(15) });
+    expect(nextRank(24).rank.label).toBe('Mover 1');
+  });
+
+  it('knows the total XP needed for any level', () => {
+    expect(xpForLevel(0)).toBe(0);
+    expect(xpForLevel(1)).toBe(20);
+    expect(xpForLevel(3)).toBe(20 + 22 + 25);
+    for (const l of [5, 25, 60]) expect(levelInfo(xpForLevel(l))).toMatchObject({ level: l, into: 0 });
   });
 });
 
@@ -73,6 +90,34 @@ describe('quests', () => {
     expect(maxDailyDifficulty(0)).toBe('easy');
     expect(maxDailyDifficulty(10)).toBe('medium');
     expect(maxDailyDifficulty(45)).toBe('elite');
+  });
+});
+
+describe('weekly targets', () => {
+  it('maps dates to weekdays (Monday first) and fills in the default plan', () => {
+    expect(weekdayOf('2026-10-26')).toBe('mon');
+    expect(weekdayOf('2026-10-24')).toBe('sat');
+    expect(weekdayOf('2026-11-01')).toBe('sun');
+    expect(normalizeTargets(null)).toEqual(DEFAULT_TARGETS);
+    expect(normalizeTargets({ mon: 'core', tue: 'nope', xyz: 'legs' })).toEqual({ ...DEFAULT_TARGETS, mon: 'core' });
+  });
+
+  it('daily quests follow the day’s focus, bodyweight only, no repeats', () => {
+    const cats = { legs: [['legs'], ['legs'], ['legs', 'full']], upper: [['push'], ['pull'], ['push', 'pull']], core: [['core'], ['core'], ['core', 'full']], full: [['legs'], ['push', 'pull'], ['core', 'full']] };
+    for (const focus of FOCUSES) {
+      for (const level of [0, 12, 30, 60]) {
+        for (let i = 0; i < 20; i++) {
+          const day = generateDay(level, 'u1:seed' + i, undefined, focus);
+          expect(day.focus).toBe(focus);
+          const exs = DAILY_SLOTS.map(s => CATALOG_BY_ID[day.daily[s]!.ex]);
+          exs.forEach((e, k) => expect(cats[focus][k]).toContain(e.category));
+          expect(exs.every(e => e.equipment === 'none')).toBe(true);
+          expect(new Set(exs.map(e => e.id)).size).toBe(3);
+          const max = DIFFICULTIES.indexOf(maxDailyDifficulty(level));
+          expect(exs.every(e => DIFFICULTIES.indexOf(e.difficulty) <= max)).toBe(true);
+        }
+      }
+    }
   });
 });
 
@@ -161,8 +206,8 @@ describe('catalog', () => {
   });
 
   it('normalizes day snapshots, dropping junk', () => {
-    const days = normalizeDays({ '2026-10-24': { daily: { q0: { ex: 'a', done: 5, xp: 5 }, q9: { ex: 'b' } }, penalty: 0 }, junk: {} });
-    expect(days).toEqual({ '2026-10-24': { daily: { q0: { ex: 'a', done: 5, xp: 5 } } } });
+    const days = normalizeDays({ '2026-10-24': { focus: 'legs', daily: { q0: { ex: 'a', done: 5, xp: 5 }, q9: { ex: 'b' } }, penalty: 0 }, '2026-10-25': { focus: 'arms' }, junk: {} });
+    expect(days).toEqual({ '2026-10-24': { focus: 'legs', daily: { q0: { ex: 'a', done: 5, xp: 5 } } }, '2026-10-25': {} });
   });
 });
 

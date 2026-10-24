@@ -9,6 +9,15 @@ Newest first. Keep each entry short.
 - 67 tests. Owner rule added: PR + merge after each phase, then stop and wait.
 - **Owner to do:** re-publish the rules (adds `leaderboard/`).
 
+## 2026-10-24 — LevelUp phase 3: ranks, badges, weekly targets
+- Phase 2 merged (geraldjohnt/tracker#9).
+- Ranks: tier every 5 levels, rank every 25 (`rankOf`, `tierStep`, `rankLevel`, `nextRank`, `xpForLevel`).
+- `RankBadge.tsx` SVG badges (ornament by rank, colour by tier); Ranks tab; badge on the player emblem and board.
+- Weekly plan (`WeeklyPlan.tsx`, `settings/targets`, `days/<date>/focus`); `generateDaily` per focus.
+- 71 tests. Checked in the browser (sample mode, desktop light + mobile dark) with Playwright.
+- **Owner to do:** re-publish `database.rules.json`.
+- Next: camera form check (roadmap item 1); open question for the owner: keep a manual Complete button as fallback?
+
 ## 2026-10-24 — LevelUp (Exercise) part 1
 - New page `exercise.html` (`src/exercise/`): 48-exercise catalog with beginner how-tos, gender
   recommendation and an SVG body map; levels (20 XP, +10%/level), ranks (5 levels each), 3 daily

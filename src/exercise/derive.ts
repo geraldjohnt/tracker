@@ -25,6 +25,13 @@ export interface LevelInfo {
   total: number;
 }
 
+/** Total XP an account needs to reach a level from 0. */
+export function xpForLevel(level: number): number {
+  let sum = 0;
+  for (let l = 0, need = FIRST_LEVEL_XP; l < level; l++) { sum += need; need = Math.ceil((need * 11) / 10); }
+  return sum;
+}
+
 export function levelInfo(total: number): LevelInfo {
   let level = 0;
   let left = Math.max(0, total);
@@ -33,7 +40,10 @@ export function levelInfo(total: number): LevelInfo {
   return { level, into: left, need, total: Math.max(0, total) };
 }
 
-export const LEVELS_PER_RANK = 5;
+/** Every 5 levels is the next tier of a rank (Rookie 1 → Rookie 2 at Level 5); 5 tiers make a rank. */
+export const LEVELS_PER_TIER = 5;
+export const TIERS_PER_RANK = 5;
+export const LEVELS_PER_RANK = LEVELS_PER_TIER * TIERS_PER_RANK;
 export const RANKS = [
   { name: 'Rookie', icon: 'bi-person-arms-up' },
   { name: 'Mover', icon: 'bi-person-walking' },
@@ -49,12 +59,28 @@ export const RANKS = [
 
 export interface Rank { index: number; name: string; tier: number; label: string; icon: string }
 
-/** Level 0–4 → Rookie 1–5, 5–9 → Mover 1–5, … The last rank keeps counting (Legend 6, 7, …). */
-export function rankOf(level: number): Rank {
-  const index = Math.min(Math.floor(level / LEVELS_PER_RANK), RANKS.length - 1);
-  const tier = level - index * LEVELS_PER_RANK + 1;
+/** Tiers reached so far: one every 5 levels (Level 0–4 → 0, 5–9 → 1, …). XP bonuses and daily difficulty follow it. */
+export const tierStep = (level: number) => Math.floor(Math.max(0, level) / LEVELS_PER_TIER);
+
+export function rankAt(index: number, tier: number): Rank {
   const r = RANKS[index];
   return { index, name: r.name, tier, label: r.name + ' ' + tier, icon: r.icon };
+}
+
+/** Level 0–4 → Rookie 1, 5–9 → Rookie 2, …, 20–24 → Rookie 5, 25 → Mover 1. The last rank keeps counting (Legend 6, 7, …). */
+export function rankOf(level: number): Rank {
+  const step = tierStep(level);
+  const index = Math.min(Math.floor(step / TIERS_PER_RANK), RANKS.length - 1);
+  return rankAt(index, step - index * TIERS_PER_RANK + 1);
+}
+
+/** First level of a rank's tier (tier 1–5). */
+export const rankLevel = (index: number, tier: number) => (index * TIERS_PER_RANK + tier - 1) * LEVELS_PER_TIER;
+
+/** The level of the next tier up, and its rank. */
+export function nextRank(level: number): { level: number; rank: Rank } {
+  const next = (tierStep(level) + 1) * LEVELS_PER_TIER;
+  return { level: next, rank: rankOf(next) };
 }
 
 /* ---------------- quests ---------------- */
@@ -74,22 +100,69 @@ export function questAmount(ex: Exercise, level: number, kind: QuestKind): numbe
   return kind === 'daily' ? amount : Math.ceil(amount * DIFFICULTY_INFO[ex.difficulty].amountMult);
 }
 
-/** XP for a quest: the difficulty's base XP, +10% per rank, rounded up. */
+/** XP for a quest: the difficulty's base XP, +10% per tier (every 5 levels), rounded up. */
 export function questXp(difficulty: Difficulty, level: number, kind: QuestKind): number {
   const info = DIFFICULTY_INFO[difficulty];
   const base = kind === 'daily' ? info.dailyXp : info.optionalXp;
-  return Math.ceil((base * (10 + rankOf(level).index)) / 10);
+  return Math.ceil((base * (10 + tierStep(level))) / 10);
 }
 
-/** Hardest difficulty daily quests may use: Rookie/Mover easy, Grinder/Athlete medium, Warrior/Gladiator hard, then elite. */
+/** Hardest difficulty daily quests may use: easy until Level 10, medium from 10, hard from 20, elite from 30. */
 export function maxDailyDifficulty(level: number): Difficulty {
-  return DIFFICULTIES[Math.min(DIFFICULTIES.length - 1, Math.floor(rankOf(level).index / 2))];
+  return DIFFICULTIES[Math.min(DIFFICULTIES.length - 1, Math.floor(tierStep(level) / 2))];
 }
 
 export const DAILY_SLOTS = ['q0', 'q1', 'q2'] as const;
 export type DailySlot = (typeof DAILY_SLOTS)[number];
-/** Daily quest slots: one legs, one upper body, one core. Bodyweight only: equipment is for optional quests. */
-const SLOT_CATEGORIES: Record<DailySlot, Exercise['category'][]> = { q0: ['legs'], q1: ['push', 'pull'], q2: ['core', 'full'] };
+
+/* ---------------- weekly targets ---------------- */
+
+/** What a day's daily quests train. */
+export const FOCUSES = ['legs', 'upper', 'core', 'full'] as const;
+export type Focus = (typeof FOCUSES)[number];
+export const FOCUS_INFO: Record<Focus, { label: string; short: string; icon: string; note: string }> = {
+  legs: { label: 'Legs', short: 'Legs', icon: 'bi-person-walking', note: 'Squats, lunges, bridges' },
+  upper: { label: 'Upper body', short: 'Upper', icon: 'bi-arrow-up-circle', note: 'Push-ups and back work' },
+  core: { label: 'Core', short: 'Core', icon: 'bi-bullseye', note: 'Planks, crunches, holds' },
+  full: { label: 'Full body', short: 'Full', icon: 'bi-lightning-charge', note: 'One legs, one upper, one core' },
+};
+/** Daily quest slots per focus. Bodyweight only: equipment is for optional quests. */
+const FOCUS_SLOTS: Record<Focus, Record<DailySlot, Exercise['category'][]>> = {
+  legs: { q0: ['legs'], q1: ['legs'], q2: ['legs', 'full'] },
+  upper: { q0: ['push'], q1: ['pull'], q2: ['push', 'pull'] },
+  core: { q0: ['core'], q1: ['core'], q2: ['core', 'full'] },
+  full: { q0: ['legs'], q1: ['push', 'pull'], q2: ['core', 'full'] },
+};
+
+/** Weekdays, Monday first (weeks start on Monday everywhere in the app). */
+export const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+export type Weekday = (typeof WEEKDAYS)[number];
+export const WEEKDAY_LABELS: Record<Weekday, string> = {
+  mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday',
+};
+export type Targets = Record<Weekday, Focus>;
+/** The plan every account starts with; each day can be changed in the weekly plan. */
+export const DEFAULT_TARGETS: Targets = { mon: 'legs', tue: 'upper', wed: 'core', thu: 'legs', fri: 'upper', sat: 'core', sun: 'full' };
+
+/** mon…sun for a local ISO date. */
+export function weekdayOf(date: ISODate): Weekday {
+  const [y, m, d] = date.split('-').map(Number);
+  return WEEKDAYS[(new Date(y, m - 1, d).getDay() + 6) % 7];
+}
+
+export const focusOn = (targets: Targets, date: ISODate): Focus => targets[weekdayOf(date)];
+
+/** Stored targets (`settings/targets`) over the defaults; anything unknown is ignored. */
+export function normalizeTargets(v: unknown): Targets {
+  const out = { ...DEFAULT_TARGETS };
+  if (v && typeof v === 'object') {
+    for (const wd of WEEKDAYS) {
+      const f = (v as Record<string, unknown>)[wd];
+      if ((FOCUSES as readonly unknown[]).includes(f)) out[wd] = f as Focus;
+    }
+  }
+  return out;
+}
 
 export interface QuestSlot {
   ex: string;
@@ -102,6 +175,8 @@ export interface QuestSlot {
 }
 
 export interface DayRecord {
+  /** The target the daily quests were picked for. */
+  focus?: Focus;
   daily?: Partial<Record<DailySlot, QuestSlot>>;
   optional?: Partial<Record<Difficulty, QuestSlot>>;
   /** XP taken away because no daily quest was completed that day. */
@@ -131,25 +206,34 @@ export function seededRandom(seed: string): () => number {
 
 const pickFrom = <T,>(list: T[], rnd: () => number): T => list[Math.floor(rnd() * list.length)];
 
-/** The quests offered on a day: 3 daily (legs, upper, core) and one optional per difficulty. */
-export function generateDay(level: number, seed: string, catalog: Exercise[] = CATALOG): Required<Pick<DayRecord, 'daily' | 'optional'>> {
-  const rnd = seededRandom(seed);
-  const max = DIFFICULTIES.indexOf(maxDailyDifficulty(level));
+/** Today's 3 daily quests for a focus, bodyweight only, no exercise twice when the pool allows it. */
+export function generateDaily(level: number, seed: string, focus: Focus, catalog: Exercise[] = CATALOG): NonNullable<DayRecord['daily']> {
+  const rnd = seededRandom(seed + ':' + focus);
+  const allowed = DIFFICULTIES.slice(0, DIFFICULTIES.indexOf(maxDailyDifficulty(level)) + 1);
   const daily: DayRecord['daily'] = {};
+  const used = new Set<string>();
   for (const slot of DAILY_SLOTS) {
-    const allowed = DIFFICULTIES.slice(0, max + 1);
-    const pool = (d: Difficulty) => catalog.filter(e => e.difficulty === d && SLOT_CATEGORIES[slot].includes(e.category) && e.equipment === 'none');
+    const fits = (e: Exercise) => FOCUS_SLOTS[focus][slot].includes(e.category) && e.equipment === 'none';
+    let pool = (d: Difficulty) => catalog.filter(e => e.difficulty === d && fits(e) && !used.has(e.id));
+    if (!allowed.some(d => pool(d).length)) pool = d => catalog.filter(e => e.difficulty === d && fits(e));
     const tiers = allowed.filter(d => pool(d).length);
-    const tier = tiers.length ? pickFrom(tiers, rnd) : null;
-    const ex = tier ? pickFrom(pool(tier), rnd) : pickFrom(catalog, rnd);
+    const ex = tiers.length ? pickFrom(pool(pickFrom(tiers, rnd)), rnd) : pickFrom(catalog, rnd);
+    used.add(ex.id);
     daily[slot] = { ex: ex.id };
   }
+  return daily;
+}
+
+/** The quests offered on a day: 3 daily for the day's focus and one optional per difficulty. */
+export function generateDay(level: number, seed: string, catalog: Exercise[] = CATALOG, focus: Focus = 'full'): Required<Pick<DayRecord, 'daily' | 'optional' | 'focus'>> {
+  const daily = generateDaily(level, seed, focus, catalog);
+  const rnd = seededRandom(seed);
   const optional: DayRecord['optional'] = {};
   for (const d of DIFFICULTIES) {
     const pool = catalog.filter(e => e.difficulty === d);
     if (pool.length) optional[d] = { ex: pickFrom(pool, rnd).id };
   }
-  return { daily, optional };
+  return { focus, daily, optional };
 }
 
 export const daySeed = (uid: string, date: ISODate) => uid + ':' + date;
@@ -197,7 +281,7 @@ export interface Settlement {
  * quest costs that day's daily XP (at the level the account had then), capped at the XP
  * the account has, so a Level 0 account with 0 XP loses nothing.
  */
-export function settle(days: DaysMap, profile: Profile, today: ISODate, uid: string, catalog: Exercise[] = CATALOG): Settlement {
+export function settle(days: DaysMap, profile: Profile, today: ISODate, uid: string, catalog: Exercise[] = CATALOG, targets: Targets = DEFAULT_TARGETS): Settlement {
   const yesterday = addDays(today, -1);
   const start = profile.startDate ?? today;
   const from = profile.settledThrough && profile.settledThrough >= start ? addDays(profile.settledThrough, 1) : start;
@@ -216,7 +300,7 @@ export function settle(days: DaysMap, profile: Profile, today: ISODate, uid: str
     if (dailyDone(day)) continue;
     missedDays++;
     const level = levelInfo(xp).level;
-    const quests = day?.daily ? day : generateDay(level, daySeed(uid, date), catalog);
+    const quests = day?.daily ? day : generateDay(level, daySeed(uid, date), catalog, focusOn(targets, date));
     const penalty = Math.min(xp, dailyXpTotal(quests, level, byId));
     if (penalty > 0) { patch['days/' + date + '/penalty'] = penalty; xp -= penalty; xpLost += penalty; }
   }
@@ -259,6 +343,7 @@ export function normalizeDays(v: unknown): DaysMap {
       day.optional = {};
       for (const k of DIFFICULTIES) { const s = normSlot(d.optional[k]); if (s) day.optional[k] = s; }
     }
+    if ((FOCUSES as readonly unknown[]).includes(d.focus)) day.focus = d.focus as Focus;
     const p = numOr(d.penalty);
     if (p) day.penalty = p;
     out[date] = day;
