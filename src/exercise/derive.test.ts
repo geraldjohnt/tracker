@@ -9,20 +9,17 @@ import {
 const done = (xp: number) => ({ ex: 'air-squat', done: 1, amount: 10, xp });
 
 describe('levels', () => {
-  it('needs 20 XP for level 1, then +10% per level, rounded up', () => {
-    expect(xpToNext(0)).toBe(20);
-    expect(xpToNext(1)).toBe(22);
-    expect(xpToNext(2)).toBe(25); // 24.2 → 25
-    expect(xpToNext(3)).toBe(28); // 27.5 → 28
-    for (let l = 1; l < 60; l++) expect(xpToNext(l)).toBe(Math.ceil((xpToNext(l - 1) * 11) / 10));
+  it('needs 15 XP per level in Rookie 1, then 5 more per tier (every 5 levels)', () => {
+    expect([0, 4, 5, 9, 10, 24, 25, 49, 50].map(xpToNext)).toEqual([15, 15, 20, 20, 25, 35, 40, 60, 65]);
+    expect(xpToNext(245)).toBe(260); // Legend 5
   });
 
   it('turns total XP into level + progress', () => {
-    expect(levelInfo(0)).toEqual({ level: 0, into: 0, need: 20, total: 0 });
-    expect(levelInfo(19).level).toBe(0);
-    expect(levelInfo(20)).toEqual({ level: 1, into: 0, need: 22, total: 20 });
-    expect(levelInfo(42)).toEqual({ level: 2, into: 0, need: 25, total: 42 });
-    expect(levelInfo(50)).toMatchObject({ level: 2, into: 8 });
+    expect(levelInfo(0)).toEqual({ level: 0, into: 0, need: 15, total: 0 });
+    expect(levelInfo(14).level).toBe(0);
+    expect(levelInfo(15)).toEqual({ level: 1, into: 0, need: 15, total: 15 });
+    expect(levelInfo(75)).toEqual({ level: 5, into: 0, need: 20, total: 75 });
+    expect(levelInfo(80)).toMatchObject({ level: 5, into: 5 });
     expect(levelInfo(-5).level).toBe(0);
   });
 
@@ -45,8 +42,10 @@ describe('levels', () => {
 
   it('knows the total XP needed for any level', () => {
     expect(xpForLevel(0)).toBe(0);
-    expect(xpForLevel(1)).toBe(20);
-    expect(xpForLevel(3)).toBe(20 + 22 + 25);
+    expect(xpForLevel(1)).toBe(15);
+    expect(xpForLevel(7)).toBe(5 * 15 + 2 * 20);
+    // Where each rank starts: Mover 625, Grinder 1,875, …, Legend 28,125 XP.
+    expect([1, 2, 9].map(r => xpForLevel(r * 25))).toEqual([625, 1875, 28125]);
     for (const l of [5, 25, 60]) expect(levelInfo(xpForLevel(l))).toMatchObject({ level: l, into: 0 });
   });
 });
@@ -65,7 +64,8 @@ describe('quests', () => {
     const xp = DIFFICULTIES.map(d => questXp(d, 0, 'optional'));
     expect([...xp].sort((a, b) => a - b)).toEqual(xp);
     expect(questXp('easy', 0, 'optional')).toBeGreaterThan(questXp('easy', 0, 'daily'));
-    expect(questXp('easy', 5, 'daily')).toBeGreaterThan(questXp('easy', 0, 'daily')); // +10% per rank
+    expect(questXp('easy', 24, 'daily')).toBe(questXp('easy', 0, 'daily')); // +10% per rank, not per tier
+    expect(questXp('easy', 25, 'daily')).toBeGreaterThan(questXp('easy', 0, 'daily'));
   });
 
   it('generates 3 daily (legs, upper, core) and one optional per difficulty, the same on every device', () => {
