@@ -9,6 +9,7 @@ GitHub Actions.
 | `index.html` | Dashboard: an overview of both trackers |
 | `weight.html` | **WeighIn**: a weekly weight-challenge tracker |
 | `spending.html` | **Spendly**: a daily spending tracker |
+| `exercise.html` | **LevelUp**: calisthenics quests with levels, ranks and XP |
 
 ## Develop
 
@@ -33,7 +34,7 @@ The built site needs to be served over HTTP. Opening `dist/*.html` straight from
 1. Repo **Settings → Pages → Source: GitHub Actions**.
 2. Push to `main`. `.github/workflows/static.yml` runs typecheck, tests and build, then deploys
    `dist/`. Pull requests run the same checks without deploying.
-3. Visit `https://<user>.github.io/<repo>/` (dashboard), `.../weight.html`, or `.../spending.html`.
+3. Visit `https://<user>.github.io/<repo>/` (dashboard), `.../weight.html`, `.../spending.html`, or `.../exercise.html`.
 
 Asset URLs are relative (`base: './'`), so the site works under any repo name.
 
@@ -116,6 +117,22 @@ weightTracker/, spendingTracker/   pre-login data, same shape; read-only backup
   Averages for the *current* period divide by the days or months elapsed so far. Click a day (in
   Week) or a month (in Year) to drill in.
 - Prices are shown in pesos (₱).
+
+### LevelUp (Exercise)
+- **Level and rank**: everyone starts at Level 0. Level 1 needs 20 XP, and each level after needs
+  10% more than the last (rounded up). Every 5 levels is a rank: Rookie, Mover, Grinder, Athlete,
+  Warrior, Gladiator, Spartan, Titan, Olympian, Legend (each numbered 1–5).
+- **Daily quests**: 3 exercises a day (legs, upper body, core). Rep targets grow with your level.
+  Complete at least one before midnight. If you complete none, that day's daily XP is taken away
+  the next time you open the app (never below Level 0 / 0 XP, and losing XP can drop a level).
+- **Optional quests**: one per difficulty (Easy, Medium, Hard, Elite) each day. Accept one, then
+  complete it for bonus XP. Unfinished optional quests just expire at midnight.
+- **Exercises**: a shared library of 48 calisthenics exercises. Each one shows the variation and
+  starting position, step-by-step instructions, good-form cues, common mistakes, an easier
+  version, a recommended gender (for reference only; anyone can take any quest), and a front/back
+  body diagram highlighting the muscles it works.
+- The library is stored once in the database (`exercises/`) for every account. The owner's
+  account publishes it automatically; until then the app uses its built-in copy.
 
 ### Everywhere
 - **Offline**: the last synced data is cached in localStorage, so pages open and render without a

@@ -12,12 +12,13 @@ update `mem/` (decisions, facts, session log) before you finish.
 
 ## What this is
 
-Two trackers plus a dashboard that share one Firebase Realtime Database project, hosted on GitHub
+Three trackers plus a dashboard that share one Firebase Realtime Database project, hosted on GitHub
 Pages. Every page requires sign-in (username + password); each account sees only its own data:
 
 - `index.html`: the dashboard, a read-only overview of both trackers
 - `weight.html`: **WeighIn**, a weekly weight-challenge tracker
 - `spending.html`: **Spendly**, a daily spending tracker
+- `exercise.html`: **LevelUp**, calisthenics quests (levels, ranks, XP; see `mem/exercise.md`)
 
 Each page is a React 19 + TypeScript app built by **Vite 7** as a multi-page build. The three HTML
 files at the repo root are thin entries (`<div id="root">` + one module script); the URLs stay the
@@ -41,7 +42,7 @@ to Pages only from `main`. Pages source must be set to **GitHub Actions**.
 ## Layout
 
 ```
-index.html / weight.html / spending.html   Vite entries (same URLs as before)
+index.html / weight.html / spending.html / exercise.html   Vite entries
 database.rules.json                        Realtime DB rules (paste into the Firebase console)
 src/
   styles/        shared CSS: tokens, templates, palettes, base, appearance menu, sidebar shell, auth
@@ -54,6 +55,8 @@ src/
   dashboard/     Dashboard, WeightCard, SpendCard, dashboard.css
   weight/        store, derive, units, WeightApp, WeekView, AllWeeksPage, WeekModal, weight.css
   spending/      store, derive, SpendingApp, views (Day/Calendar/Week/Month/Year), BarChart, spending.css
+  exercise/      catalog (48 exercises), derive (levels/ranks/quests/penalties), store, ExerciseApp,
+                 ExerciseModal, BodyMap (SVG muscle diagram), parts, exercise.css
 mem/             portable project memory (see above)
 ```
 
@@ -110,6 +113,23 @@ Inline inputs use `DraftInput`: it owns its text while focused and accepts prop 
 unfocused or on blur. This is the React form of the old `isEditing`/`requestRender` guard, and it
 keeps snapshots and lb rounding from rewriting what the user is typing.
 
+### Exercise / LevelUp (`src/exercise/`, details in `mem/exercise.md`)
+- **Catalog** (`catalog.ts`) is bundled and also published to the shared `exercises/` node
+  (`{version, items/<id>}`), readable by any signed-in account, writable only by the owner
+  (`CATALOG_OWNER` = `LEGACY_OWNER`). The owner's session publishes it when `CATALOG_VERSION` is
+  newer than the stored one; everyone uses the stored copy if its version ≥ the bundled one.
+  **Bump `CATALOG_VERSION` after editing the catalog.**
+- **XP is a ledger, not a counter**: total XP = fold over `days/<date>` in date order of
+  (gains − penalty), floored at 0 (`totalXp`). Level is derived from total XP (`levelInfo`):
+  20 XP for level 1, then `ceil(prev × 1.1)` (integer maths). Ranks are 5 levels each (`rankOf`).
+- A day's quests (`generateDay`, seeded by `uid:date`, so devices agree) store only the exercise
+  ids. Reps and XP are computed from the **current** level until completed, then frozen into
+  `amount`/`xp`. Daily = legs + upper + core, home equipment only; optional = one per difficulty,
+  must be accepted first.
+- **Missed days** (`settle`): on load and when the date changes, each finished day since
+  `profile/settledThrough` with no completed *daily* quest gets `penalty` = that day's daily XP at
+  the level then, capped at current XP. Optional quests never protect a day.
+
 ### Derived data
 Pure, unit-tested functions in `src/weight/derive.ts` and `src/spending/derive.ts`, recomputed on
 every render; nothing is cached beyond store state. Key rules:
@@ -135,7 +155,7 @@ plain numbers shown with a hardcoded **₱**; there is no currency toggle.
 `claymorphism`/`minimalism`/`liquidglass`/`spatial`) and `data-palette` (`indigo`/`rose`/`emerald`/
 `amber`/`ocean`/`violet`/`slate`/`sunset`) on `<html>`, defined in `src/shared/appearance.ts`.
 Each page's `main.tsx` applies the saved choice before first paint.
-- Per-page localStorage prefixes: `weighin.*`, `spendly.*`, `dashboard.*`.
+- Per-page localStorage prefixes: `weighin.*`, `spendly.*`, `exercise.*`, `dashboard.*`.
 - `useAppearance(prefix, syncRoot)` also mirrors the choice to `users/<uid>/<root>/settings/{theme,template,palette}`
   for the trackers. The dashboard passes no `syncRoot` and stays device-local.
 - Templates only redefine *shape* tokens; palettes only redefine *accent* tokens. `default`/`indigo`
@@ -149,6 +169,8 @@ Each page's `main.tsx` applies the saved choice before first paint.
 ### Data shape (Realtime Database)
 
 ```
+exercises/                        shared catalog: { version, items/<id>/{name, variant, …} }; read: any
+                                  signed-in account; write: owner only
 users/<uid>/                      read/write only by that account (auth.uid === $uid)
   weightTracker/
     settings/ unit: "kg"|"lb", theme, template, palette
@@ -159,6 +181,12 @@ users/<uid>/                      read/write only by that account (auth.uid === 
     settings/ theme, template, palette
     expenses/
       e_<id>/ { date: "YYYY-MM-DD", item, price, createdAt: <ms> }   (no `id` field: rules reject it)
+  exerciseTracker/
+    settings/ theme, template, palette
+    profile/ { startDate, settledThrough }   (ISO dates)
+    days/<YYYY-MM-DD>/ { penalty?,
+      daily/q0..q2/ { ex, done?, amount?, xp? },
+      optional/easy|medium|hard|elite/ { ex, accepted?, done?, amount?, xp? } }
   meta/ legacyImported: <ms>
 
 weightTracker/, spendingTracker/  pre-login data (same shape), read-only, readable by geraldjohnt only

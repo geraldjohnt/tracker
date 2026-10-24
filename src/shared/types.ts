@@ -32,6 +32,8 @@ export type Unit = 'kg' | 'lb';
 
 export const WEIGHT_ROOT = 'weightTracker';
 export const SPEND_ROOT = 'spendingTracker';
+// Exercise quests: users/<uid>/exerciseTracker/{profile,days,settings}. Shapes are in src/exercise/derive.ts.
+export const EXERCISE_ROOT = 'exerciseTracker';
 
 // Every account's data lives under users/<uid>/<tracker root>. The top-level
 // weightTracker / spendingTracker nodes are the pre-login data, kept read-only

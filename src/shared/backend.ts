@@ -69,8 +69,22 @@ export class MemoryBackend implements Backend {
   }
 
   async set(path: string, value: unknown): Promise<void> {
+    this.write(path, value);
+    this.prune();
+    this.changed();
+  }
+
+  async update(path: string, patch: Record<string, unknown>): Promise<void> {
+    // Firebase update(): each key may itself be a relative path ("participants/p_1/name"),
+    // and the whole patch lands atomically, so listeners see it once.
+    for (const [k, v] of Object.entries(patch)) this.write(path + '/' + k, v);
+    this.prune();
+    this.changed();
+  }
+
+  private write(path: string, value: unknown) {
     const keys = split(path);
-    if (!keys.length) { this.tree = (clone(value) as Tree) ?? {}; this.changed(); return; }
+    if (!keys.length) { this.tree = (stripNulls(clone(value)) as Tree) ?? {}; return; }
     let node = this.tree;
     for (const k of keys.slice(0, -1)) {
       if (node[k] === null || typeof node[k] !== 'object') node[k] = {};
@@ -79,13 +93,6 @@ export class MemoryBackend implements Backend {
     const last = keys[keys.length - 1];
     if (value === null || value === undefined) delete node[last];
     else node[last] = stripNulls(clone(value));
-    this.prune();
-    this.changed();
-  }
-
-  async update(path: string, patch: Record<string, unknown>): Promise<void> {
-    // Firebase update(): each key may itself be a relative path ("participants/p_1/name").
-    for (const [k, v] of Object.entries(patch)) await this.set(path + '/' + k, v);
   }
 
   async remove(path: string): Promise<void> {

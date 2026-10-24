@@ -13,7 +13,7 @@
   match production.
 - `database.rules.json` rejects unknown keys (`$other: false`). A new field means a rules update,
   pasted into the Firebase console by the owner.
-- localStorage keys: `weighin.cache.v1`, `weighin.{theme,template,palette}`, `spendly.cache.v1`,
+- localStorage keys: `exercise.cache.v1[.sample].<uid>`, `exercise.{theme,template,palette,sidebar}`, `weighin.cache.v1`, `weighin.{theme,template,palette}`, `spendly.cache.v1`,
   `spendly.*`, `dashboard.{theme,template,palette,sidebar}`, and `tracker.sample.v1` (sample mode).
 - `default` template / `indigo` palette intentionally have **no** CSS rules. Never add
   `[data-template="default"]` or `[data-palette="indigo"]`.
@@ -33,8 +33,13 @@
   Keep it faithful; store tests depend on it.
 - Trackers' stores (`src/<tracker>/store.ts`) live outside React and are read with `useSyncExternalStore`;
   `store.start()` is called from `main.tsx`. Tests construct a store with an injected `MemoryBackend`.
-- Build output chunks: `vendor-{react,firebase,chart,bootstrap}`, `app-shared` (src/shared, src/styles, */derive.ts),
-  plus one chunk per page.
+- Build output chunks: `vendor-{react,firebase,chart,bootstrap}`, `app-shared` (src/shared, src/styles, weight/spending
+  derive.ts, which the dashboard reuses), plus one chunk per page. Exercise code (catalog included) stays in its page chunk.
+- `MemoryBackend.update()` applies the whole patch, then notifies once (Firebase multi-path updates are atomic). The
+  exercise store relies on it.
+- Exercise catalog: edit `src/exercise/catalog.ts`, then **bump `CATALOG_VERSION`** so the owner's session republishes
+  it. Rules cap string lengths (name 60, variant 200, steps/summary/easier 300, form/mistakes 200); a test checks them.
+- Exercise quest slots use keys `q0..q2` (not 0..2) so Firebase never turns them into arrays.
 - **Expense records must not contain `id`** (the rules reject unknown keys). Stores add `id` only in memory/local
   cache; `rules.test.ts` catches regressions.
 - **Everything is per account**: paths are `users/<uid>/<tracker>/…` (`userRoot()` in `types.ts`); stores need

@@ -14,12 +14,13 @@ export function SidebarLink({ href, onClick, icon, label, active }: {
 
 export const SidebarDivider = () => <div className="sidebar-divider"></div>;
 
-export type AppPage = 'dashboard' | 'weight' | 'spending';
+export type AppPage = 'dashboard' | 'weight' | 'spending' | 'exercise';
 
 const BOTTOM_NAV: [AppPage, string, string, string][] = [
   ['dashboard', 'index.html', 'bi-grid-1x2', 'Home'],
   ['weight', 'weight.html', 'bi-activity', 'Weight'],
   ['spending', 'spending.html', 'bi-wallet2', 'Spendly'],
+  ['exercise', 'exercise.html', 'bi-person-arms-up', 'Exercise'],
 ];
 
 /** Mobile-only app tab bar; replaces the sidebar below 768px. */

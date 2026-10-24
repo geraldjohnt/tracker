@@ -57,6 +57,7 @@ export function Dashboard({ user }: { user: AuthUser }) {
         <SidebarDivider />
         <SidebarLink href="weight.html" icon="bi-activity" label="Weight Tracker" />
         <SidebarLink href="spending.html" icon="bi-wallet2" label="Spending Tracker" />
+        <SidebarLink href="exercise.html" icon="bi-person-arms-up" label="Exercise" />
       </>}
       headerActions={<>
         <ConnPill status={conn} localLabel={isSampleMode() ? 'Sample data' : 'Unavailable'} />
