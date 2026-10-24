@@ -53,3 +53,7 @@
   import the sample data; other names start empty.
 - Bootstrap modals opened from the sticky header must be portaled to `document.body` (see `AccountMenu`), or they
   render under their own backdrop.
+
+- **Mobile bottom tab bar spacing:** `html, body { height:100% }` (base.css) means padding on `body` does NOT add
+  space after the content. The space for the tab bar is padding on `.content-col`, sized by `--bottom-nav-h`
+  (the bar's measured height, set by `BottomNav` with a ResizeObserver; it grows with the phone's text size).

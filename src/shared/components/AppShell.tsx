@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import logoUrl from '../../../logo.png';
 
 /** A sidebar entry: a link to another page, or (with onClick) an in-page view switch. */
@@ -25,8 +25,22 @@ const BOTTOM_NAV: [AppPage, string, string, string][] = [
 
 /** Mobile-only app tab bar; replaces the sidebar below 768px. */
 function BottomNav({ page }: { page: AppPage }) {
+  const ref = useRef<HTMLElement>(null);
+  // Publish the bar's real height (it grows with the phone's text size and safe area) as
+  // --bottom-nav-h, so page content and toasts always clear it.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const root = document.documentElement;
+    const ro = new ResizeObserver(() => {
+      const h = el.offsetHeight;
+      if (h) root.style.setProperty('--bottom-nav-h', h + 'px'); else root.style.removeProperty('--bottom-nav-h');
+    });
+    ro.observe(el);
+    return () => { ro.disconnect(); root.style.removeProperty('--bottom-nav-h'); };
+  }, []);
   return (
-    <nav className="bottom-nav" aria-label="Main">
+    <nav className="bottom-nav" aria-label="Main" ref={ref}>
       {BOTTOM_NAV.map(([p, href, icon, label]) => (
         <a key={p} href={href} className={'bottom-nav-link' + (p === page ? ' active' : '')} aria-current={p === page ? 'page' : undefined}>
           <i className={'bi ' + icon}></i><span>{label}</span>

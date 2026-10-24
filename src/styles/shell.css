@@ -41,7 +41,9 @@
 /* Mobile: no sidebar; an app-style tab bar sits at the bottom instead. */
 @media (max-width:767.98px){
   .sidebar, #menuBtn{ display:none; }
-  body{ padding-bottom:calc(64px + 1.5rem + env(safe-area-inset-bottom)); }
+  /* body is height:100% (base.css), so padding on it doesn't land after the content: pad the content column.
+     --bottom-nav-h is the bar's measured height (AppShell); the fallback fits it at normal text size. */
+  .content-col{ padding-bottom:calc(var(--bottom-nav-h, calc(4.6rem + env(safe-area-inset-bottom))) + 1.25rem); }
   .bottom-nav{
     display:flex; position:fixed; left:0; right:0; bottom:0; z-index:1035;
     padding:.35rem .5rem calc(.35rem + env(safe-area-inset-bottom));
@@ -58,5 +60,5 @@
   .bottom-nav-link.active{ color:var(--accent); }
   .bottom-nav-link.active i{ background:var(--accent-soft); }
   /* Toasts float above the tab bar. */
-  body .toast-wrap{ bottom:calc(64px + 1rem + env(safe-area-inset-bottom)); }
+  body .toast-wrap{ bottom:calc(var(--bottom-nav-h, calc(4.6rem + env(safe-area-inset-bottom))) + .75rem); }
 }
