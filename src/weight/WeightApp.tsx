@@ -1,4 +1,6 @@
 import { useRef, useState, useSyncExternalStore } from 'react';
+import type { AuthUser } from '../shared/auth';
+import { AccountMenu } from '../shared/components/AccountMenu';
 import { AppShell, SidebarDivider, SidebarLink } from '../shared/components/AppShell';
 import { AppearanceMenu } from '../shared/components/AppearanceMenu';
 import { ConfirmModal, type ConfirmHandle } from '../shared/components/ConfirmModal';
@@ -8,7 +10,7 @@ import { fmtRange, todayISO } from '../shared/dates';
 import { useConnection } from '../shared/hooks';
 import { isSampleMode } from '../shared/store';
 import { toast } from '../shared/toast';
-import { WEIGHT_ROOT } from '../shared/types';
+import { WEIGHT_ROOT, userRoot } from '../shared/types';
 import { useAppearance } from '../shared/useAppearance';
 import { AllWeeksPage } from './AllWeeksPage';
 import { exportRows, sortedWeeks, weekStatus } from './derive';
@@ -24,10 +26,10 @@ function loadPage(): Page {
   try { return localStorage.getItem(PAGE_KEY) === 'weeks' ? 'weeks' : 'week'; } catch { return 'week'; }
 }
 
-export function WeightApp() {
+export function WeightApp({ user }: { user: AuthUser }) {
   const { weeks, unit, ready, usingLocal } = useSyncExternalStore(weightStore.subscribe, weightStore.getState);
   const conn = useConnection();
-  const [appearance, setAppearance] = useAppearance('weighin', WEIGHT_ROOT);
+  const [appearance, setAppearance] = useAppearance('weighin', userRoot(user.uid, WEIGHT_ROOT));
   const [page, setPageState] = useState<Page>(loadPage);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const weekModal = useRef<WeekModalHandle>(null);
@@ -77,6 +79,7 @@ export function WeightApp() {
           <ConnPill status={status} localLabel={localLabel} />
           <button id="unitBtn" className="btn btn-ghost btn-sm" title="Toggle unit" style={{ minWidth: 44 }} onClick={() => weightStore.toggleUnit()}>{unit}</button>
           <AppearanceMenu appearance={appearance} onChange={setAppearance} />
+          <AccountMenu user={user} />
         </>}
       >
         {page === 'week' ? (

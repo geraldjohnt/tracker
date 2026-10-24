@@ -11,11 +11,11 @@ import type { Backend } from '../shared/backend';
 import { uid } from '../shared/format';
 import { getBackend, isSampleMode } from '../shared/store';
 import { toast } from '../shared/toast';
-import { WEIGHT_ROOT, type Participant, type Unit, type Week } from '../shared/types';
+import { WEIGHT_ROOT, userRoot, type Participant, type Unit, type Week } from '../shared/types';
 import { normalizeWeeks, sortedWeeks, type WeeksMap } from './derive';
 
-const ROOT = WEIGHT_ROOT; // change to run a second, separate tracker
 // Sample mode gets its own cache key so sample data never overwrites the real offline cache.
+// start() appends the account's uid, so people sharing a device never see each other's cache.
 const LS_KEY = 'weighin.cache.v1' + (isSampleMode() ? '.sample' : '');
 const SAVE_DEBOUNCE_MS = 450;
 const OFFLINE_FALLBACK_MS = 4000;
@@ -38,8 +38,12 @@ export class WeightStore {
   private pending: Record<string, PendingEdit> = {};
   private saveTimers: Record<string, ReturnType<typeof setTimeout> | null> = {};
   private started = false;
+  private accountId = '';
+  private root = '';
 
-  constructor(private getBackendFn: () => Backend | null = getBackend, private lsKey = LS_KEY) {}
+  constructor(private getBackendFn: () => Backend | null = getBackend, private lsKeyBase = LS_KEY) {}
+
+  private get lsKey() { return this.lsKeyBase + '.' + this.accountId; }
 
   subscribe = (l: () => void) => { this.listeners.add(l); return () => { this.listeners.delete(l); }; };
   getState = () => this.state;
@@ -58,9 +62,12 @@ export class WeightStore {
     try { const raw = localStorage.getItem(this.lsKey); return raw ? JSON.parse(raw) : null; } catch { return null; }
   }
 
-  start() {
+  /** Loads and live-syncs the signed-in account's data (users/<uid>/weightTracker). */
+  start(accountId: string) {
     if (this.started) return;
     this.started = true;
+    this.accountId = accountId;
+    this.root = userRoot(accountId, WEIGHT_ROOT);
     const cached = this.readLocal();
     if (cached) this.set({ weeks: normalizeWeeks(cached.weeks || {}), unit: cached.unit || 'kg' });
 
@@ -71,7 +78,7 @@ export class WeightStore {
       return;
     }
 
-    this.backend.on(ROOT + '/weeks', v => {
+    this.backend.on(this.root + '/weeks', v => {
       this.state = { ...this.state, weeks: normalizeWeeks(v as Record<string, Week> | null), ready: true };
       this.applyPending(); // keep un-flushed local edits on top of the incoming snapshot
       this.cacheLocal();
@@ -82,7 +89,7 @@ export class WeightStore {
       toast('Database read denied — check your rules', true);
     });
 
-    this.backend.on(ROOT + '/settings/unit', v => {
+    this.backend.on(this.root + '/settings/unit', v => {
       if ((v === 'kg' || v === 'lb') && v !== this.state.unit) { this.set({ unit: v }); this.cacheLocal(); }
     });
 
@@ -93,15 +100,15 @@ export class WeightStore {
 
   private write(path: string, value: unknown) {
     this.cacheLocal();
-    return this.online()?.set(ROOT + '/' + path, value).catch(err => { console.error(err); toast('Could not save to server', true); }) ?? Promise.resolve();
+    return this.online()?.set(this.root + '/' + path, value).catch(err => { console.error(err); toast('Could not save to server', true); }) ?? Promise.resolve();
   }
   private update(path: string, patch: Record<string, unknown>) {
     this.cacheLocal();
-    return this.online()?.update(ROOT + '/' + path, patch).catch(err => { console.error(err); toast('Could not save to server', true); }) ?? Promise.resolve();
+    return this.online()?.update(this.root + '/' + path, patch).catch(err => { console.error(err); toast('Could not save to server', true); }) ?? Promise.resolve();
   }
   private remove(path: string) {
     this.cacheLocal();
-    return this.online()?.remove(ROOT + '/' + path).catch(err => { console.error(err); toast('Could not delete on server', true); }) ?? Promise.resolve();
+    return this.online()?.remove(this.root + '/' + path).catch(err => { console.error(err); toast('Could not delete on server', true); }) ?? Promise.resolve();
   }
 
   /* ---------- pending-edit reconciliation ---------- */
@@ -216,7 +223,7 @@ export class WeightStore {
     const unit: Unit = this.state.unit === 'kg' ? 'lb' : 'kg';
     this.set({ unit });
     this.cacheLocal();
-    this.online()?.set(ROOT + '/settings/unit', unit).catch(console.error);
+    this.online()?.set(this.root + '/settings/unit', unit).catch(console.error);
     toast('Unit set to ' + unit);
   }
 

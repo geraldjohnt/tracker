@@ -1,52 +1,67 @@
 {
   "rules": {
-    "weightTracker": {
-      ".read": true,
-      ".write": true,
-      "weeks": {
-        "$weekId": {
-          ".validate": "newData.hasChildren(['startDate','endDate']) || !newData.exists()",
-          "startDate": { ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)" },
-          "endDate":   { ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)" },
-          "id":        { ".validate": "newData.isString()" },
-          "createdAt": { ".validate": "newData.isNumber()" },
-          "participants": {
-            "$pid": {
-              "name":        { ".validate": "newData.isString() && newData.val().length <= 60" },
-              "startWeight": { ".validate": "newData.isNumber() || !newData.exists()" },
-              "endWeight":   { ".validate": "newData.isNumber() || !newData.exists()" },
-              "order":       { ".validate": "newData.isNumber()" },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "weightTracker": {
+          "weeks": {
+            "$weekId": {
+              ".validate": "newData.hasChildren(['startDate','endDate']) || !newData.exists()",
+              "startDate": { ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)" },
+              "endDate":   { ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)" },
+              "id":        { ".validate": "newData.isString()" },
+              "createdAt": { ".validate": "newData.isNumber()" },
+              "participants": {
+                "$pid": {
+                  "name":        { ".validate": "newData.isString() && newData.val().length <= 60" },
+                  "startWeight": { ".validate": "newData.isNumber() || !newData.exists()" },
+                  "endWeight":   { ".validate": "newData.isNumber() || !newData.exists()" },
+                  "order":       { ".validate": "newData.isNumber()" },
+                  "$other": { ".validate": false }
+                }
+              },
               "$other": { ".validate": false }
             }
           },
+          "settings": {
+            "unit":     { ".validate": "newData.isString() && (newData.val() === 'kg' || newData.val() === 'lb')" },
+            "theme":    { ".validate": "newData.isString() && (newData.val() === 'dark' || newData.val() === 'light')" },
+            "template": { ".validate": "newData.isString() && newData.val().matches(/^(default|neomorphism|glassmorphism|claymorphism|minimalism|liquidglass|spatial)$/)" },
+            "palette":  { ".validate": "newData.isString() && newData.val().matches(/^(indigo|rose|emerald|amber|ocean|violet|slate|sunset)$/)" }
+          }
+        },
+        "spendingTracker": {
+          "expenses": {
+            "$expenseId": {
+              ".validate": "newData.hasChildren(['date','item','price']) || !newData.exists()",
+              "date":      { ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)" },
+              "item":      { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
+              "price":     { ".validate": "newData.isNumber() && newData.val() >= 0" },
+              "createdAt": { ".validate": "newData.isNumber()" },
+              "$other": { ".validate": false }
+            }
+          },
+          "settings": {
+            "theme":    { ".validate": "newData.isString() && (newData.val() === 'dark' || newData.val() === 'light')" },
+            "template": { ".validate": "newData.isString() && newData.val().matches(/^(default|neomorphism|glassmorphism|claymorphism|minimalism|liquidglass|spatial)$/)" },
+            "palette":  { ".validate": "newData.isString() && newData.val().matches(/^(indigo|rose|emerald|amber|ocean|violet|slate|sunset)$/)" }
+          }
+        },
+        "meta": {
+          "legacyImported": { ".validate": "newData.isNumber()" },
           "$other": { ".validate": false }
-        }
-      },
-      "settings": {
-        "unit":     { ".validate": "newData.isString() && (newData.val() === 'kg' || newData.val() === 'lb')" },
-        "theme":    { ".validate": "newData.isString() && (newData.val() === 'dark' || newData.val() === 'light')" },
-        "template": { ".validate": "newData.isString() && newData.val().matches(/^(default|neomorphism|glassmorphism|claymorphism|minimalism|liquidglass|spatial)$/)" },
-        "palette":  { ".validate": "newData.isString() && newData.val().matches(/^(indigo|rose|emerald|amber|ocean|violet|slate|sunset)$/)" }
+        },
+        "$other": { ".validate": false }
       }
     },
+    "weightTracker": {
+      ".read": "auth != null && auth.token.email === 'geraldjohnt@tracker-8dcc0.firebaseapp.com'",
+      ".write": false
+    },
     "spendingTracker": {
-      ".read": true,
-      ".write": true,
-      "expenses": {
-        "$expenseId": {
-          ".validate": "newData.hasChildren(['date','item','price']) || !newData.exists()",
-          "date":      { ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)" },
-          "item":      { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
-          "price":     { ".validate": "newData.isNumber() && newData.val() >= 0" },
-          "createdAt": { ".validate": "newData.isNumber()" },
-          "$other": { ".validate": false }
-        }
-      },
-      "settings": {
-        "theme":    { ".validate": "newData.isString() && (newData.val() === 'dark' || newData.val() === 'light')" },
-        "template": { ".validate": "newData.isString() && newData.val().matches(/^(default|neomorphism|glassmorphism|claymorphism|minimalism|liquidglass|spatial)$/)" },
-        "palette":  { ".validate": "newData.isString() && newData.val().matches(/^(indigo|rose|emerald|amber|ocean|violet|slate|sunset)$/)" }
-      }
+      ".read": "auth != null && auth.token.email === 'geraldjohnt@tracker-8dcc0.firebaseapp.com'",
+      ".write": false
     }
   }
 }

@@ -5,7 +5,9 @@ import { describe, expect, it, vi } from 'vitest';
 import rules from '../../database.rules.json';
 import { SpendingStore } from '../spending/store';
 import { WeightStore } from '../weight/store';
+import { usernameToEmail } from './auth';
 import { MemoryBackend } from './backend';
+import { importLegacyData, LEGACY_OWNER } from './legacy';
 import { sampleTree } from './sampleData';
 
 type RuleNode = { [k: string]: RuleNode | string | boolean };
@@ -30,10 +32,10 @@ describe('database.rules.json accepts everything the app writes', () => {
   it('sample data and a full CRUD pass on both trackers', async () => {
     vi.useFakeTimers();
     localStorage.clear();
-    const backend = new MemoryBackend(sampleTree('2026-10-24'));
+    const backend = new MemoryBackend({ users: { u1: sampleTree('2026-10-24') } });
 
     const w = new WeightStore(() => backend, 'rules.w');
-    w.start(); await flush();
+    w.start('u1'); await flush();
     const wid = w.createWeek('2026-10-26', '2026-11-02', [{ name: 'A', startWeight: 70 }]);
     const pid = w.addParticipant(wid, 'B')!;
     w.setField(wid, pid, 'endWeight', 69);
@@ -41,14 +43,25 @@ describe('database.rules.json accepts everything the app writes', () => {
     w.toggleUnit();
 
     const s = new SpendingStore(() => backend, 'rules.s');
-    s.start(); await flush();
+    s.start('u1'); await flush();
     const eid = s.addExpense('2026-10-24', 'Tea', 45);
     s.setField(eid, 'item', 'Milk tea');
 
     vi.advanceTimersByTime(1000); await flush();
-    for (const root of ['weightTracker', 'spendingTracker'] as const) {
-      expect(disallowed(backend.get(root), (rules.rules as unknown as RuleNode)[root] as RuleNode, root)).toEqual([]);
-    }
+    const userRule = ((rules.rules as unknown as RuleNode).users as RuleNode).$uid as RuleNode;
+    expect(disallowed(backend.get('users/u1'), userRule, 'users/$uid')).toEqual([]);
     vi.useRealTimers();
+  });
+
+  it('the legacy import writes only allowed keys, and the owner rule names the owner account', async () => {
+    const backend = new MemoryBackend(sampleTree('2026-10-24'));
+    await backend.update('weightTracker/weeks/w_sample0', { stray: 1 }); // unknown keys are dropped, not copied
+    await importLegacyData(backend, { uid: 'u1', username: LEGACY_OWNER });
+    const userRule = ((rules.rules as unknown as RuleNode).users as RuleNode).$uid as RuleNode;
+    expect(disallowed(backend.get('users/u1'), userRule, 'users/$uid')).toEqual([]);
+
+    const owner = "auth.token.email === '" + usernameToEmail(LEGACY_OWNER) + "'";
+    expect(rules.rules.weightTracker['.read']).toContain(owner);
+    expect(rules.rules.spendingTracker['.read']).toContain(owner);
   });
 });

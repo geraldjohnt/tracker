@@ -2,6 +2,22 @@
 
 Append new entries at the top. Format: date · decision · why · rejected alternatives.
 
+## 2026-10-24 · Accounts: username + password, data per user
+- **Decision:** Firebase email/password auth with usernames mapped to
+  `<username>@tracker-8dcc0.firebaseapp.com`. Open registration. All data moves under
+  `users/<uid>/{weightTracker,spendingTracker}`, and the rules allow only `auth.uid === $uid`.
+- **Why:** The owner asked for log in + register + change password, with each user seeing only
+  their own data, and usernames (not emails).
+- **Legacy data:** copied (not moved) into `geraldjohnt`'s account on its first sign-in. The root
+  nodes are never written, which keeps the "never touch existing data" rule. The rules make them
+  read-only, readable only by that account, as a backup.
+- **The owner's account isn't created from a Claude session:** calling Firebase's sign-up API from
+  the container was blocked. The owner registers `geraldjohnt` in the app, right after deploying
+  and before publishing the rules, so no one else can take the username first.
+- **Rejected:** a `users/<uid>` field tag on each record (needs per-record rules and queries,
+  and anyone could still list everything); moving and deleting the legacy nodes (violates the
+  data-safety rule, and leaves no backup); Google sign-in (the owner asked for username/password).
+
 ## 2026-10-24 · Convert to React + TypeScript, no Python
 - **Decision:** Rewrite the three pages as a React 19 + TypeScript app built with Vite 7.
   Python is not used at all.
