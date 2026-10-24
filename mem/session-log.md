@@ -9,6 +9,11 @@ Newest first. Keep each entry short.
 - 67 tests. Owner rule added: PR + merge after each phase, then stop and wait.
 - **Owner to do:** re-publish the rules (adds `leaderboard/`).
 
+## 2026-10-24 — Fix: mobile tab bar covered the bottom of pages
+- Phase 4 merged (geraldjohnt/tracker#11). Body padding had no effect (body is height:100%); moved to `.content-col`
+  using the bar's measured height. Checked every page/tab at 390px, normal and 130% text: all clear.
+- Not fixed yet (seen while checking): at large text sizes the Ranks tab's 5-badge rows can spill past the right edge.
+
 ## 2026-10-24 — LevelUp phase 4: moderate XP curve
 - Phase 3 merged (geraldjohnt/tracker#10).
 - `xpToNext` = 15 + 5 per tier; quest XP bonus +10% per rank (was per tier). Numbers and simulation in `mem/exercise.md`.
