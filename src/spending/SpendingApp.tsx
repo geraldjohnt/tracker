@@ -40,6 +40,7 @@ export function SpendingApp({ user }: { user: AuthUser }) {
         title="Spendly"
         subtitle="Daily spending tracker"
         sidebarKey="spendly.sidebar"
+        page="spending"
         nav={<>
           <SidebarLink href="index.html" icon="bi-grid-1x2" label="Dashboard" />
           <SidebarDivider />

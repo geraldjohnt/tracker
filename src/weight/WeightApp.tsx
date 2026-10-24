@@ -67,6 +67,7 @@ export function WeightApp({ user }: { user: AuthUser }) {
         title="WeighIn"
         subtitle="Weekly weight challenge"
         sidebarKey="weighin.sidebar"
+        page="weight"
         nav={<>
           <SidebarLink href="index.html" icon="bi-grid-1x2" label="Dashboard" />
           <SidebarDivider />
@@ -82,6 +83,12 @@ export function WeightApp({ user }: { user: AuthUser }) {
           <AccountMenu user={user} />
         </>}
       >
+        <div className="page-toggle-wrap">
+          <div className="tabs page-toggle" role="tablist" aria-label="View">
+            <button type="button" role="tab" aria-selected={page === 'week'} className={page === 'week' ? 'active' : ''} onClick={() => setPage('week')}>This Week</button>
+            <button type="button" role="tab" aria-selected={page === 'weeks'} className={page === 'weeks' ? 'active' : ''} onClick={() => setPage('weeks')}>All Weeks</button>
+          </div>
+        </div>
         {page === 'week' ? (
           <div id="pageWeek" className="page">
             <div className="toolbar">

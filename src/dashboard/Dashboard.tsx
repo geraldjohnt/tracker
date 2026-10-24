@@ -51,6 +51,7 @@ export function Dashboard({ user }: { user: AuthUser }) {
       title="Dashboard"
       subtitle="Tracker overview"
       sidebarKey="dashboard.sidebar"
+      page="dashboard"
       nav={<>
         <SidebarLink href="index.html" icon="bi-grid-1x2" label="Dashboard" active />
         <SidebarDivider />

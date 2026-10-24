@@ -84,6 +84,9 @@ implementations, picked by `getAuthService()` exactly like the backend:
 Each page's `main.tsx` wraps the app in `<AuthGate>`: it shows the sign-in/register screen until
 someone is signed in, then runs the legacy import, calls `onUser` (which starts the stores with the
 uid) and renders the app with `user`. The header's `AccountMenu` has Change password and Sign out.
+On mobile (<768px) there is no sidebar: `AppShell` renders a fixed bottom tab bar (Home / Weight /
+Spendly, marked by its `page` prop), and WeighIn shows a This Week / All Weeks toggle at the top
+(`.page-toggle`, mobile only; desktop switches from the sidebar).
 Sign-out (and a different account signing in from another tab) reloads the page, because stores
 are started once per page load.
 
