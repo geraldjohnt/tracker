@@ -5,7 +5,7 @@
 | 1 | Vite/React/TS scaffold, shared modules (`src/shared`, `src/styles`), backend abstraction + sample data, unit tests, Actions build/deploy, `mem/` | ✅ done |
 | 2 | Dashboard (`index.html`) → React | ✅ done (pixel-identical to legacy except the "Sample data" pill) |
 | 3 | WeighIn (`weight.html`) → React (modals, pending-edit reconciliation, kg/lb, CSV export, All Weeks page) | ✅ done: pixel-identical at every step of a scripted flow (light/dark/mobile); CRUD verified on sample data |
-| 4 | Spendly (`spending.html`) → React (day/calendar/week/month/year views, charts) | ⏳ |
+| 4 | Spendly (`spending.html`) → React (day/calendar/week/month/year views, charts) | ✅ done: pixel-identical across a 10-step flow (light/dark/mobile); CRUD verified on sample data |
 | 5 | Cleanup: drop legacy inline code, refresh README/CLAUDE.md, final docs | ⏳ |
 
 ## Porting checklist (per page)
@@ -29,3 +29,5 @@
    pixel-diff each step. Expected difference: the fake legacy SDK doesn't echo writes back, so legacy chrome that only
    re-renders on a snapshot (week select, status chip) stays stale until the next full render. Production Firebase
    does echo writes, so React's live update is the correct reference.
+7. Chart.js animates for ~1s: wait ≥1.6s before a screenshot. On mobile, a `fullPage` screenshot resizes the
+   viewport and triggers a chart redraw mid-capture. Compare canvas pixels (`getImageData`) instead.

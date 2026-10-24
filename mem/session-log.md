@@ -2,6 +2,13 @@
 
 Newest first. Keep each entry short.
 
+## 2026-10-24 — Phase 4 (spending.html)
+- Phase 3 merged (geraldjohnt/tracker#3).
+- Spendly ported: `src/spending/` (store, views.tsx with Day/Calendar/Week/Month/Year, BarChart, period summaries in derive.ts).
+- Added date helpers to `src/shared/dates.ts` (fmtRangeShort, monthLabel, daysInMonth, daysInYear, shiftMonth, weekdayShort).
+- 34 unit tests, including the "current period averages over elapsed days" rule.
+- Next: Phase 5 cleanup (rewrite README + CLAUDE.md for the new architecture, final mem refresh).
+
 ## 2026-10-24 — Phase 3 (weight.html)
 - Phase 2 merged (geraldjohnt/tracker#2).
 - WeighIn ported: `src/weight/` (store with pending-edit reconciliation, WeekView, AllWeeksPage, WeekModal, units, derive).
