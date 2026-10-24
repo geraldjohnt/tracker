@@ -43,6 +43,56 @@ tracker. Code: `src/exercise/`. Architecture notes are in CLAUDE.md → "Exercis
 - Board values are self-reported by each client (like XP itself) until there's server-side
   verification; the rules stop impersonation, not inflated numbers.
 
+## Phase plan (agreed with the owner 2026-10-24): 9 phases
+Owner rule: PR + merge to `main` after **each** phase (CI green), then **stop** until the owner says continue.
+
+| # | Phase | Status | PR |
+|---|---|---|---|
+| 1 | Core game: 48-exercise catalog + rules, engine (`derive.ts`), store, Quests / Exercises / History, detail modal + body map | Done | geraldjohnt/tracker#8 |
+| 2 | Opt-in ranking board (Ranking tab); daily quests bodyweight-only; L-sit floor version, `CATALOG_VERSION` 2 | Done | geraldjohnt/tracker#9 |
+| 3 | Tiers every 5 levels / ranks every 25, SVG rank badges, Ranks tab, badge on player emblem + board, weekly plan driving daily quests | Done | geraldjohnt/tracker#10 |
+| 4 | Moderate XP curve (option C): 15 XP/level +5 per tier; quest XP +10% per rank | Done | geraldjohnt/tracker#11 |
+| — | Fix: mobile bottom tab bar covered page bottoms (pad `.content-col` by measured `--bottom-nav-h`) | Done | geraldjohnt/tracker#12 |
+| 5 | **Camera form check, part 1** (next) | Not started | |
+| 6 | Camera form check, part 2 | Not started | |
+| 7 | Dashboard card for LevelUp | Not started | |
+| 8 | Better visuals (movement illustrations/animations) | Not started | |
+| 9 | Extras (owner picks) | Not started | |
+
+The owner may move 7–9 before the camera phases.
+
+### Phase 5: camera form check, part 1
+- Pose detection in the browser (MediaPipe Pose Landmarker or TF.js MoveNet; no server, works on GitHub Pages;
+  no video leaves the device). Camera view in a quest "Start with camera" modal.
+- Rep counting + basic form checks for the most common daily exercises: **squats, lunges, push-ups, glute
+  bridges, planks/holds** (holds count seconds while the pose is held).
+- Rep counters from joint angles (knee angle for squats/lunges, elbow for push-ups, hip for bridges, body line
+  for planks), with hysteresis thresholds. A quest completes when the camera has counted every rep.
+- Add a per-exercise `tracker` definition (joints, angle thresholds, form rules) to the catalog →
+  bump `CATALOG_VERSION`, extend `database.rules.json` (`exercises/items/$id`), update tests.
+- Load the pose model lazily (only when the camera opens) so the page stays light.
+- **Open question for the owner (ask before starting):** keep the manual Complete button once the camera works?
+  Recommended: keep it as a setting, off by default (fallback for no camera / bad lighting).
+
+### Phase 6: camera form check, part 2
+- Trackers for the rest of the catalog; detailed form feedback ("hips sagging", "go lower", "knees caving");
+  the manual-Complete setting decided in phase 5.
+
+### Phase 7: dashboard card
+- LevelUp card on `index.html`: level, rank badge, XP progress, today's daily quests done / 3, streak.
+
+### Phase 8: better visuals
+- An illustration or short animation of the movement per exercise, next to the body map (the body map only
+  shows muscles).
+
+### Phase 9: extras (offer the list; owner picks)
+- Achievements, streak bonuses, rest days in the weekly plan (needs a penalty rule), rank-up celebration
+  screen, weekly challenge quest.
+
+### Known issues to fix (small, any time)
+- Ranks tab on mobile with large phone text: the 5-badge tier row can overflow the right edge
+  (e.g. "Olympian 5" clipped). Likely fix: `min-width:0` on `.tier`, smaller badges / wrapping labels below 400px.
+
 ## Status
 - **Part 1 (done, 2026-10-24):** catalog + rules, game engine (`derive.ts`, unit-tested), store,
   page with Quests / Exercises (library with filters) / History, exercise detail modal with body
@@ -54,15 +104,6 @@ tracker. Code: `src/exercise/`. Architecture notes are in CLAUDE.md → "Exercis
 - **Owner to do:** re-publish `database.rules.json` (new `exercises/`, `leaderboard/` and `users/$uid/exerciseTracker`),
   then open `exercise.html` signed in as `geraldjohnt` once, which publishes the catalog.
 
-## Roadmap (next phases; PR + merge after each, then wait for the owner)
-1. **Camera form check (owner's planned upgrade):** a quest only completes when the camera sees the
-   required reps with correct form. Likely approach: MediaPipe Pose / TensorFlow.js MoveNet in the
-   browser (no server; works on Pages), per-exercise rep counters from joint angles (e.g. knee angle
-   for squats, elbow angle for push-ups), form rules from the catalog's `form` cues. Needs a
-   per-exercise "tracker" definition (joints, angle thresholds) added to the catalog, so bump
-   `CATALOG_VERSION` and extend the rules. Keep the manual button as a fallback setting? Ask the owner.
-2. Dashboard card for LevelUp (level, rank, today's daily progress).
-3. Better visuals: per-exercise illustrations or animations of the movement (the body map only
-   shows muscles).
-4. "And more" ideas to offer the owner: weekly challenge quest, achievements/badges, streak
-   bonuses, rest days, a rank-up celebration screen.
+## Roadmap
+See "Phase plan" above (phases 5–9). Notes for the camera phases: per-exercise rep counters from joint angles,
+form rules derived from the catalog's `form` cues.

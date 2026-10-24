@@ -9,6 +9,10 @@ Newest first. Keep each entry short.
 - 67 tests. Owner rule added: PR + merge after each phase, then stop and wait.
 - **Owner to do:** re-publish the rules (adds `leaderboard/`).
 
+## 2026-10-24 — Saved the phase plan
+- Tab bar fix merged (geraldjohnt/tracker#12). The full 9-phase LevelUp plan, each phase's contents, the open
+  question and known issues are in `mem/exercise.md` → "Phase plan". Owner paused here; resume with phase 5.
+
 ## 2026-10-24 — Fix: mobile tab bar covered the bottom of pages
 - Phase 4 merged (geraldjohnt/tracker#11). Body padding had no effect (body is height:100%); moved to `.content-col`
   using the bar's measured height. Checked every page/tab at 390px, normal and 130% text: all clear.
