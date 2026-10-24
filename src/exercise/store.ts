@@ -1,5 +1,5 @@
 // Exercise (quests) state + persistence, outside React (exposed through useSyncExternalStore).
-// Live-syncs users/<uid>/exerciseTracker/{profile,days}, mirrors it to localStorage, and
+// Live-syncs users/<uid>/exerciseTracker/{profile,days,settings/targets}, mirrors it to localStorage, and
 // falls back to local-only mode like the other trackers. On load (and when the date
 // changes) it settles missed days and creates the day's quests. It also reads the shared
 // catalog at `exercises/`, and the owner's account publishes the bundled catalog there
@@ -13,8 +13,9 @@ import { toast } from '../shared/toast';
 import { EXERCISE_ROOT, userRoot, type ISODate } from '../shared/types';
 import { CATALOG, CATALOG_VERSION, type Difficulty, type Exercise } from './catalog';
 import {
-  catalogRecord, daySeed, normalizeBoard, type BoardEntry, generateDay, levelInfo, normalizeCatalog, normalizeDays, normalizeProfile, questAmount, questXp,
-  rankOf, settle, totalXp, type DailySlot, type DaysMap, type Profile, type QuestKind,
+  catalogRecord, DEFAULT_TARGETS, daySeed, focusOn, generateDaily, generateDay, levelInfo, normalizeBoard, normalizeCatalog, normalizeDays,
+  normalizeProfile, normalizeTargets, questAmount, questXp, rankOf, settle, totalXp, weekdayOf, type BoardEntry, type DailySlot, type DaysMap,
+  type Focus, type Profile, type QuestKind, type Targets, type Weekday,
 } from './derive';
 
 const LS_KEY = 'exercise.cache.v1' + (isSampleMode() ? '.sample' : '');
@@ -27,6 +28,8 @@ const DATE_CHECK_MS = 60_000;
 export interface ExerciseState {
   profile: Profile;
   days: DaysMap;
+  /** The weekly plan: what each weekday's daily quests train. */
+  targets: Targets;
   catalog: Exercise[];
   byId: Record<string, Exercise>;
   today: ISODate;
@@ -59,7 +62,7 @@ const byIdOf = (c: Exercise[]) => Object.fromEntries(c.map(e => [e.id, e]));
 
 export class ExerciseStore {
   private state: ExerciseState = {
-    profile: {}, days: {}, catalog: CATALOG, byId: byIdOf(CATALOG), today: '', ready: false, usingLocal: false, lastSettlement: null,
+    profile: {}, days: {}, targets: DEFAULT_TARGETS, catalog: CATALOG, byId: byIdOf(CATALOG), today: '', ready: false, usingLocal: false, lastSettlement: null,
     board: [], boardReady: false,
   };
   private listeners = new Set<() => void>();
@@ -83,11 +86,11 @@ export class ExerciseStore {
   }
 
   private syncFromRaw() {
-    this.set({ profile: normalizeProfile(this.raw.profile), days: normalizeDays(this.raw.days) });
+    this.set({ profile: normalizeProfile(this.raw.profile), days: normalizeDays(this.raw.days), targets: normalizeTargets(this.raw.targets) });
   }
 
   private cacheLocal() {
-    try { localStorage.setItem(this.lsKey, JSON.stringify({ profile: this.raw.profile ?? null, days: this.raw.days ?? null })); } catch { /* ignore */ }
+    try { localStorage.setItem(this.lsKey, JSON.stringify({ profile: this.raw.profile ?? null, days: this.raw.days ?? null, targets: this.raw.targets ?? null })); } catch { /* ignore */ }
   }
   private readLocal(): Obj | null {
     try { const raw = localStorage.getItem(this.lsKey); return raw ? JSON.parse(raw) : null; } catch { return null; }
@@ -102,7 +105,7 @@ export class ExerciseStore {
     this.root = userRoot(accountId, EXERCISE_ROOT);
     this.state = { ...this.state, today: this.todayFn() };
     const cached = this.readLocal();
-    if (cached) { this.raw = { profile: cached.profile, days: cached.days }; this.syncFromRaw(); }
+    if (cached) { this.raw = { profile: cached.profile, days: cached.days, targets: cached.targets }; this.syncFromRaw(); }
 
     this.backend = this.getBackendFn();
     if (!this.backend) {
@@ -121,7 +124,7 @@ export class ExerciseStore {
       this.syncBoard();
     }, err => { console.error(err); this.set({ boardReady: true }); });
     this.backend.on(this.root, v => {
-      this.raw = isObj(v) ? { profile: v.profile, days: v.days } : {};
+      this.raw = isObj(v) ? { profile: v.profile, days: v.days, targets: isObj(v.settings) ? v.settings.targets : undefined } : {};
       this.cacheLocal();
       const first = !this.state.ready;
       this.syncFromRaw();
@@ -146,7 +149,8 @@ export class ExerciseStore {
   private online() { return this.state.usingLocal ? null : this.backend; }
 
   private write(patch: Obj) {
-    applyPatch(this.raw, patch);
+    // raw keeps settings/targets at the top level as `targets`.
+    applyPatch(this.raw, Object.fromEntries(Object.entries(patch).map(([k, v]) => [k.replace(/^settings\/targets/, 'targets'), v])));
     this.cacheLocal();
     this.syncFromRaw();
     queueMicrotask(() => this.syncBoard());
@@ -164,12 +168,12 @@ export class ExerciseStore {
     const today = this.todayFn();
     const patch: Obj = {};
     let lastSettlement = this.state.lastSettlement;
-    const { profile, days, catalog } = this.state;
+    const { profile, days, catalog, targets } = this.state;
     if (!profile.startDate) {
       patch['profile/startDate'] = today;
       patch['profile/settledThrough'] = addDays(today, -1);
     } else {
-      const s = settle(days, profile, today, this.accountId, catalog);
+      const s = settle(days, profile, today, this.accountId, catalog, targets);
       if (s.patch) Object.assign(patch, s.patch);
       if (s.missedDays) lastSettlement = { missedDays: s.missedDays, xpLost: s.xpLost };
     }
@@ -181,7 +185,8 @@ export class ExerciseStore {
         if (m) after[m[1]] = { ...after[m[1]], penalty: v as number };
       }
       const level = levelInfo(totalXp(after)).level;
-      const { daily, optional } = generateDay(level, daySeed(this.accountId, today), catalog);
+      const { focus, daily, optional } = generateDay(level, daySeed(this.accountId, today), catalog, focusOn(targets, today));
+      patch['days/' + today + '/focus'] = focus;
       patch['days/' + today + '/daily'] = daily;
       if (!days[today]?.optional) patch['days/' + today + '/optional'] = optional;
     }
@@ -231,6 +236,34 @@ export class ExerciseStore {
     b.update(BOARD_PATH + '/' + this.accountId, patch).catch(err => console.error(err));
   }
 
+  /* ---------- weekly targets ---------- */
+
+  /**
+   * Sets what a weekday's daily quests train. If it's today's weekday and no daily quest
+   * is done yet, today's daily quests are picked again for the new target.
+   */
+  setTarget(day: Weekday, focus: Focus) {
+    const { today, days, targets, catalog } = this.state;
+    if (targets[day] === focus) return;
+    const patch: Obj = { ['settings/targets/' + day]: focus };
+    const todays = days[today];
+    if (weekdayOf(today) === day && !Object.values(todays?.daily ?? {}).some(q => q?.done)) {
+      patch['days/' + today + '/focus'] = focus;
+      patch['days/' + today + '/daily'] = generateDaily(levelInfo(this.xp()).level, daySeed(this.accountId, today), focus, catalog);
+    }
+    this.write(patch);
+  }
+
+  /** Puts every weekday back to the default plan (today's quests follow if none is done yet). */
+  resetTargets() {
+    for (const [day, focus] of Object.entries(DEFAULT_TARGETS) as Array<[Weekday, Focus]>) this.setTarget(day, focus);
+  }
+
+  /** Today's daily quests can still follow a change of target (none of them is done). */
+  canRetargetToday() {
+    return !Object.values(this.state.days[this.state.today]?.daily ?? {}).some(q => q?.done);
+  }
+
   dismissSettlement() { this.set({ lastSettlement: null }); }
 
   /* ---------- quests ---------- */
@@ -246,7 +279,9 @@ export class ExerciseStore {
     const base = 'days/' + today + '/' + kind + '/' + key + '/';
     this.write({ [base + 'done']: Date.now(), [base + 'amount']: amount, [base + 'xp']: xp });
     const after = levelInfo(this.xp()).level;
-    if (after > before) toast('Level up! Level ' + after + ' · ' + rankOf(after).label);
+    const rank = rankOf(after).label;
+    if (rank !== rankOf(before).label) toast('Rank up! You’re now ' + rank);
+    else if (after > before) toast('Level up! Level ' + after + ' · ' + rank);
     else toast('+' + xp + ' XP · ' + ex.name);
   }
 

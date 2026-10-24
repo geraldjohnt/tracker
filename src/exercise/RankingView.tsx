@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useBsModal } from '../shared/components/useBsModal';
 import { rankBoard, rankOf } from './derive';
+import { RankBadge } from './RankBadge';
 import { exerciseStore, type ExerciseState } from './store';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -48,7 +49,7 @@ export function RankingView({ state, uid }: { state: ExerciseState; uid: string 
             return (
               <div key={r.uid} className={'board-row' + (r.uid === uid ? ' me' : '')}>
                 <div className="board-place">{r.place <= 3 ? <span className="medal" aria-label={'#' + r.place}>{MEDALS[r.place - 1]}</span> : '#' + r.place}</div>
-                <div className={'rank-emblem sm rank-' + rank.index}><i className={'bi ' + rank.icon}></i></div>
+                <RankBadge rank={rank} size={42} className="board-badge" />
                 <div className="board-who min-w-0">
                   <div className="board-name">{r.username}{r.uid === uid && <span className="you-tag">You</span>}</div>
                   <div className="hist-sub">{rank.label}</div>

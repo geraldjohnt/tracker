@@ -75,6 +75,7 @@
                 "xp":       { ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "$other": { ".validate": false }
               } },
+              "focus":   { ".validate": "newData.isString() && newData.val().matches(/^(legs|upper|core|full)$/)" },
               "penalty": { ".validate": "newData.isNumber() && newData.val() >= 0" },
               "$other": { ".validate": false }
             }
@@ -82,7 +83,10 @@
           "settings": {
             "theme":    { ".validate": "newData.isString() && (newData.val() === 'dark' || newData.val() === 'light')" },
             "template": { ".validate": "newData.isString() && newData.val().matches(/^(default|neomorphism|glassmorphism|claymorphism|minimalism|liquidglass|spatial)$/)" },
-            "palette":  { ".validate": "newData.isString() && newData.val().matches(/^(indigo|rose|emerald|amber|ocean|violet|slate|sunset)$/)" }
+            "palette":  { ".validate": "newData.isString() && newData.val().matches(/^(indigo|rose|emerald|amber|ocean|violet|slate|sunset)$/)" },
+            "targets":  { "$weekday": {
+              ".validate": "$weekday.matches(/^(mon|tue|wed|thu|fri|sat|sun)$/) && newData.isString() && newData.val().matches(/^(legs|upper|core|full)$/)"
+            } }
           }
         },
         "meta": {

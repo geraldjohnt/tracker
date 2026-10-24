@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryBackend } from '../shared/backend';
 import { CATALOG, CATALOG_VERSION } from './catalog';
-import { levelInfo, questAmount } from './derive';
+import { DEFAULT_TARGETS, levelInfo, questAmount } from './derive';
 import { BOARD_PATH, CATALOG_OWNER, ExerciseStore } from './store';
 
 const flush = async () => { for (let i = 0; i < 6; i++) await Promise.resolve(); };
@@ -85,6 +85,39 @@ describe('ExerciseStore (sample data only)', () => {
     expect(backend.get(ROOT + '/profile/settledThrough')).toBe('2026-10-26');
     expect(s.xp()).toBe(55 - st.lastSettlement!.xpLost);
     expect(st.days['2026-10-27'].daily).toBeTruthy();
+  });
+
+  it('picks today’s daily quests for the day’s target, and re-picks them when today’s target changes', async () => {
+    const s = make(); // 2026-10-24 is a Saturday: core by default
+    await flush();
+    const exs = () => Object.values(s.getState().days[today].daily!).map(q => s.getState().byId[q!.ex]);
+    expect(backend.get(ROOT + '/days/2026-10-24/focus')).toBe('core');
+    expect(exs().every(e => ['core', 'full'].includes(e.category))).toBe(true);
+
+    s.setTarget('sat', 'legs');
+    await flush();
+    expect(backend.get(ROOT + '/settings/targets/sat')).toBe('legs');
+    expect(s.getState().targets.sat).toBe('legs');
+    expect(backend.get(ROOT + '/days/2026-10-24/focus')).toBe('legs');
+    expect(exs().every(e => ['legs', 'full'].includes(e.category))).toBe(true);
+
+    s.completeDaily('q0');
+    const after = s.getState().days[today].daily;
+    s.setTarget('sat', 'upper'); // a daily quest is done: today's quests stay
+    s.setTarget('mon', 'core');
+    await flush();
+    expect(s.getState().days[today].daily).toEqual(after);
+    expect(backend.get(ROOT + '/settings/targets')).toEqual({ sat: 'upper', mon: 'core' });
+
+    s.resetTargets();
+    await flush();
+    expect(s.getState().targets).toEqual(DEFAULT_TARGETS);
+
+    today = '2026-10-26'; // Monday: legs by default
+    const next = make();
+    await flush();
+    expect(backend.get(ROOT + '/days/2026-10-26/focus')).toBe('legs');
+    expect(next.getState().targets).toEqual(DEFAULT_TARGETS);
   });
 
   it('shows the bundled catalog, and only the owner publishes it to the database', async () => {

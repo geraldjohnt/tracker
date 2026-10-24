@@ -55,8 +55,9 @@ src/
   dashboard/     Dashboard, WeightCard, SpendCard, dashboard.css
   weight/        store, derive, units, WeightApp, WeekView, AllWeeksPage, WeekModal, weight.css
   spending/      store, derive, SpendingApp, views (Day/Calendar/Week/Month/Year), BarChart, spending.css
-  exercise/      catalog (48 exercises), derive (levels/ranks/quests/penalties/board), store, ExerciseApp,
-                 ExerciseModal, BodyMap (SVG muscle diagram), RankingView, parts, exercise.css
+  exercise/      catalog (48 exercises), derive (levels/ranks/targets/quests/penalties/board), store, ExerciseApp,
+                 ExerciseModal, BodyMap (SVG muscle diagram), RankBadge (SVG rank badges), RanksView,
+                 WeeklyPlan, RankingView, parts, exercise.css
 mem/             portable project memory (see above)
 ```
 
@@ -121,7 +122,14 @@ keeps snapshots and lb rounding from rewriting what the user is typing.
   **Bump `CATALOG_VERSION` after editing the catalog.**
 - **XP is a ledger, not a counter**: total XP = fold over `days/<date>` in date order of
   (gains − penalty), floored at 0 (`totalXp`). Level is derived from total XP (`levelInfo`):
-  20 XP for level 1, then `ceil(prev × 1.1)` (integer maths). Ranks are 5 levels each (`rankOf`).
+  20 XP for level 1, then `ceil(prev × 1.1)` (integer maths). A new **tier** every 5 levels, 5 tiers per
+  rank (Level 0 Rookie 1, 5 Rookie 2, … 25 Mover 1; `rankOf`). XP bonuses (+10%) and daily difficulty follow
+  the tier step (`tierStep`), not the rank.
+- **Badges** (`RankBadge.tsx`): the rank sets how ornate the SVG is (disc → hexagon → shield → swords,
+  laurels, crest, rays, gem → crown and wings); the tier sets the colours (1 pale … 5 purple), same for every rank.
+- **Weekly targets**: `settings/targets/<mon..sun>` = `legs|upper|core|full` over `DEFAULT_TARGETS`. The day's
+  3 daily quests are picked for that focus (`generateDaily`) and the focus is stored in `days/<date>/focus`.
+  Changing today's target re-picks today's quests only while none of them is done.
 - A day's quests (`generateDay`, seeded by `uid:date`, so devices agree) store only the exercise
   ids. Reps and XP are computed from the **current** level until completed, then frozen into
   `amount`/`xp`. Daily = legs + upper + core, home equipment only; optional = one per difficulty,
@@ -190,9 +198,9 @@ users/<uid>/                      read/write only by that account (auth.uid === 
     expenses/
       e_<id>/ { date: "YYYY-MM-DD", item, price, createdAt: <ms> }   (no `id` field: rules reject it)
   exerciseTracker/
-    settings/ theme, template, palette
+    settings/ theme, template, palette, targets/<mon..sun>: "legs"|"upper"|"core"|"full"
     profile/ { startDate, settledThrough }   (ISO dates)
-    days/<YYYY-MM-DD>/ { penalty?,
+    days/<YYYY-MM-DD>/ { focus?, penalty?,
       daily/q0..q2/ { ex, done?, amount?, xp? },
       optional/easy|medium|hard|elite/ { ex, accepted?, done?, amount?, xp? } }
   meta/ legacyImported: <ms>

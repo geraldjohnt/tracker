@@ -50,7 +50,7 @@ describe('database.rules.json accepts everything the app writes', () => {
 
     const x = new ExerciseStore(() => backend, 'rules.x', () => '2026-10-24');
     x.start('u1'); await flush();
-    x.completeDaily('q0'); x.acceptOptional('easy'); x.completeOptional('easy'); x.acceptOptional('hard'); await flush();
+    x.setTarget('mon', 'upper'); x.setTarget('sat', 'legs'); x.completeDaily('q0'); x.acceptOptional('easy'); x.completeOptional('easy'); x.acceptOptional('hard'); await flush();
     const later = new ExerciseStore(() => backend, 'rules.x2', () => '2026-10-28'); // settles missed days
     later.start('u1'); await flush();
     expect(backend.get('users/u1/exerciseTracker/days/2026-10-25/penalty')).toBeGreaterThan(0);

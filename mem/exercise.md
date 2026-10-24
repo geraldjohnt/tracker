@@ -10,9 +10,13 @@ tracker. Code: `src/exercise/`. Architecture notes are in CLAUDE.md → "Exercis
 | Ranking board for all users, opt-in only, ranked by level | `leaderboard/<uid>` (shared; own entry writable only; username must match the account). Join/leave behind a confirm dialog; entry kept in sync while joined. Ties: more XP, then earlier join |
 | List of calisthenics exercises, saved to the database, readable by all users | `catalog.ts` (48 exercises: 15 easy, 15 medium, 10 hard, 8 elite). Published to `exercises/` by the owner's session; read by every signed-in account; bundled fallback |
 | Level starts at 0; 20 XP to level 1; each next level needs +10% of the previous requirement, whole number, rounded up | `xpToNext`: 20, 22, 25, 28, … (`ceil(prev*11/10)`) |
-| Every 5 levels is a rank, numbered 1–5, exercise-themed names | `RANKS`: Rookie, Mover, Grinder, Athlete, Warrior, Gladiator, Spartan, Titan, Olympian, Legend. Past Legend 5 it keeps counting (Legend 6…) |
-| Daily quests: 3 exercises; reps rise with level (squats 10 at L0, 12 at L1) | `base + perLevel × level` per exercise. Slots: legs / push-or-pull / core-or-full, bodyweight only (`equipment: 'none'`). Daily difficulty unlocks by rank (easy → medium at Grinder → hard at Warrior → elite at Spartan) |
-| Optional quests with XP; must be accepted first; harder = more XP, harder exercise, more reps | One per difficulty per day. XP easy 8 / medium 15 / hard 30 / elite 50; reps × 1 / 1.25 / 1.5 / 2. Daily XP easy 5 / medium 8 / hard 12 / elite 20. All XP +10% per rank |
+| ~~Every 5 levels is a rank~~ **Changed 2026-10-24:** every 5 levels is the next *tier* (Level 5 Rookie 2, 10 Rookie 3, 15 Rookie 4, 20 Rookie 5, 25 Mover 1) | `RANKS`: Rookie, Mover, Grinder, Athlete, Warrior, Gladiator, Spartan, Titan, Olympian, Legend; 25 levels each. Past Legend 5 it keeps counting (Legend 6…) |
+| Players can see all ranks, to motivate them | **Ranks** tab (`RanksView.tsx`): every rank and tier with its badge, unlock level and total XP; the player card's badge links there |
+| Each rank has a badge: simple for low ranks, cooler for high ranks; each tier number has a colour (1 pale … 5 bright purple), same for every rank | `RankBadge.tsx` (pure SVG). Rank → ornaments: Rookie disc+chevron, Mover ringed disc, Grinder hexagon+bolt, Athlete shield+star, Warrior +crossed swords, Gladiator +laurels, Spartan +crest+rays, Titan +gem+glow, Olympian +crown+wings, Legend +bigger wings, jewelled crown, animated sparkles. Tier colours: 1 pale stone, 2 green, 3 blue, 4 gold/orange, 5 purple-magenta with gold trim. Tier pips (dots) too, for colour-blind players |
+| The badge replaces the tier number on the player card emblem | `.emblem-badge` on `.rank-emblem`; the ranking board shows badges as well |
+| Each weekday has a target (e.g. Monday legs), with a default the user can change; daily quests follow it | Focuses `legs`/`upper`/`core`/`full`. Default plan Mon legs, Tue upper, Wed core, Thu legs, Fri upper, Sat core, Sun full body. Stored in `settings/targets`; Weekly plan strip + editor on the Quests tab. Daily quests: 3 bodyweight exercises of that focus, no repeats (full body = legs + upper + core) |
+| Daily quests: 3 exercises; reps rise with level (squats 10 at L0, 12 at L1) | `base + perLevel × level` per exercise. Slots depend on the day's focus, bodyweight only (`equipment: 'none'`). Daily difficulty unlocks by level: medium at 10, hard at 20, elite at 30 (unchanged by the rank rework) |
+| Optional quests with XP; must be accepted first; harder = more XP, harder exercise, more reps | One per difficulty per day. XP easy 8 / medium 15 / hard 30 / elite 50; reps × 1 / 1.25 / 1.5 / 2. Daily XP easy 5 / medium 8 / hard 12 / elite 20. All XP +10% per tier step (every 5 levels; kept when ranks were stretched to 25 levels so XP balance didn't change) |
 | Missed daily quest → that day's XP deducted; nothing at level 0 / 0 XP; ≥1 of 3 done = no deduction | `settle()`; penalty capped at current XP |
 | Each exercise: beginner-friendly how-to, which variation, body form | `variant`, `summary`, `steps`, `form`, `mistakes`, `easier` |
 | Recommended gender (reference only, anyone can accept) | `gender: any/female/male`, shown as "Recommended for women · anyone can do it" |
@@ -28,6 +32,10 @@ tracker. Code: `src/exercise/`. Architecture notes are in CLAUDE.md → "Exercis
   level (only the exercise choice is fixed for the day). Completed quests freeze amount/XP.
 
 ## Choices made without asking (cheap to change)
+- Phase 3: focus names/default plan above; no "rest day" option (a rest day would need a penalty rule: ask
+  the owner if wanted). Changing today's target re-picks today's quests only if none is done yet.
+- With +10% XP per level and 25-level ranks, high ranks need enormous XP (Mover 1 ≈ 2.3k XP, Warrior ≈ 3.3M).
+  The Ranks tab shows these numbers. Raised with the owner; a gentler curve is an easy change in `xpToNext`.
 - App name "LevelUp"; rank names; XP numbers above; undo is allowed for today's completions only
   (honour system until the camera exists).
 - Non-participants can still *view* the ranking board; they just aren't on it.
@@ -38,6 +46,8 @@ tracker. Code: `src/exercise/`. Architecture notes are in CLAUDE.md → "Exercis
 - **Part 1 (done, 2026-10-24):** catalog + rules, game engine (`derive.ts`, unit-tested), store,
   page with Quests / Exercises (library with filters) / History, exercise detail modal with body
   map, nav links on every page.
+- **Phase 3 (done, 2026-10-24):** ranks stretched to 25 levels (tiers every 5), rank badges, Ranks tab,
+  weekly targets driving daily quests. Rules: `settings/targets`, `days/<date>/focus` (**owner must re-publish**).
 - **Phase 2 (done, 2026-10-24):** opt-in ranking board (Ranking tab); daily quests are bodyweight-only;
   L-sit moved to the floor version (no equipment); `CATALOG_VERSION` 2.
 - **Owner to do:** re-publish `database.rules.json` (new `exercises/`, `leaderboard/` and `users/$uid/exerciseTracker`),

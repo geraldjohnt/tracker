@@ -13,16 +13,19 @@ import { useAppearance } from '../shared/useAppearance';
 import { BodyMap } from './BodyMap';
 import { DIFFICULTIES, MUSCLE_LABELS, type Difficulty, type Exercise } from './catalog';
 import {
-  DAILY_SLOTS, dailyDone, dailyXpTotal, dayGain, DIFFICULTY_INFO, LEVELS_PER_RANK, levelInfo, questAmount, questXp, rankOf,
+  DAILY_SLOTS, dailyDone, dailyXpTotal, dayGain, DIFFICULTY_INFO, focusOn, FOCUS_INFO, levelInfo, nextRank, questAmount, questXp, rankOf,
   streak, totalXp, type QuestKind, type QuestSlot,
 } from './derive';
 import { ExerciseModal, type ExerciseModalHandle } from './ExerciseModal';
+import { RankBadge } from './RankBadge';
 import { RankingView } from './RankingView';
+import { RanksView } from './RanksView';
+import { WeeklyPlanModal, WeeklyStrip, type WeeklyPlanHandle } from './WeeklyPlan';
 import { CATEGORY_ICONS, CATEGORY_LABELS, fmtAmount, GenderTag } from './parts';
 import { exerciseStore, type ExerciseState } from './store';
 
-type View = 'quests' | 'ranking' | 'library' | 'history';
-const VIEWS: Array<[View, string]> = [['quests', 'Quests'], ['ranking', 'Ranking'], ['library', 'Exercises'], ['history', 'History']];
+type View = 'quests' | 'ranks' | 'ranking' | 'library' | 'history';
+const VIEWS: Array<[View, string]> = [['quests', 'Quests'], ['ranks', 'Ranks'], ['ranking', 'Ranking'], ['library', 'Exercises'], ['history', 'History']];
 
 export function ExerciseApp({ user }: { user: AuthUser }) {
   const state = useSyncExternalStore(exerciseStore.subscribe, exerciseStore.getState);
@@ -30,6 +33,7 @@ export function ExerciseApp({ user }: { user: AuthUser }) {
   const [appearance, setAppearance] = useAppearance('exercise', userRoot(user.uid, EXERCISE_ROOT));
   const [view, setView] = useState<View>('quests');
   const modalRef = useRef<ExerciseModalHandle>(null);
+  const planRef = useRef<WeeklyPlanHandle>(null);
   const info = levelInfo(totalXp(state.days));
   const openEx = (ex: Exercise) => modalRef.current?.open(ex);
 
@@ -67,13 +71,15 @@ export function ExerciseApp({ user }: { user: AuthUser }) {
         {!state.ready || !state.today
           ? <div className="text-center py-5"><div className="spinner-border spinner-border-sm" role="status"><span className="visually-hidden">Loading</span></div></div>
           : <>
-            {view === 'quests' && <QuestsView state={state} level={info.level} onInfo={openEx} />}
+            {view === 'quests' && <QuestsView state={state} level={info.level} onInfo={openEx} onRanks={() => setView('ranks')} onPlan={() => planRef.current?.open()} />}
+            {view === 'ranks' && <RanksView state={state} />}
             {view === 'ranking' && <RankingView state={state} uid={user.uid} />}
             {view === 'library' && <LibraryView catalog={state.catalog} level={info.level} onInfo={openEx} />}
             {view === 'history' && <HistoryView state={state} />}
           </>}
       </AppShell>
       <ExerciseModal ref={modalRef} level={info.level} />
+      {state.today && <WeeklyPlanModal ref={planRef} targets={state.targets} today={state.today} canRetargetToday={exerciseStore.canRetargetToday()} />}
       <Toasts />
     </>
   );
@@ -81,15 +87,18 @@ export function ExerciseApp({ user }: { user: AuthUser }) {
 
 /* ---------------- Quests ---------------- */
 
-function PlayerCard({ state }: { state: ExerciseState }) {
+function PlayerCard({ state, onRanks }: { state: ExerciseState; onRanks: () => void }) {
   const info = levelInfo(totalXp(state.days));
   const rank = rankOf(info.level);
-  const nextRankLevel = (Math.floor(info.level / LEVELS_PER_RANK) + 1) * LEVELS_PER_RANK;
+  const next = nextRank(info.level);
   const pct = Math.min(100, (info.into / info.need) * 100);
   const days = streak(state.days, state.today);
   return (
     <div className="card-x player fade-in">
-      <div className={'rank-emblem rank-' + rank.index}><i className={'bi ' + rank.icon}></i><span>{rank.tier}</span></div>
+      <button type="button" className={'rank-emblem rank-' + rank.index} onClick={onRanks} title={rank.label + ' · see all ranks'} aria-label={rank.label + ', see all ranks'}>
+        <i className={'bi ' + rank.icon}></i>
+        <RankBadge rank={rank} size={40} className="emblem-badge" />
+      </button>
       <div className="player-main">
         <div className="player-rank">{rank.label}</div>
         <div className="player-level">Level {info.level}</div>
@@ -98,7 +107,7 @@ function PlayerCard({ state }: { state: ExerciseState }) {
         </div>
         <div className="xp-meta">
           <span><b>{info.into}</b> / {info.need} XP to Level {info.level + 1}</span>
-          <span>{rankOf(nextRankLevel).label} at Level {nextRankLevel}</span>
+          <button type="button" className="link-btn" onClick={onRanks}>{next.rank.label} at Level {next.level}</button>
         </div>
       </div>
       <div className="player-stats">
@@ -109,15 +118,18 @@ function PlayerCard({ state }: { state: ExerciseState }) {
   );
 }
 
-function QuestsView({ state, level, onInfo }: { state: ExerciseState; level: number; onInfo: (ex: Exercise) => void }) {
+function QuestsView({ state, level, onInfo, onRanks, onPlan }: {
+  state: ExerciseState; level: number; onInfo: (ex: Exercise) => void; onRanks: () => void; onPlan: () => void;
+}) {
   const day = state.days[state.today];
+  const focus = FOCUS_INFO[day?.focus ?? focusOn(state.targets, state.today)];
   const safe = dailyDone(day);
   const atRisk = dailyXpTotal(day, level, state.byId);
   const xp = totalXp(state.days);
   const s = state.lastSettlement;
   return (
     <>
-      <PlayerCard state={state} />
+      <PlayerCard state={state} onRanks={onRanks} />
       {s && (
         <div className={'settle-banner fade-in' + (s.xpLost ? ' lost' : '')}>
           <i className={'bi ' + (s.xpLost ? 'bi-heartbreak' : 'bi-info-circle')}></i>
@@ -133,6 +145,7 @@ function QuestsView({ state, level, onInfo }: { state: ExerciseState; level: num
         <div className="card-x-head">
           <h2 className="card-x-title"><i className="bi bi-calendar-check"></i>Daily quests</h2>
           <span className="head-note">{fmtDate(state.today, { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+          <button type="button" className="focus-chip" onClick={onPlan} title="Change the weekly plan"><i className={'bi ' + focus.icon}></i>{focus.label} day<i className="bi bi-pencil"></i></button>
           <span className={'safe-pill ms-auto' + (safe ? ' safe' : '')}>
             {safe ? <><i className="bi bi-shield-check"></i>Safe for today</> : <><i className="bi bi-exclamation-triangle"></i>{Math.min(atRisk, xp) ? 'Do 1 by midnight or lose ' + Math.min(atRisk, xp) + ' XP' : 'Do at least 1 today'}</>}
           </span>
@@ -164,6 +177,7 @@ function QuestsView({ state, level, onInfo }: { state: ExerciseState; level: num
           })}
         </div>
       </div>
+      <WeeklyStrip targets={state.targets} today={state.today} onEdit={onPlan} />
       <p className="fine-print">
         Quests reset at midnight. Rep targets grow with your level. Honour system for now: tap Complete only after you’ve done every rep with good form.
       </p>
@@ -281,7 +295,7 @@ function HistoryView({ state }: { state: ExerciseState }) {
             <div key={d} className={'hist-row' + (d === state.today ? ' is-today' : '') + (missed ? ' missed' : '')}>
               <div>
                 <div className="list-row-label">{d === state.today ? 'Today' : fmtDate(d, { weekday: 'short', month: 'short', day: 'numeric' })}</div>
-                <div className="hist-sub">{dailyCount}/3 daily · {optCount} optional{missed ? ' · missed' : ''}</div>
+                <div className="hist-sub">{day?.focus ? FOCUS_INFO[day.focus].label + ' · ' : ''}{dailyCount}/3 daily · {optCount} optional{missed ? ' · missed' : ''}</div>
               </div>
               <div className="hist-xp">
                 {gain > 0 && <span className="good">+{gain}</span>}
