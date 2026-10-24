@@ -2,6 +2,13 @@
 
 Newest first. Keep each entry short.
 
+
+## 2026-10-24 — Body map + badge pips (between phases 4 and 5)
+- `BodyMap.tsx` redrawn as an anatomical chart (200×450 per figure, mirrored halves, outline pass + fill pass for
+  a clean silhouette; muscle heads separated by card-coloured gaps; untracked anatomy as muted `bm-part`s).
+  Tried per-piece cylindrical shading: it left seams where pieces overlap, so it was dropped.
+- `RankBadge.tsx`: tier pips in two rows for tiers 4 (2+2) and 5 (3+2); they used to spill past the shield's trim.
+- Owner asked for PR + merge to `main`. Next is still phase 5 (camera), after asking the owner's open question.
 ## 2026-10-24 — LevelUp phase 2: ranking board + equipment rule
 - Phase 1 merged (geraldjohnt/tracker#8).
 - Ranking tab: opt-in board at `leaderboard/<uid>` with join/leave confirm dialogs; sample mode seeds
