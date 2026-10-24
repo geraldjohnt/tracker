@@ -2,6 +2,16 @@
 
 Newest first. Keep each entry short.
 
+## 2026-10-24 — LevelUp (Exercise) part 1
+- New page `exercise.html` (`src/exercise/`): 48-exercise catalog with beginner how-tos, gender
+  recommendation and an SVG body map; levels (20 XP, +10%/level), ranks (5 levels each), 3 daily
+  quests, 4 optional quests (accept → complete), missed-day penalties, streak, history, library.
+- Rules: new `exercises/` (shared, owner-written) and `users/$uid/exerciseTracker`. **Owner must
+  re-publish the rules**, then open the page as geraldjohnt to publish the catalog.
+- `MemoryBackend.update()` is now atomic (one notification per multi-path update, like Firebase).
+- 64 tests. Checked in the browser (sample mode, desktop + mobile, light + dark) with Playwright.
+- Next: see the roadmap in `mem/exercise.md` (camera form check, dashboard card, …).
+
 ## 2026-10-24 — Mobile bottom nav
 - Below 768px the sidebar and menu button are hidden; `AppShell` renders a bottom tab bar (Home / Weight / Spendly).
   Each page passes `page=`. Toasts sit above the bar.

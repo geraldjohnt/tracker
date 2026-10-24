@@ -75,6 +75,7 @@ export function WeightApp({ user }: { user: AuthUser }) {
           <SidebarLink icon="bi-collection" label="All Weeks" active={page === 'weeks'} onClick={() => setPage('weeks')} />
           <SidebarDivider />
           <SidebarLink href="spending.html" icon="bi-wallet2" label="Spending Tracker" />
+          <SidebarLink href="exercise.html" icon="bi-person-arms-up" label="Exercise" />
         </>}
         headerActions={<>
           <ConnPill status={status} localLabel={localLabel} />

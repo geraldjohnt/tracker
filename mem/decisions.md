@@ -2,6 +2,20 @@
 
 Append new entries at the top. Format: date · decision · why · rejected alternatives.
 
+## 2026-10-24 · LevelUp: shared catalog node + XP as a per-day ledger
+- **Decision:** The exercise catalog lives at a new root node `exercises/` (read: any signed-in
+  account; write: owner email only), published by the owner's own session from the bundled copy.
+  Per-user progress lives under `users/<uid>/exerciseTracker/days/<date>`, and total XP is derived
+  by folding the days (gains − penalty, floored at 0) instead of storing a counter.
+- **Why:** the owner asked for the list "saved to the database, accessible by all users". Writing
+  it from the app keeps it in sync with the code without manual console imports. A ledger can't
+  lose increments when two devices write at once, and it makes the floor-at-0 rule exact.
+- **Not "touching existing data":** `exercises/` and `exerciseTracker/` are new nodes; nothing
+  existing is read or written.
+- **Rejected:** a manual JSON import in the Firebase console (drifts from the code); catalog only in
+  code (owner chose the database); a stored `xp` counter (races, harder floor rule).
+- Owner answers to the design questions are in `mem/exercise.md`.
+
 ## 2026-10-24 · Accounts: username + password, data per user
 - **Decision:** Firebase email/password auth with usernames mapped to
   `<username>@tracker-8dcc0.firebaseapp.com`. Open registration. All data moves under

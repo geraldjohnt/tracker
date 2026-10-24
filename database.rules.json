@@ -48,12 +48,78 @@
             "palette":  { ".validate": "newData.isString() && newData.val().matches(/^(indigo|rose|emerald|amber|ocean|violet|slate|sunset)$/)" }
           }
         },
+        "exerciseTracker": {
+          "profile": {
+            "startDate":      { ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)" },
+            "settledThrough": { ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)" },
+            "$other": { ".validate": false }
+          },
+          "days": {
+            "$date": {
+              ".validate": "$date.matches(/^\\d{4}-\\d{2}-\\d{2}$/)",
+              "daily":    { "$slot": {
+                ".validate": "$slot.matches(/^q[0-2]$/) && newData.hasChild('ex')",
+                "ex":       { ".validate": "newData.isString() && newData.val().length <= 40" },
+                "accepted": { ".validate": "newData.isNumber()" },
+                "done":     { ".validate": "newData.isNumber()" },
+                "amount":   { ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "xp":       { ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "$other": { ".validate": false }
+              } },
+              "optional": { "$difficulty": {
+                ".validate": "$difficulty.matches(/^(easy|medium|hard|elite)$/) && newData.hasChild('ex')",
+                "ex":       { ".validate": "newData.isString() && newData.val().length <= 40" },
+                "accepted": { ".validate": "newData.isNumber()" },
+                "done":     { ".validate": "newData.isNumber()" },
+                "amount":   { ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "xp":       { ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "$other": { ".validate": false }
+              } },
+              "penalty": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+              "$other": { ".validate": false }
+            }
+          },
+          "settings": {
+            "theme":    { ".validate": "newData.isString() && (newData.val() === 'dark' || newData.val() === 'light')" },
+            "template": { ".validate": "newData.isString() && newData.val().matches(/^(default|neomorphism|glassmorphism|claymorphism|minimalism|liquidglass|spatial)$/)" },
+            "palette":  { ".validate": "newData.isString() && newData.val().matches(/^(indigo|rose|emerald|amber|ocean|violet|slate|sunset)$/)" }
+          }
+        },
         "meta": {
           "legacyImported": { ".validate": "newData.isNumber()" },
           "$other": { ".validate": false }
         },
         "$other": { ".validate": false }
       }
+    },
+    "exercises": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.email === 'geraldjohnt@tracker-8dcc0.firebaseapp.com'",
+      "version": { ".validate": "newData.isNumber()" },
+      "items": {
+        "$id": {
+          ".validate": "$id.matches(/^[a-z0-9-]{1,40}$/) && newData.hasChildren(['name','difficulty','measure','base','perLevel'])",
+          "name":       { ".validate": "newData.isString() && newData.val().length <= 60" },
+          "variant":    { ".validate": "newData.isString() && newData.val().length <= 200" },
+          "category":   { ".validate": "newData.isString() && newData.val().matches(/^(legs|push|pull|core|full)$/)" },
+          "difficulty": { ".validate": "newData.isString() && newData.val().matches(/^(easy|medium|hard|elite)$/)" },
+          "measure":    { ".validate": "newData.isString() && newData.val().matches(/^(reps|seconds)$/)" },
+          "base":       { ".validate": "newData.isNumber() && newData.val() > 0" },
+          "perLevel":   { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "perSide":    { ".validate": "newData.isBoolean()" },
+          "gender":     { ".validate": "newData.isString() && newData.val().matches(/^(any|female|male)$/)" },
+          "equipment":  { ".validate": "newData.isString() && newData.val().matches(/^(none|wall|chair|bar|dip|anchor)$/)" },
+          "primary":    { "$i": { ".validate": "newData.isString() && newData.val().matches(/^(chest|shoulders|biceps|triceps|forearms|abs|obliques|traps|back|lowerBack|glutes|quads|hamstrings|calves)$/)" } },
+          "secondary":  { "$i": { ".validate": "newData.isString() && newData.val().matches(/^(chest|shoulders|biceps|triceps|forearms|abs|obliques|traps|back|lowerBack|glutes|quads|hamstrings|calves)$/)" } },
+          "summary":    { ".validate": "newData.isString() && newData.val().length <= 300" },
+          "steps":      { "$i": { ".validate": "newData.isString() && newData.val().length <= 300" } },
+          "form":       { "$i": { ".validate": "newData.isString() && newData.val().length <= 200" } },
+          "mistakes":   { "$i": { ".validate": "newData.isString() && newData.val().length <= 200" } },
+          "easier":     { ".validate": "newData.isString() && newData.val().length <= 300" },
+          "$other": { ".validate": false }
+        }
+      },
+      "$other": { ".validate": false }
     },
     "weightTracker": {
       ".read": "auth != null && auth.token.email === 'geraldjohnt@tracker-8dcc0.firebaseapp.com'",

@@ -3,6 +3,7 @@
 // rules, which reject unknown keys via `$other: { ".validate": false }`.
 import { describe, expect, it, vi } from 'vitest';
 import rules from '../../database.rules.json';
+import { CATALOG_OWNER, ExerciseStore } from '../exercise/store';
 import { SpendingStore } from '../spending/store';
 import { WeightStore } from '../weight/store';
 import { usernameToEmail } from './auth';
@@ -47,9 +48,29 @@ describe('database.rules.json accepts everything the app writes', () => {
     const eid = s.addExpense('2026-10-24', 'Tea', 45);
     s.setField(eid, 'item', 'Milk tea');
 
+    const x = new ExerciseStore(() => backend, 'rules.x', () => '2026-10-24');
+    x.start('u1'); await flush();
+    x.completeDaily('q0'); x.acceptOptional('easy'); x.completeOptional('easy'); x.acceptOptional('hard'); await flush();
+    const later = new ExerciseStore(() => backend, 'rules.x2', () => '2026-10-28'); // settles missed days
+    later.start('u1'); await flush();
+    expect(backend.get('users/u1/exerciseTracker/days/2026-10-25/penalty')).toBeGreaterThan(0);
+
     vi.advanceTimersByTime(1000); await flush();
     const userRule = ((rules.rules as unknown as RuleNode).users as RuleNode).$uid as RuleNode;
     expect(disallowed(backend.get('users/u1'), userRule, 'users/$uid')).toEqual([]);
+    vi.useRealTimers();
+  });
+
+  it('the shared exercise catalog the owner publishes, and only the owner may write it', async () => {
+    vi.useFakeTimers();
+    const backend = new MemoryBackend({});
+    new ExerciseStore(() => backend, 'rules.c', () => '2026-10-24').start('u1', CATALOG_OWNER);
+    await flush();
+    const catalogRule = (rules.rules as unknown as RuleNode).exercises as RuleNode;
+    expect(backend.get('exercises/version')).toBeTruthy();
+    expect(disallowed(backend.get('exercises'), catalogRule, 'exercises')).toEqual([]);
+    expect(rules.rules.exercises['.write']).toContain("auth.token.email === '" + usernameToEmail(CATALOG_OWNER) + "'");
+    expect(rules.rules.exercises['.read']).toBe('auth != null');
     vi.useRealTimers();
   });
 
