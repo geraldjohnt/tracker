@@ -121,6 +121,19 @@
       },
       "$other": { ".validate": false }
     },
+    "leaderboard": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['username','level','xp','joinedAt']) && newData.child('username').val() + '@tracker-8dcc0.firebaseapp.com' === auth.token.email",
+        "username":  { ".validate": "newData.isString() && newData.val().length <= 30" },
+        "level":     { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "xp":        { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "joinedAt":  { ".validate": "newData.isNumber()" },
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
     "weightTracker": {
       ".read": "auth != null && auth.token.email === 'geraldjohnt@tracker-8dcc0.firebaseapp.com'",
       ".write": false

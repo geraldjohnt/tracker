@@ -16,7 +16,8 @@ parity-testing method are in [migration.md](migration.md). The pre-migration cod
 1. **Never touch the existing Firebase data.** No reads/writes against production for testing.
    Test CRUD only with sample data (`npm run dev` / `?sample=1` / `MemoryBackend` in tests).
 2. Ask the owner when a decision is genuinely theirs, always with a recommendation.
-3. Keep the URLs `index.html` / `weight.html` / `spending.html` / `exercise.html` working on GitHub Pages.
+3. Phased work: PR + merge to `main` after every phase, then stop until the owner says continue.
+4. Keep the URLs `index.html` / `weight.html` / `spending.html` / `exercise.html` working on GitHub Pages.
 
 ## Where things are
 - `src/shared/` — types, dates, format, backend (Firebase vs in-memory sample), appearance, shell components

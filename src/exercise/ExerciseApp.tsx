@@ -17,11 +17,12 @@ import {
   streak, totalXp, type QuestKind, type QuestSlot,
 } from './derive';
 import { ExerciseModal, type ExerciseModalHandle } from './ExerciseModal';
+import { RankingView } from './RankingView';
 import { CATEGORY_ICONS, CATEGORY_LABELS, fmtAmount, GenderTag } from './parts';
 import { exerciseStore, type ExerciseState } from './store';
 
-type View = 'quests' | 'library' | 'history';
-const VIEWS: Array<[View, string]> = [['quests', 'Quests'], ['library', 'Exercises'], ['history', 'History']];
+type View = 'quests' | 'ranking' | 'library' | 'history';
+const VIEWS: Array<[View, string]> = [['quests', 'Quests'], ['ranking', 'Ranking'], ['library', 'Exercises'], ['history', 'History']];
 
 export function ExerciseApp({ user }: { user: AuthUser }) {
   const state = useSyncExternalStore(exerciseStore.subscribe, exerciseStore.getState);
@@ -67,6 +68,7 @@ export function ExerciseApp({ user }: { user: AuthUser }) {
           ? <div className="text-center py-5"><div className="spinner-border spinner-border-sm" role="status"><span className="visually-hidden">Loading</span></div></div>
           : <>
             {view === 'quests' && <QuestsView state={state} level={info.level} onInfo={openEx} />}
+            {view === 'ranking' && <RankingView state={state} uid={user.uid} />}
             {view === 'library' && <LibraryView catalog={state.catalog} level={info.level} onInfo={openEx} />}
             {view === 'history' && <HistoryView state={state} />}
           </>}

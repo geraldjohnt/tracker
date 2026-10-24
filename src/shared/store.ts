@@ -1,4 +1,5 @@
 // Picks the storage backend once per page load.
+// (In sample mode the tree holds the legacy-root sample data plus shared nodes like the ranking board.)
 //
 // Production builds talk to Firebase. Everything else uses the in-memory
 // sample-data backend, so development can never read or write real data:
@@ -9,7 +10,7 @@ import { MemoryAuth, type AuthService } from './auth';
 import { MemoryBackend, type Backend } from './backend';
 import { FirebaseAuthService } from './firebaseAuth';
 import { FirebaseBackend } from './firebaseBackend';
-import { sampleTree } from './sampleData';
+import { sampleShared, sampleTree } from './sampleData';
 
 export const SAMPLE_STORAGE_KEY = 'tracker.sample.v1';
 export const SAMPLE_AUTH_KEY = 'tracker.sample.auth.v1';
@@ -25,7 +26,7 @@ let backend: Backend | null | undefined;
 export function getBackend(): Backend | null {
   if (backend !== undefined) return backend;
   if (isSampleMode()) {
-    backend = new MemoryBackend(sampleTree(), SAMPLE_STORAGE_KEY);
+    backend = new MemoryBackend({ ...sampleTree(), ...sampleShared() }, SAMPLE_STORAGE_KEY);
   } else {
     try { backend = new FirebaseBackend(); }
     catch (e) { console.error(e); backend = null; }

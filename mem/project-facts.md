@@ -39,6 +39,8 @@
   exercise store relies on it.
 - Exercise catalog: edit `src/exercise/catalog.ts`, then **bump `CATALOG_VERSION`** so the owner's session republishes
   it. Rules cap string lengths (name 60, variant 200, steps/summary/easier 300, form/mistakes 200); a test checks them.
+- Sample mode seeds shared nodes from `sampleShared()` (ranking-board players) next to `sampleTree()`. Keep shared
+  nodes out of `sampleTree()`: tests nest that tree under `users/u1`, and the rules test would flag them.
 - Exercise quest slots use keys `q0..q2` (not 0..2) so Firebase never turns them into arrays.
 - **Expense records must not contain `id`** (the rules reject unknown keys). Stores add `id` only in memory/local
   cache; `rules.test.ts` catches regressions.

@@ -2,6 +2,17 @@
 
 Append new entries at the top. Format: date · decision · why · rejected alternatives.
 
+## 2026-10-24 · LevelUp ranking board: opt-in shared node
+- **Decision:** `leaderboard/<uid>` holds `{username, level, xp, joinedAt, updatedAt}` only for
+  accounts that confirmed joining. Readable by every signed-in account; each account can write only
+  its own entry, and the rules tie `username` to the signed-in email so nobody can post as someone
+  else. The client mirrors its level/XP there while joined.
+- **Why:** the owner asked for a ranking of all users by level, with participation only after the
+  user confirms. User data under `users/<uid>` is private, so a separate public node is needed.
+- **Known limit:** values are client-reported (as all XP is); fixing that needs server-side
+  verification (Cloud Functions), not possible on Pages alone.
+- **Rejected:** opening `users/<uid>/exerciseTracker` to everyone (exposes all history).
+
 ## 2026-10-24 · LevelUp: shared catalog node + XP as a per-day ledger
 - **Decision:** The exercise catalog lives at a new root node `exercises/` (read: any signed-in
   account; write: owner email only), published by the owner's own session from the bundled copy.

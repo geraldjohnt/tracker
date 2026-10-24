@@ -19,3 +19,6 @@ Hard rules from the project owner. They apply to every session on every machine.
 - When a decision is the owner's to make, ask, and include a recommendation (mark it "Recommended").
 - Keep the portable memory in `mem/` up to date; it's how work continues on other machines.
 - Keep the GitHub Pages deployment working at all times; each migration phase must ship on its own.
+- **Phased work (owner, 2026-10-24):** when a feature is split into phases, open a PR and merge it to
+  `main` at the end of **each** phase (after CI is green), then **stop** and wait for the owner to say
+  continue. Don't start the next phase on your own.

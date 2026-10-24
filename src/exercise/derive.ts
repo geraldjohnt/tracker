@@ -88,9 +88,8 @@ export function maxDailyDifficulty(level: number): Difficulty {
 
 export const DAILY_SLOTS = ['q0', 'q1', 'q2'] as const;
 export type DailySlot = (typeof DAILY_SLOTS)[number];
-/** Daily quest slots: one legs, one upper body, one core. */
+/** Daily quest slots: one legs, one upper body, one core. Bodyweight only: equipment is for optional quests. */
 const SLOT_CATEGORIES: Record<DailySlot, Exercise['category'][]> = { q0: ['legs'], q1: ['push', 'pull'], q2: ['core', 'full'] };
-const HOME_EQUIPMENT: Exercise['equipment'][] = ['none', 'wall', 'chair'];
 
 export interface QuestSlot {
   ex: string;
@@ -139,7 +138,7 @@ export function generateDay(level: number, seed: string, catalog: Exercise[] = C
   const daily: DayRecord['daily'] = {};
   for (const slot of DAILY_SLOTS) {
     const allowed = DIFFICULTIES.slice(0, max + 1);
-    const pool = (d: Difficulty) => catalog.filter(e => e.difficulty === d && SLOT_CATEGORIES[slot].includes(e.category) && HOME_EQUIPMENT.includes(e.equipment));
+    const pool = (d: Difficulty) => catalog.filter(e => e.difficulty === d && SLOT_CATEGORIES[slot].includes(e.category) && e.equipment === 'none');
     const tiers = allowed.filter(d => pool(d).length);
     const tier = tiers.length ? pickFrom(tiers, rnd) : null;
     const ex = tier ? pickFrom(pool(tier), rnd) : pickFrom(catalog, rnd);
@@ -310,4 +309,36 @@ export function catalogRecord(version: number, catalog: Exercise[]): Obj {
   const items: Obj = {};
   for (const { id, ...rest } of catalog) items[id] = rest;
   return { version, items };
+}
+
+/* ---------------- ranking board ---------------- */
+
+/** One participant on the shared ranking board (`leaderboard/<uid>`). Only accounts that opt in have one. */
+export interface BoardEntry {
+  uid: string; // from the key; not stored
+  username: string;
+  level: number;
+  xp: number;
+  joinedAt: number;
+  updatedAt?: number;
+}
+
+export function normalizeBoard(v: unknown): BoardEntry[] {
+  if (!isObj(v)) return [];
+  const out: BoardEntry[] = [];
+  for (const [uid, e] of Object.entries(v)) {
+    if (!isObj(e) || typeof e.username !== 'string') continue;
+    out.push({ uid, username: e.username, level: numOr(e.level) ?? 0, xp: numOr(e.xp) ?? 0, joinedAt: numOr(e.joinedAt) ?? 0, updatedAt: numOr(e.updatedAt) });
+  }
+  return out;
+}
+
+/** Highest level first; ties go to more total XP, then to whoever joined first. Equal level and XP share a place. */
+export function rankBoard(entries: BoardEntry[]): Array<BoardEntry & { place: number }> {
+  const sorted = [...entries].sort((a, b) => b.level - a.level || b.xp - a.xp || a.joinedAt - b.joinedAt || a.username.localeCompare(b.username));
+  let place = 0;
+  return sorted.map((e, i) => {
+    if (i === 0 || e.level !== sorted[i - 1].level || e.xp !== sorted[i - 1].xp) place = i + 1;
+    return { ...e, place };
+  });
 }

@@ -47,3 +47,13 @@ export function sampleTree(today = todayISO()): Record<string, unknown> {
     [SPEND_ROOT]: { expenses },
   };
 }
+
+/** Shared (not per-account) sample nodes: a few ranking-board players so the board isn't empty. */
+export function sampleShared(): Record<string, unknown> {
+  const players: Array<[string, number, number]> = [['sample-alex', 7, 205], ['sample-bea', 4, 105], ['sample-cris', 12, 470], ['sample-dana', 1, 28]];
+  const leaderboard: Record<string, unknown> = {};
+  players.forEach(([username, level, xp], i) => {
+    leaderboard['sample_u' + i] = { username, level, xp, joinedAt: 1700000000000 + i, updatedAt: 1700000000000 + i };
+  });
+  return { leaderboard };
+}
