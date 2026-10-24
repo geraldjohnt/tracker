@@ -1,0 +1,11 @@
+/* One import for every page: design tokens, templates, palettes, base, appearance menu, app shell.
+   Page-specific CSS (including that page's "surfaces that pick up a template's blur" selector list)
+   lives next to the page's entry, e.g. src/dashboard/dashboard.css. */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.min.css';
+@import './tokens.css';
+@import './templates.css';
+@import './palettes.css';
+@import './base.css';
+@import './appearance.css';
+@import './shell.css';

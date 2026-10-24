@@ -1,0 +1,90 @@
+/* Shared across all trackers — extracted verbatim from the legacy single-file pages.
+   Keep in sync with any legacy page still inlining this block until it is ported. */
+/* ============================================================
+   Color palettes — accent hue only; good/bad/warn stay semantic.
+   "indigo" (no data-palette, or the literal value) = current colors.
+   ============================================================ */
+[data-palette="rose"]{
+  --accent:#f43f5e; --accent-2:#fb7185;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="rose"][data-bs-theme="dark"]{
+  --accent:#fb7185; --accent-2:#fda4af;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}
+[data-palette="emerald"]{
+  --accent:#10b981; --accent-2:#34d399;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="emerald"][data-bs-theme="dark"]{
+  --accent:#34d399; --accent-2:#6ee7b7;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}
+[data-palette="amber"]{
+  --accent:#d97706; --accent-2:#f59e0b;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="amber"][data-bs-theme="dark"]{
+  --accent:#fbbf24; --accent-2:#fcd34d;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}
+[data-palette="ocean"]{
+  --accent:#0284c7; --accent-2:#22d3ee;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="ocean"][data-bs-theme="dark"]{
+  --accent:#38bdf8; --accent-2:#67e8f9;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}
+[data-palette="violet"]{
+  --accent:#a855f7; --accent-2:#ec4899;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="violet"][data-bs-theme="dark"]{
+  --accent:#c084fc; --accent-2:#f472b6;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}
+[data-palette="slate"]{
+  --accent:#475569; --accent-2:#64748b;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="slate"][data-bs-theme="dark"]{
+  --accent:#94a3b8; --accent-2:#cbd5e1;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}
+[data-palette="sunset"]{
+  --accent:#ea580c; --accent-2:#ef4444;
+  --accent-soft:color-mix(in srgb, var(--accent) 11%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+[data-palette="sunset"][data-bs-theme="dark"]{
+  --accent:#fb923c; --accent-2:#f87171;
+  --accent-soft:color-mix(in srgb, var(--accent) 15%, transparent);
+  --bg-grad-1:color-mix(in srgb, var(--accent) 22%, transparent);
+  --bg-grad-2:color-mix(in srgb, var(--accent-2) 15%, transparent);
+}

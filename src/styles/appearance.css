@@ -1,0 +1,47 @@
+/* Shared across all trackers — extracted verbatim from the legacy single-file pages.
+   Keep in sync with any legacy page still inlining this block until it is ported. */
+/* ============================================================
+   Appearance menu (theme mode + design template + color palette)
+   ============================================================ */
+.appearance-menu{
+  /* Anchored toward the opaque --bg (not used bare) so this settings panel stays
+     legible even under a very translucent template, or if backdrop-filter is
+     unsupported/disabled — a page-level glass card can afford to be see-through,
+     a control you have to read and click can't. */
+  background:color-mix(in srgb, var(--card) 60%, var(--bg));
+  border:1px solid var(--border); border-radius:var(--r-md);
+  box-shadow:var(--shadow-lg); padding:.7rem; min-width:270px; max-width:min(320px,88vw);
+  max-height:min(75vh,560px); overflow-y:auto;
+}
+.appearance-label{
+  font-size:.68rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+  color:var(--muted); padding:.15rem .3rem .5rem;
+}
+.appearance-menu .dropdown-divider{ border-color:var(--border); margin:.6rem 0; }
+.appearance-mode-btn{
+  width:100%; display:flex; align-items:center; gap:.55rem; justify-content:flex-start;
+  padding:.55rem .7rem;
+}
+.template-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:.4rem; }
+.tpl-opt{
+  display:flex; flex-direction:column; align-items:center; gap:.32rem;
+  padding:.6rem .4rem; border-radius:var(--r-sm); border:1px solid var(--border);
+  background:var(--card-2); color:var(--text); font-size:.72rem; font-weight:600;
+  cursor:pointer; text-align:center;
+}
+.tpl-opt i{ font-size:1.1rem; color:var(--muted); }
+.tpl-opt:hover{ border-color:var(--border-strong); }
+.tpl-opt.active{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
+.tpl-opt.active i{ color:var(--accent); }
+.palette-grid{ display:flex; flex-wrap:wrap; gap:.55rem; padding:.1rem .3rem .2rem; }
+.pal-opt{
+  width:30px; height:30px; flex:0 0 30px; border-radius:50%; border:none; padding:0;
+  background:linear-gradient(135deg,var(--sw1),var(--sw2)); cursor:pointer; position:relative;
+}
+.pal-opt .pal-check{
+  display:none; position:absolute; inset:0; align-items:center; justify-content:center;
+  color:#fff; font-size:.85rem; text-shadow:0 1px 3px rgba(0,0,0,.6);
+}
+.pal-opt.active{ box-shadow:0 0 0 2px var(--card), 0 0 0 4px var(--text); }
+.pal-opt.active .pal-check{ display:flex; }
+
