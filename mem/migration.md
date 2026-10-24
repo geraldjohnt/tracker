@@ -6,7 +6,7 @@
 | 2 | Dashboard (`index.html`) → React | ✅ done (pixel-identical to legacy except the "Sample data" pill) |
 | 3 | WeighIn (`weight.html`) → React (modals, pending-edit reconciliation, kg/lb, CSV export, All Weeks page) | ✅ done: pixel-identical at every step of a scripted flow (light/dark/mobile); CRUD verified on sample data |
 | 4 | Spendly (`spending.html`) → React (day/calendar/week/month/year views, charts) | ✅ done: pixel-identical across a 10-step flow (light/dark/mobile); CRUD verified on sample data |
-| 5 | Cleanup: drop legacy inline code, refresh README/CLAUDE.md, final docs | ⏳ |
+| 5 | Cleanup: README + CLAUDE.md rewritten for the new architecture, rules-conformance test, mem refresh | ✅ done |
 
 ## Porting checklist (per page)
 - [ ] HTML entry keeps the same filename, has only `<head>` meta/font links + `<div id="root">` + module script
