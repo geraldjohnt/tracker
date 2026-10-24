@@ -22,3 +22,17 @@
   classes). It lives in the page's CSS, not in `src/styles/`.
 - `.claude/settings.local.json` holds Windows paths from the owner's other machine. It's harmless;
   leave it alone.
+- **React text-node gotcha:** JSX like `<label>{label} ({unit})</label>` renders four text nodes, which kerns
+  sub-pixel differently from the legacy single string and fails pixel parity. Concatenate into one string expression
+  when matching legacy output.
+- **Editable inputs use `DraftInput`** (`src/shared/components/DraftInput.tsx`): it owns its text while focused and
+  syncs from props only when unfocused or on blur. This is the React form of legacy `isEditing`/`requestRender`, and
+  stops lb display rounding ("180" → "180.0") or live snapshots from rewriting what the user is typing.
+- **Sample mode uses separate cache keys** (`weighin.cache.v1.sample`, and `spendly.cache.v1.sample` once ported),
+  so sample data never overwrites the real offline cache.
+- `MemoryBackend` mimics Firebase quirks: async first value, null fields stripped on write, empty parents pruned.
+  Keep it faithful; store tests depend on it.
+- Trackers' stores (`src/<tracker>/store.ts`) live outside React and are read with `useSyncExternalStore`;
+  `store.start()` is called from `main.tsx`. Tests construct a store with an injected `MemoryBackend`.
+- Build output chunks: `vendor-{react,firebase,chart,bootstrap}`, `app-shared` (src/shared, src/styles, */derive.ts),
+  plus one chunk per page.

@@ -4,7 +4,7 @@
 |---|---|---|
 | 1 | Vite/React/TS scaffold, shared modules (`src/shared`, `src/styles`), backend abstraction + sample data, unit tests, Actions build/deploy, `mem/` | ✅ done |
 | 2 | Dashboard (`index.html`) → React | ✅ done (pixel-identical to legacy except the "Sample data" pill) |
-| 3 | WeighIn (`weight.html`) → React (modals, pending-edit reconciliation, kg/lb, CSV export, All Weeks page) | ⏳ |
+| 3 | WeighIn (`weight.html`) → React (modals, pending-edit reconciliation, kg/lb, CSV export, All Weeks page) | ✅ done: pixel-identical at every step of a scripted flow (light/dark/mobile); CRUD verified on sample data |
 | 4 | Spendly (`spending.html`) → React (day/calendar/week/month/year views, charts) | ⏳ |
 | 5 | Cleanup: drop legacy inline code, refresh README/CLAUDE.md, final docs | ⏳ |
 
@@ -25,3 +25,7 @@
 4. In Playwright, route CDN URLs (jsdelivr bootstrap/icons/chart.js) to `node_modules` files, abort Google Fonts, and
    **abort `firebaseio.com|firebasedatabase.app|gstatic.com/firebasejs`** as a safety net. Screenshot both in light and dark, then pixel-diff.
 5. Drive interactions (appearance menu, sidebar, mobile drawer) and check `localStorage` keys.
+6. Run the same scripted flow on both pages (type values, switch tabs, toggle the unit, open modals, change pages) and
+   pixel-diff each step. Expected difference: the fake legacy SDK doesn't echo writes back, so legacy chrome that only
+   re-renders on a snapshot (week select, status chip) stays stale until the next full render. Production Firebase
+   does echo writes, so React's live update is the correct reference.
