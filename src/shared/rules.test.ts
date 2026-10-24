@@ -6,7 +6,7 @@ import rules from '../../database.rules.json';
 import { CATALOG_OWNER, ExerciseStore } from '../exercise/store';
 import { SpendingStore } from '../spending/store';
 import { WeightStore } from '../weight/store';
-import { usernameToEmail } from './auth';
+import { USER_EMAIL_DOMAIN, usernameToEmail } from './auth';
 import { MemoryBackend } from './backend';
 import { importLegacyData, LEGACY_OWNER } from './legacy';
 import { sampleTree } from './sampleData';
@@ -71,6 +71,21 @@ describe('database.rules.json accepts everything the app writes', () => {
     expect(disallowed(backend.get('exercises'), catalogRule, 'exercises')).toEqual([]);
     expect(rules.rules.exercises['.write']).toContain("auth.token.email === '" + usernameToEmail(CATALOG_OWNER) + "'");
     expect(rules.rules.exercises['.read']).toBe('auth != null');
+    vi.useRealTimers();
+  });
+
+  it('ranking board entries: only allowed keys, own entry only, username tied to the account', async () => {
+    vi.useFakeTimers();
+    const backend = new MemoryBackend({});
+    const x = new ExerciseStore(() => backend, 'rules.b', () => '2026-10-24');
+    x.start('u1', 'someone'); await flush();
+    await x.joinBoard();
+    x.completeDaily('q0'); await flush();
+    const boardRule = (rules.rules as unknown as RuleNode).leaderboard as RuleNode;
+    expect(disallowed(backend.get('leaderboard'), boardRule, 'leaderboard')).toEqual([]);
+    const entry = rules.rules.leaderboard.$uid;
+    expect(entry['.write']).toBe('auth != null && auth.uid === $uid');
+    expect(entry['.validate']).toContain("newData.child('username').val() + '@" + USER_EMAIL_DOMAIN + "' === auth.token.email");
     vi.useRealTimers();
   });
 

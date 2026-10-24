@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CATALOG, CATALOG_BY_ID, DIFFICULTIES, MUSCLES } from './catalog';
 import {
   catalogRecord, dailyDone, dailyXpTotal, DAILY_SLOTS, generateDay, levelInfo, maxDailyDifficulty, normalizeCatalog, normalizeDays,
-  questAmount, questXp, rankOf, settle, streak, totalXp, xpToNext, type DaysMap,
+  normalizeBoard, questAmount, questXp, rankBoard, rankOf, settle, streak, totalXp, xpToNext, type DaysMap,
 } from './derive';
 
 const done = (xp: number) => ({ ex: 'air-squat', done: 1, amount: 10, xp });
@@ -57,11 +57,15 @@ describe('quests', () => {
     expect(Object.keys(a.daily)).toEqual([...DAILY_SLOTS]);
     expect(Object.keys(a.optional)).toEqual([...DIFFICULTIES]);
     for (const d of DIFFICULTIES) expect(CATALOG_BY_ID[a.optional[d]!.ex].difficulty).toBe(d);
-    // Level 0 daily quests are easy and need no bar.
+    // Level 0 daily quests are easy; daily quests never need equipment, at any level.
     for (let i = 0; i < 30; i++) {
+      for (const level of [10, 25, 45]) {
+        const hard = generateDay(level, 'u1:seed' + i);
+        expect(DAILY_SLOTS.every(s => CATALOG_BY_ID[hard.daily[s]!.ex].equipment === 'none')).toBe(true);
+      }
       const day = generateDay(0, 'u1:seed' + i);
       const cats = DAILY_SLOTS.map(s => CATALOG_BY_ID[day.daily[s]!.ex]);
-      expect(cats.every(e => e.difficulty === 'easy' && ['none', 'wall', 'chair'].includes(e.equipment))).toBe(true);
+      expect(cats.every(e => e.difficulty === 'easy' && e.equipment === 'none')).toBe(true);
       expect(cats[0].category).toBe('legs');
       expect(['push', 'pull']).toContain(cats[1].category);
       expect(['core', 'full']).toContain(cats[2].category);
@@ -159,5 +163,19 @@ describe('catalog', () => {
   it('normalizes day snapshots, dropping junk', () => {
     const days = normalizeDays({ '2026-10-24': { daily: { q0: { ex: 'a', done: 5, xp: 5 }, q9: { ex: 'b' } }, penalty: 0 }, junk: {} });
     expect(days).toEqual({ '2026-10-24': { daily: { q0: { ex: 'a', done: 5, xp: 5 } } } });
+  });
+});
+
+describe('ranking board', () => {
+  it('ranks by level, then XP, then who joined first; equal level and XP share a place', () => {
+    const board = normalizeBoard({
+      a: { username: 'ana', level: 3, xp: 80, joinedAt: 5 },
+      b: { username: 'ben', level: 5, xp: 130, joinedAt: 9 },
+      c: { username: 'cy', level: 3, xp: 90, joinedAt: 7 },
+      d: { username: 'dee', level: 3, xp: 80, joinedAt: 1 },
+      junk: { level: 99 },
+    });
+    expect(board).toHaveLength(4);
+    expect(rankBoard(board).map(e => [e.username, e.place])).toEqual([['ben', 1], ['cy', 2], ['dee', 3], ['ana', 3]]);
   });
 });

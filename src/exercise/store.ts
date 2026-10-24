@@ -3,7 +3,8 @@
 // falls back to local-only mode like the other trackers. On load (and when the date
 // changes) it settles missed days and creates the day's quests. It also reads the shared
 // catalog at `exercises/`, and the owner's account publishes the bundled catalog there
-// when it's newer.
+// when it's newer. Accounts that opt in to the ranking board keep their entry at
+// `leaderboard/<uid>` up to date with their level and XP.
 import type { Backend } from '../shared/backend';
 import { addDays, todayISO } from '../shared/dates';
 import { LEGACY_OWNER } from '../shared/legacy';
@@ -12,12 +13,13 @@ import { toast } from '../shared/toast';
 import { EXERCISE_ROOT, userRoot, type ISODate } from '../shared/types';
 import { CATALOG, CATALOG_VERSION, type Difficulty, type Exercise } from './catalog';
 import {
-  catalogRecord, daySeed, generateDay, levelInfo, normalizeCatalog, normalizeDays, normalizeProfile, questAmount, questXp,
+  catalogRecord, daySeed, normalizeBoard, type BoardEntry, generateDay, levelInfo, normalizeCatalog, normalizeDays, normalizeProfile, questAmount, questXp,
   rankOf, settle, totalXp, type DailySlot, type DaysMap, type Profile, type QuestKind,
 } from './derive';
 
 const LS_KEY = 'exercise.cache.v1' + (isSampleMode() ? '.sample' : '');
 export const CATALOG_PATH = 'exercises';
+export const BOARD_PATH = 'leaderboard';
 /** The account that publishes the shared catalog (the same owner as the legacy data). */
 export const CATALOG_OWNER = LEGACY_OWNER;
 const DATE_CHECK_MS = 60_000;
@@ -30,6 +32,10 @@ export interface ExerciseState {
   today: ISODate;
   ready: boolean;
   usingLocal: boolean;
+  /** Everyone on the ranking board (readable by any signed-in account). */
+  board: BoardEntry[];
+  /** The ranking board has answered at least once (or can't be reached). */
+  boardReady: boolean;
   /** Set when opening the app settled missed days; shown once as a banner. */
   lastSettlement: { missedDays: number; xpLost: number } | null;
 }
@@ -54,6 +60,7 @@ const byIdOf = (c: Exercise[]) => Object.fromEntries(c.map(e => [e.id, e]));
 export class ExerciseStore {
   private state: ExerciseState = {
     profile: {}, days: {}, catalog: CATALOG, byId: byIdOf(CATALOG), today: '', ready: false, usingLocal: false, lastSettlement: null,
+    board: [], boardReady: false,
   };
   private listeners = new Set<() => void>();
   private backend: Backend | null = null;
@@ -61,6 +68,7 @@ export class ExerciseStore {
   private started = false;
   private accountId = '';
   private root = '';
+  private username = '';
 
   constructor(private getBackendFn: () => Backend | null = getBackend, private lsKeyBase = LS_KEY, private todayFn: () => ISODate = todayISO) {}
 
@@ -90,6 +98,7 @@ export class ExerciseStore {
     if (this.started) return;
     this.started = true;
     this.accountId = accountId;
+    this.username = username;
     this.root = userRoot(accountId, EXERCISE_ROOT);
     this.state = { ...this.state, today: this.todayFn() };
     const cached = this.readLocal();
@@ -107,12 +116,17 @@ export class ExerciseStore {
       if (stored && stored.version >= CATALOG_VERSION && stored.items.length) this.set({ catalog: stored.items, byId: byIdOf(stored.items) });
       if (username === CATALOG_OWNER && (!stored || stored.version < CATALOG_VERSION)) this.publishCatalog();
     }, err => console.error(err)); // unreadable catalog: keep the bundled one
+    this.backend.on(BOARD_PATH, v => {
+      this.set({ board: normalizeBoard(v), boardReady: true });
+      this.syncBoard();
+    }, err => { console.error(err); this.set({ boardReady: true }); });
     this.backend.on(this.root, v => {
       this.raw = isObj(v) ? { profile: v.profile, days: v.days } : {};
       this.cacheLocal();
       const first = !this.state.ready;
       this.syncFromRaw();
       if (first) { this.set({ ready: true }); this.tick(); }
+      this.syncBoard();
     }, err => {
       console.error(err);
       this.set({ usingLocal: true, ready: true });
@@ -135,6 +149,7 @@ export class ExerciseStore {
     applyPatch(this.raw, patch);
     this.cacheLocal();
     this.syncFromRaw();
+    queueMicrotask(() => this.syncBoard());
     return this.online()?.update(this.root, patch).catch(err => { console.error(err); toast('Could not save to server', true); }) ?? Promise.resolve();
   }
 
@@ -173,6 +188,47 @@ export class ExerciseStore {
     this.state = { ...this.state, today, lastSettlement };
     if (Object.keys(patch).length) this.write(patch);
     else this.set({});
+    this.syncBoard();
+  }
+
+  /* ---------- ranking board (opt-in) ---------- */
+
+  /** This account's board entry, if it has joined. */
+  myEntry() { return this.state.board.find(e => e.uid === this.accountId) ?? null; }
+
+  /** Adds this account to the ranking board. Only called after the user confirms. */
+  joinBoard() {
+    const b = this.online();
+    if (!b || this.myEntry()) return Promise.resolve();
+    const { level } = levelInfo(this.xp());
+    const entry = { username: this.username, level, xp: this.xp(), joinedAt: Date.now(), updatedAt: Date.now() };
+    this.set({ board: [...this.state.board, { uid: this.accountId, ...entry }] });
+    return b.set(BOARD_PATH + '/' + this.accountId, entry)
+      .then(() => toast('You joined the ranking board'))
+      .catch(err => { console.error(err); toast('Could not join the ranking board', true); });
+  }
+
+  /** Removes this account from the ranking board. */
+  leaveBoard() {
+    const b = this.online();
+    if (!b || !this.myEntry()) return Promise.resolve();
+    this.set({ board: this.state.board.filter(e => e.uid !== this.accountId) });
+    return b.remove(BOARD_PATH + '/' + this.accountId)
+      .then(() => toast('You left the ranking board'))
+      .catch(err => { console.error(err); toast('Could not leave the ranking board', true); });
+  }
+
+  /** Keeps a joined account's level and XP on the board current. Never adds an account that hasn't joined. */
+  private syncBoard() {
+    const b = this.online();
+    const mine = this.myEntry();
+    if (!b || !mine || !this.state.ready) return;
+    const xp = this.xp();
+    const { level } = levelInfo(xp);
+    if (mine.level === level && mine.xp === xp && mine.username === this.username) return;
+    const patch = { username: this.username, level, xp, updatedAt: Date.now() };
+    this.state = { ...this.state, board: this.state.board.map(e => (e.uid === this.accountId ? { ...e, ...patch } : e)) };
+    b.update(BOARD_PATH + '/' + this.accountId, patch).catch(err => console.error(err));
   }
 
   dismissSettlement() { this.set({ lastSettlement: null }); }

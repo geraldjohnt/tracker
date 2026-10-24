@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryBackend } from '../shared/backend';
 import { CATALOG, CATALOG_VERSION } from './catalog';
 import { levelInfo, questAmount } from './derive';
-import { CATALOG_OWNER, ExerciseStore } from './store';
+import { BOARD_PATH, CATALOG_OWNER, ExerciseStore } from './store';
 
 const flush = async () => { for (let i = 0; i < 6; i++) await Promise.resolve(); };
 const ROOT = 'users/u1/exerciseTracker';
@@ -106,5 +106,28 @@ describe('ExerciseStore (sample data only)', () => {
     s.start('u1');
     expect(s.getState().usingLocal).toBe(true);
     expect(s.getState().days['2026-10-24'].daily).toBeTruthy();
+  });
+
+  it('is not on the ranking board until it joins; then level and XP stay in sync; leaving removes it', async () => {
+    await backend.set(BOARD_PATH + '/other', { username: 'other', level: 2, xp: 45, joinedAt: 1 });
+    const s = make('me');
+    await flush();
+    expect(backend.get(BOARD_PATH + '/u1')).toBeNull();
+    expect(s.getState().board.map(e => e.username)).toEqual(['other']);
+    s.acceptOptional('hard'); s.completeOptional('hard'); // 30 XP, not joined: nothing published
+    await flush();
+    expect(backend.get(BOARD_PATH + '/u1')).toBeNull();
+
+    await s.joinBoard();
+    expect(backend.get(BOARD_PATH + '/u1')).toMatchObject({ username: 'me', level: 1, xp: 30 });
+    s.completeDaily('q0');
+    await flush();
+    expect(backend.get(BOARD_PATH + '/u1')).toMatchObject({ level: 1, xp: 35 });
+
+    await s.leaveBoard();
+    expect(backend.get(BOARD_PATH + '/u1')).toBeNull();
+    s.completeDaily('q1');
+    await flush();
+    expect(backend.get(BOARD_PATH + '/u1')).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 /* LevelUp (exercise.html) styles. Tabs, cards, buttons, empty state and toasts match Spendly. */
 /* Surfaces that pick up a template's blur (glass/liquid-glass only; --surface-backdrop is "none" everywhere else) */
-.sidebar, .card-x, .modal-content, .tabs, .quest, .lib-card, .hist-row, .chip, .lib-search, .settle-banner, .empty,
+.sidebar, .card-x, .modal-content, .tabs, .quest, .lib-card, .hist-row, .board-row, .chip, .lib-search, .settle-banner, .empty,
 .btn-ghost, .conn, .dropdown-menu{
   backdrop-filter:var(--surface-backdrop);
   -webkit-backdrop-filter:var(--surface-backdrop);
@@ -203,3 +203,19 @@
 .hist-row.missed{ border-color:color-mix(in srgb,var(--bad) 30%, transparent); }
 .hist-sub{ font-size:.74rem; color:var(--muted); }
 .hist-xp{ font-weight:800; font-variant-numeric:tabular-nums; font-size:.9rem; display:flex; gap:.35rem; }
+
+/* Ranking board */
+.board-intro{ display:flex; align-items:center; gap:.9rem; padding:1rem 1.15rem; flex-wrap:wrap; }
+.board-intro-icon, .board-modal-icon{ width:46px; height:46px; flex:0 0 46px; border-radius:14px; display:grid; place-items:center; font-size:1.3rem; color:var(--accent); background:var(--accent-soft); }
+.board-modal-icon{ width:52px; height:52px; margin:0 auto 1rem; border-radius:16px; }
+.board-intro-title{ font-weight:800; font-size:1.05rem; letter-spacing:-.01em; }
+.board-row{ display:flex; align-items:center; gap:.75rem; padding:.6rem .75rem; border-radius:var(--r-sm); border:1px solid var(--border); background:var(--card-2); }
+.board-row.me{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+.board-place{ width:34px; flex:0 0 34px; text-align:center; font-weight:800; color:var(--muted); font-variant-numeric:tabular-nums; }
+.medal{ font-size:1.35rem; line-height:1; }
+.rank-emblem.sm{ width:36px; height:36px; flex:0 0 36px; border-radius:11px; font-size:1rem; box-shadow:none; }
+.board-who{ flex:1 1 auto; }
+.board-name{ font-weight:700; font-size:.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:.4rem; }
+.you-tag{ font-size:.62rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); background:var(--accent-soft); padding:.12rem .4rem; border-radius:6px; }
+.board-score{ text-align:right; }
+.board-level{ font-weight:800; font-variant-numeric:tabular-nums; }

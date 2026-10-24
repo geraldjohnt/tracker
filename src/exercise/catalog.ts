@@ -7,8 +7,12 @@
 // when it's offline. Bump CATALOG_VERSION after any change here.
 //
 // `gender` is a recommendation only. Anyone can take any quest.
+//
+// Owner rule: only calisthenics that can be done at home (no running, jogging, gyms).
+// Exercises that need any equipment (`equipment` other than 'none') are optional quests
+// only; daily quests use bodyweight-only exercises.
 
-export const CATALOG_VERSION = 1;
+export const CATALOG_VERSION = 2;
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard', 'elite'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
@@ -28,12 +32,12 @@ export const MUSCLE_LABELS: Record<Muscle, string> = {
 export type Category = 'legs' | 'push' | 'pull' | 'core' | 'full';
 export type Measure = 'reps' | 'seconds';
 export type Gender = 'any' | 'female' | 'male';
-/** What you need. Daily quests only use exercises that need nothing beyond a wall or a chair. */
+/** What you need at home. Anything but 'none' counts as equipment and is never a daily quest. */
 export type Equipment = 'none' | 'wall' | 'chair' | 'bar' | 'dip' | 'anchor';
 
 export const EQUIPMENT_LABELS: Record<Equipment, string> = {
-  none: 'No equipment', wall: 'A wall', chair: 'A sturdy chair or bench', bar: 'A pull-up bar (or low bar / sturdy table for rows)',
-  dip: 'Parallel bars or two sturdy chairs', anchor: 'Something heavy to hook your feet under, or a partner',
+  none: 'No equipment', wall: 'A wall', chair: 'A sturdy chair or bench', bar: 'A doorway pull-up bar (or a sturdy table for rows)',
+  dip: 'Two sturdy chairs (or dip bars)', anchor: 'Something heavy to hook your feet under, or a partner',
 };
 
 export interface Exercise {
@@ -767,12 +771,12 @@ export const CATALOG: Exercise[] = [
     easier: 'Do pike push-ups with your feet raised on a chair.',
   }),
   ex({
-    id: 'l-sit', name: 'L-sit', variant: 'Seated, pressing up on the hands (floor, two chairs or parallettes) with straight legs held level',
-    category: 'core', difficulty: 'elite', measure: 'seconds', base: 10, perLevel: 2, equipment: 'chair',
+    id: 'l-sit', name: 'L-sit', variant: 'Floor L-sit: seated, hands flat beside the hips, pressing the body up with straight legs held level',
+    category: 'core', difficulty: 'elite', measure: 'seconds', base: 10, perLevel: 2,
     primary: ['abs', 'quads'], secondary: ['triceps', 'shoulders'],
     summary: 'A gymnastics hold where your body makes an L shape. Very hard on the core and hip flexors.',
     steps: [
-      'Sit between two sturdy chairs (or on the floor) with your legs straight in front of you and your hands beside your hips.',
+      'Sit on the floor with your legs straight in front of you and your hands flat beside your hips, fingers forward. (Two sturdy chairs make it a little easier.)',
       'Press down hard through your hands to straighten your arms and lift your seat off the surface.',
       'Lift your straight legs so they are level with the floor, making an L.',
       'Hold, pushing your shoulders down away from your ears.',

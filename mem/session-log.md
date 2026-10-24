@@ -2,6 +2,13 @@
 
 Newest first. Keep each entry short.
 
+## 2026-10-24 — LevelUp phase 2: ranking board + equipment rule
+- Phase 1 merged (geraldjohnt/tracker#8).
+- Ranking tab: opt-in board at `leaderboard/<uid>` with join/leave confirm dialogs; sample mode seeds
+  4 sample players (`sampleShared()`). Daily quests now bodyweight-only; L-sit is the floor version.
+- 67 tests. Owner rule added: PR + merge after each phase, then stop and wait.
+- **Owner to do:** re-publish the rules (adds `leaderboard/`).
+
 ## 2026-10-24 — LevelUp (Exercise) part 1
 - New page `exercise.html` (`src/exercise/`): 48-exercise catalog with beginner how-tos, gender
   recommendation and an SVG body map; levels (20 XP, +10%/level), ranks (5 levels each), 3 daily

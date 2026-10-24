@@ -122,7 +122,7 @@ weightTracker/, spendingTracker/   pre-login data, same shape; read-only backup
 - **Level and rank**: everyone starts at Level 0. Level 1 needs 20 XP, and each level after needs
   10% more than the last (rounded up). Every 5 levels is a rank: Rookie, Mover, Grinder, Athlete,
   Warrior, Gladiator, Spartan, Titan, Olympian, Legend (each numbered 1–5).
-- **Daily quests**: 3 exercises a day (legs, upper body, core). Rep targets grow with your level.
+- **Daily quests**: 3 bodyweight exercises a day (legs, upper body, core). Rep targets grow with your level.
   Complete at least one before midnight. If you complete none, that day's daily XP is taken away
   the next time you open the app (never below Level 0 / 0 XP, and losing XP can drop a level).
 - **Optional quests**: one per difficulty (Easy, Medium, Hard, Elite) each day. Accept one, then
@@ -131,6 +131,10 @@ weightTracker/, spendingTracker/   pre-login data, same shape; read-only backup
   starting position, step-by-step instructions, good-form cues, common mistakes, an easier
   version, a recommended gender (for reference only; anyone can take any quest), and a front/back
   body diagram highlighting the muscles it works.
+- **Ranking**: an opt-in board of everyone who joined, ranked by level (then total XP). Nobody is
+  added automatically: you join (or leave) from the Ranking tab after confirming.
+- Only exercises you can do at home. Exercises that need equipment (a chair, a doorway pull-up
+  bar, …) only appear as optional quests; daily quests are bodyweight only.
 - The library is stored once in the database (`exercises/`) for every account. The owner's
   account publishes it automatically; until then the app uses its built-in copy.
 

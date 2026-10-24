@@ -55,8 +55,8 @@ src/
   dashboard/     Dashboard, WeightCard, SpendCard, dashboard.css
   weight/        store, derive, units, WeightApp, WeekView, AllWeeksPage, WeekModal, weight.css
   spending/      store, derive, SpendingApp, views (Day/Calendar/Week/Month/Year), BarChart, spending.css
-  exercise/      catalog (48 exercises), derive (levels/ranks/quests/penalties), store, ExerciseApp,
-                 ExerciseModal, BodyMap (SVG muscle diagram), parts, exercise.css
+  exercise/      catalog (48 exercises), derive (levels/ranks/quests/penalties/board), store, ExerciseApp,
+                 ExerciseModal, BodyMap (SVG muscle diagram), RankingView, parts, exercise.css
 mem/             portable project memory (see above)
 ```
 
@@ -126,6 +126,12 @@ keeps snapshots and lb rounding from rewriting what the user is typing.
   ids. Reps and XP are computed from the **current** level until completed, then frozen into
   `amount`/`xp`. Daily = legs + upper + core, home equipment only; optional = one per difficulty,
   must be accepted first.
+- **Ranking board** (`RankingView.tsx`): opt-in. `leaderboard/<uid>` = `{username, level, xp, joinedAt,
+  updatedAt}`; any signed-in account reads it; each account writes only its own entry and the rules
+  require `username + '@<domain>' === auth.token.email`. The store never creates an entry without
+  `joinBoard()` (behind a confirm dialog), and keeps an existing one in sync (`syncBoard`).
+- **Equipment rule**: only home calisthenics. Anything with `equipment !== 'none'` is optional-quest
+  only; daily quests are bodyweight-only.
 - **Missed days** (`settle`): on load and when the date changes, each finished day since
   `profile/settledThrough` with no completed *daily* quest gets `penalty` = that day's daily XP at
   the level then, capped at current XP. Optional quests never protect a day.
@@ -171,6 +177,8 @@ Each page's `main.tsx` applies the saved choice before first paint.
 ```
 exercises/                        shared catalog: { version, items/<id>/{name, variant, …} }; read: any
                                   signed-in account; write: owner only
+leaderboard/<uid>/                opt-in ranking: { username, level, xp, joinedAt, updatedAt }; read: any
+                                  signed-in account; write: own entry, username must match the account
 users/<uid>/                      read/write only by that account (auth.uid === $uid)
   weightTracker/
     settings/ unit: "kg"|"lb", theme, template, palette
