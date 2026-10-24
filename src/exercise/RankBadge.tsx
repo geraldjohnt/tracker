@@ -113,6 +113,9 @@ function Glyph({ index, color, tier }: { index: number; color: string; tier: Tie
   }
 }
 
+/** Tier pips per row: one row up to 3, then two rows (4 → 2 + 2, 5 → 3 + 2) so they stay inside the trim. */
+const pipRows = (n: number) => n <= 3 ? [n] : [Math.ceil(n / 2), Math.floor(n / 2)];
+
 export function RankBadge({ rank, size = 48, className, title }: { rank: Rank; size?: number; className?: string; title?: string }) {
   const id = 'rb' + useId().replace(/[^a-zA-Z0-9]/g, '');
   const r = rank.index;
@@ -173,9 +176,10 @@ export function RankBadge({ rank, size = 48, className, title }: { rank: Rank; s
         {r >= 3 && <g transform="scale(.94)"><Shape kind={shape} fill="none" stroke={c.edge} strokeWidth={0.8} strokeOpacity={0.6} /></g>}
         <g transform="translate(0,-3)"><Glyph index={r} color={c.glyph} tier={c} /></g>
         <g>
-          {Array.from({ length: pips }, (_, i) => (
-            <circle key={i} cx={(i - (pips - 1) / 2) * 6} cy={20} r={2} fill={c.glyph} fillOpacity={0.95} stroke={c.edge} strokeWidth={0.5} />
-          ))}
+          {pipRows(pips).flatMap((n, row, rows) => Array.from({ length: n }, (_, i) => (
+            <circle key={row + ':' + i} cx={(i - (n - 1) / 2) * (rows.length > 1 ? 5.4 : 6)} cy={rows.length > 1 ? 16 + row * 5.4 : 20}
+              r={rows.length > 1 ? 1.8 : 2} fill={c.glyph} fillOpacity={0.95} stroke={c.edge} strokeWidth={0.5} />
+          )))}
         </g>
       </g>
       {r >= 1 && <ellipse cx={-10} cy={-18} rx={20} ry={11} fill="#fff" fillOpacity={0.22} clipPath={`url(#${id}c)`} transform="rotate(-20)" />}
