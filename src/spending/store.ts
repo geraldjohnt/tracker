@@ -6,11 +6,11 @@ import type { Backend } from '../shared/backend';
 import { uid } from '../shared/format';
 import { getBackend, isSampleMode } from '../shared/store';
 import { toast } from '../shared/toast';
-import { SPEND_ROOT, type Expense } from '../shared/types';
+import { SPEND_ROOT, userRoot, type Expense } from '../shared/types';
 import { normalizeExpenses, type ExpensesMap } from './derive';
 
-const ROOT = SPEND_ROOT; // change to run a second, separate tracker
 // Sample mode gets its own cache key so sample data never overwrites the real offline cache.
+// start() appends the account's uid, so people sharing a device never see each other's cache.
 const LS_KEY = 'spendly.cache.v1' + (isSampleMode() ? '.sample' : '');
 const SAVE_DEBOUNCE_MS = 450;
 
@@ -31,8 +31,12 @@ export class SpendingStore {
   private pending: Record<string, PendingEdit> = {};
   private saveTimers: Record<string, ReturnType<typeof setTimeout> | null> = {};
   private started = false;
+  private accountId = '';
+  private root = '';
 
-  constructor(private getBackendFn: () => Backend | null = getBackend, private lsKey = LS_KEY) {}
+  constructor(private getBackendFn: () => Backend | null = getBackend, private lsKeyBase = LS_KEY) {}
+
+  private get lsKey() { return this.lsKeyBase + '.' + this.accountId; }
 
   subscribe = (l: () => void) => { this.listeners.add(l); return () => { this.listeners.delete(l); }; };
   getState = () => this.state;
@@ -49,9 +53,12 @@ export class SpendingStore {
     try { const raw = localStorage.getItem(this.lsKey); return raw ? JSON.parse(raw) : null; } catch { return null; }
   }
 
-  start() {
+  /** Loads and live-syncs the signed-in account's data (users/<uid>/spendingTracker). */
+  start(accountId: string) {
     if (this.started) return;
     this.started = true;
+    this.accountId = accountId;
+    this.root = userRoot(accountId, SPEND_ROOT);
     const cached = this.readLocal();
     if (cached) this.set({ expenses: normalizeExpenses(cached.expenses || {}) });
 
@@ -61,7 +68,7 @@ export class SpendingStore {
       toast('Firebase unavailable — saving to this device only', true);
       return;
     }
-    this.backend.on(ROOT + '/expenses', v => {
+    this.backend.on(this.root + '/expenses', v => {
       this.state = { ...this.state, expenses: normalizeExpenses(v as Record<string, Expense> | null), ready: true };
       this.applyPending();
       this.cacheLocal();
@@ -77,15 +84,15 @@ export class SpendingStore {
 
   private write(path: string, value: unknown) {
     this.cacheLocal();
-    return this.online()?.set(ROOT + '/' + path, value).catch(err => { console.error(err); toast('Could not save to server', true); }) ?? Promise.resolve();
+    return this.online()?.set(this.root + '/' + path, value).catch(err => { console.error(err); toast('Could not save to server', true); }) ?? Promise.resolve();
   }
   private update(path: string, patch: Record<string, unknown>) {
     this.cacheLocal();
-    return this.online()?.update(ROOT + '/' + path, patch).catch(err => { console.error(err); toast('Could not save to server', true); }) ?? Promise.resolve();
+    return this.online()?.update(this.root + '/' + path, patch).catch(err => { console.error(err); toast('Could not save to server', true); }) ?? Promise.resolve();
   }
   private remove(path: string) {
     this.cacheLocal();
-    return this.online()?.remove(ROOT + '/' + path).catch(err => { console.error(err); toast('Could not delete on server', true); }) ?? Promise.resolve();
+    return this.online()?.remove(this.root + '/' + path).catch(err => { console.error(err); toast('Could not delete on server', true); }) ?? Promise.resolve();
   }
 
   /* ---------- pending-edit reconciliation ---------- */

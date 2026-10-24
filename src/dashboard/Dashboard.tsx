@@ -1,14 +1,17 @@
 // Read-only overview of both trackers. Appearance is device-local
 // (dashboard.* in localStorage) and never synced to either tracker's settings.
 import { useEffect, useState } from 'react';
+import type { AuthUser } from '../shared/auth';
+import { AccountMenu } from '../shared/components/AccountMenu';
 import { AppShell, SidebarDivider, SidebarLink } from '../shared/components/AppShell';
 import { AppearanceMenu } from '../shared/components/AppearanceMenu';
 import { ConnPill } from '../shared/components/ConnPill';
+import { Toasts } from '../shared/components/Toasts';
 import { todayISO } from '../shared/dates';
 import { fmtMoney } from '../shared/format';
 import { useConnection, useLiveValue } from '../shared/hooks';
 import { isSampleMode } from '../shared/store';
-import { SPEND_ROOT, WEIGHT_ROOT } from '../shared/types';
+import { SPEND_ROOT, WEIGHT_ROOT, userRoot } from '../shared/types';
 import { useAppearance } from '../shared/useAppearance';
 import { dayTotal, normalizeExpenses } from '../spending/derive';
 import { normalizeWeeks, peopleOf, sortedWeeks } from '../weight/derive';
@@ -17,11 +20,11 @@ import { WeightCard } from './WeightCard';
 
 const OFFLINE_FALLBACK_MS = 4000; // render with whatever we have if Firebase never answers
 
-export function Dashboard() {
+export function Dashboard({ user }: { user: AuthUser }) {
   const [appearance, setAppearance] = useAppearance('dashboard');
   const conn = useConnection();
-  const weeksLive = useLiveValue<Record<string, never> | null>(WEIGHT_ROOT + '/weeks', null);
-  const expLive = useLiveValue<Record<string, never> | null>(SPEND_ROOT + '/expenses', null);
+  const weeksLive = useLiveValue<Record<string, never> | null>(userRoot(user.uid, WEIGHT_ROOT) + '/weeks', null);
+  const expLive = useLiveValue<Record<string, never> | null>(userRoot(user.uid, SPEND_ROOT) + '/expenses', null);
 
   const [timedOut, setTimedOut] = useState(false);
   useEffect(() => {
@@ -43,6 +46,7 @@ export function Dashboard() {
   if (spendReady) bits.push(fmtMoney(dayTotal(expenses, today)) + ' spent today');
 
   return (
+    <>
     <AppShell
       title="Dashboard"
       subtitle="Tracker overview"
@@ -56,6 +60,7 @@ export function Dashboard() {
       headerActions={<>
         <ConnPill status={conn} localLabel={isSampleMode() ? 'Sample data' : 'Unavailable'} />
         <AppearanceMenu appearance={appearance} onChange={setAppearance} />
+        <AccountMenu user={user} />
       </>}
     >
       <section className="hero fade-in">
@@ -72,5 +77,7 @@ export function Dashboard() {
         <SpendCard expenses={expenses} ready={spendReady} appearance={appearance} />
       </div>
     </AppShell>
+    <Toasts />
+    </>
   );
 }

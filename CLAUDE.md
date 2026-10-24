@@ -13,7 +13,7 @@ update `mem/` (decisions, facts, session log) before you finish.
 ## What this is
 
 Two trackers plus a dashboard that share one Firebase Realtime Database project, hosted on GitHub
-Pages:
+Pages. Every page requires sign-in (username + password); each account sees only its own data:
 
 - `index.html`: the dashboard, a read-only overview of both trackers
 - `weight.html`: **WeighIn**, a weekly weight-challenge tracker
@@ -44,10 +44,12 @@ to Pages only from `main`. Pages source must be set to **GitHub Actions**.
 index.html / weight.html / spending.html   Vite entries (same URLs as before)
 database.rules.json                        Realtime DB rules (paste into the Firebase console)
 src/
-  styles/        shared CSS: tokens, templates, palettes, base, appearance menu, sidebar shell
-  shared/        types, dates, format, backend (Firebase | in-memory sample), store selection,
-                 appearance + useAppearance, toast, hooks, sampleData
-    components/  AppShell (+SidebarLink/SidebarDivider), AppearanceMenu, ConnPill, ChartCanvas,
+  styles/        shared CSS: tokens, templates, palettes, base, appearance menu, sidebar shell, auth
+  shared/        types, dates, format, backend (Firebase | in-memory sample), auth (Firebase | sample),
+                 legacy (one-time import), store selection, appearance + useAppearance, toast, hooks,
+                 sampleData
+    components/  AuthGate, AccountMenu (+change password), AppShell (+SidebarLink/SidebarDivider),
+                 AppearanceMenu, ConnPill, ChartCanvas,
                  DraftInput, ConfirmModal, useBsModal, Toasts
   dashboard/     Dashboard, WeightCard, SpendCard, dashboard.css
   weight/        store, derive, units, WeightApp, WeekView, AllWeeksPage, WeekModal, weight.css
@@ -65,14 +67,37 @@ A `Backend` interface (`on`, `onConnection`, `set`, `update`, `remove`) has two 
   stripped on write, empty parents pruned.
 
 `getBackend()` picks `MemoryBackend` for `npm run dev` (always) and for `?sample=1`, so development
-can never touch real data. Tests construct `MemoryBackend` directly. `getBackend()` returns `null`
-if Firebase fails to initialize, and the stores then fall back to local-only mode.
+can never touch real data. In sample mode the sample tree sits at the legacy root, so registering
+`geraldjohnt` imports it, and any other username starts empty. Tests construct `MemoryBackend`
+directly. `getBackend()` returns `null` if Firebase fails to initialize, and the stores then fall
+back to local-only mode.
+
+### Accounts (`src/shared/auth.ts`, `firebaseAuth.ts`, `legacy.ts`, `components/AuthGate.tsx`)
+An `AuthService` interface (`onChange`, `signIn`, `register`, `changePassword`, `signOut`) has two
+implementations, picked by `getAuthService()` exactly like the backend:
+- `FirebaseAuthService`: Firebase email/password auth. A username maps to the email
+  `<username>@tracker-8dcc0.firebaseapp.com` (`usernameToEmail`); nothing is ever emailed.
+  Usernames are lowercased, 3–30 chars of `[a-z0-9._-]`. Passwords: 6+ chars. Changing a password
+  re-authenticates with the current one first.
+- `MemoryAuth`: sample-mode accounts in `localStorage['tracker.sample.auth.v1']`.
+
+Each page's `main.tsx` wraps the app in `<AuthGate>`: it shows the sign-in/register screen until
+someone is signed in, then runs the legacy import, calls `onUser` (which starts the stores with the
+uid) and renders the app with `user`. The header's `AccountMenu` has Change password and Sign out.
+Sign-out (and a different account signing in from another tab) reloads the page, because stores
+are started once per page load.
+
+**Legacy data** (`legacy.ts`): the pre-login root nodes `weightTracker/` and `spendingTracker/`
+belong to `LEGACY_OWNER` (`geraldjohnt`). On that account's first sign-in they're copied in one
+multi-path update to `users/<uid>/…` and `meta/legacyImported` is set so it never runs again. The
+root nodes are never written; the rules make them read-only and readable only by that account.
 
 ### Tracker stores (`src/weight/store.ts`, `src/spending/store.ts`)
 Plain classes outside React, read with `useSyncExternalStore` and started from `main.tsx`. Each one:
-- listens to `<ROOT>/weeks` or `<ROOT>/expenses` and normalizes snapshots (`derive.ts`);
-- mirrors state to localStorage (`weighin.cache.v1` / `spendly.cache.v1`, plus a `.sample` suffix
-  in sample mode) so the app opens offline;
+- `start(uid)` listens to `users/<uid>/weightTracker/weeks` or `users/<uid>/spendingTracker/expenses`
+  (`userRoot()` in `types.ts`) and normalizes snapshots (`derive.ts`);
+- mirrors state to localStorage (`weighin.cache.v1[.sample].<uid>` / `spendly.cache.v1[.sample].<uid>`)
+  so the app opens offline; the uid suffix keeps accounts on a shared device apart;
 - switches to `usingLocal` (header pill "Local only") if the backend is missing or a read is denied;
 - **pending-edit reconciliation**: each inline field edit is recorded in `pending`, written after a
   450ms debounce (`flushSaves` on blur), and re-applied on top of every incoming snapshot until
@@ -108,7 +133,7 @@ plain numbers shown with a hardcoded **₱**; there is no currency toggle.
 `amber`/`ocean`/`violet`/`slate`/`sunset`) on `<html>`, defined in `src/shared/appearance.ts`.
 Each page's `main.tsx` applies the saved choice before first paint.
 - Per-page localStorage prefixes: `weighin.*`, `spendly.*`, `dashboard.*`.
-- `useAppearance(prefix, syncRoot)` also mirrors the choice to `<root>/settings/{theme,template,palette}`
+- `useAppearance(prefix, syncRoot)` also mirrors the choice to `users/<uid>/<root>/settings/{theme,template,palette}`
   for the trackers. The dashboard passes no `syncRoot` and stays device-local.
 - Templates only redefine *shape* tokens; palettes only redefine *accent* tokens. `default`/`indigo`
   intentionally have **no** CSS rules: never add `[data-template="default"]` or
@@ -121,16 +146,19 @@ Each page's `main.tsx` applies the saved choice before first paint.
 ### Data shape (Realtime Database)
 
 ```
-weightTracker/
-  settings/ unit: "kg"|"lb", theme, template, palette
-  weeks/
-    w_<id>/ { id, startDate: "YYYY-MM-DD", endDate: "YYYY-MM-DD", createdAt: <ms>,
-              participants/ p_<id>/ { name, startWeight?, endWeight?, order } }
+users/<uid>/                      read/write only by that account (auth.uid === $uid)
+  weightTracker/
+    settings/ unit: "kg"|"lb", theme, template, palette
+    weeks/
+      w_<id>/ { id, startDate: "YYYY-MM-DD", endDate: "YYYY-MM-DD", createdAt: <ms>,
+                participants/ p_<id>/ { name, startWeight?, endWeight?, order } }
+  spendingTracker/
+    settings/ theme, template, palette
+    expenses/
+      e_<id>/ { date: "YYYY-MM-DD", item, price, createdAt: <ms> }   (no `id` field: rules reject it)
+  meta/ legacyImported: <ms>
 
-spendingTracker/
-  settings/ theme, template, palette
-  expenses/
-    e_<id>/ { date: "YYYY-MM-DD", item, price, createdAt: <ms> }   (no `id` field: rules reject it)
+weightTracker/, spendingTracker/  pre-login data (same shape), read-only, readable by geraldjohnt only
 ```
 
 `database.rules.json` enforces this shape and rejects unknown keys. `src/shared/rules.test.ts`
@@ -140,7 +168,9 @@ the Firebase console.
 
 ## Notes
 
-- No authentication: the rules are open read/write. See README.md for how to lock this down.
+- Auth needs **Email/Password** enabled in the Firebase console, and the rules re-published by the
+  owner after any change. The owner-only email in the legacy rules must equal
+  `usernameToEmail(LEGACY_OWNER)`; `rules.test.ts` checks it.
 - Firebase Analytics is intentionally omitted.
 - Visual parity with the original single-file pages was verified by screenshot diffing against the
   pre-migration HTML (`git show fe581ba:weight.html`). The method is in `mem/migration.md`.

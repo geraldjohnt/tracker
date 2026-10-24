@@ -6,7 +6,8 @@ Two trackers + a dashboard sharing one Firebase Realtime Database project, hoste
 **Status:** fully migrated (Oct 2026) from three self-contained HTML files to **React 19 +
 TypeScript + Vite 7**, built by GitHub Actions and deployed from `dist/`. History and the
 parity-testing method are in [migration.md](migration.md). The pre-migration code is at commit
-`fe581ba`.
+`fe581ba`. Since then every page requires sign-in and data is per account under `users/<uid>/`
+(see CLAUDE.md → Accounts).
 
 ## Hard rules (details: [rules.md](rules.md))
 1. **Never touch the existing Firebase data.** No reads/writes against production for testing.

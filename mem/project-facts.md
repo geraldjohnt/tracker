@@ -37,3 +37,12 @@
   plus one chunk per page.
 - **Expense records must not contain `id`** (the rules reject unknown keys). Stores add `id` only in memory/local
   cache; `rules.test.ts` catches regressions.
+- **Everything is per account**: paths are `users/<uid>/<tracker>/…` (`userRoot()` in `types.ts`); stores need
+  `start(uid)`; offline caches are suffixed with the uid. Never read or write the root `weightTracker`/`spendingTracker`
+  except in `legacy.ts` (read-only).
+- `LEGACY_OWNER` (`src/shared/legacy.ts`) and the email in `database.rules.json`'s legacy `.read` rules must agree;
+  `rules.test.ts` checks it.
+- Sample mode: accounts in `tracker.sample.auth.v1` (plain-text passwords, sample only). Register `geraldjohnt` to
+  import the sample data; other names start empty.
+- Bootstrap modals opened from the sticky header must be portaled to `document.body` (see `AccountMenu`), or they
+  render under their own backdrop.

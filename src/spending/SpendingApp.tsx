@@ -1,4 +1,6 @@
 import { useState, useSyncExternalStore } from 'react';
+import type { AuthUser } from '../shared/auth';
+import { AccountMenu } from '../shared/components/AccountMenu';
 import { AppShell, SidebarDivider, SidebarLink } from '../shared/components/AppShell';
 import { AppearanceMenu } from '../shared/components/AppearanceMenu';
 import { ConnPill } from '../shared/components/ConnPill';
@@ -6,7 +8,7 @@ import { Toasts } from '../shared/components/Toasts';
 import { todayISO } from '../shared/dates';
 import { useConnection } from '../shared/hooks';
 import { isSampleMode } from '../shared/store';
-import { SPEND_ROOT } from '../shared/types';
+import { SPEND_ROOT, userRoot } from '../shared/types';
 import { useAppearance } from '../shared/useAppearance';
 import { spendingStore } from './store';
 import { CalendarView, DayView, MonthView, WeekView, YearView } from './views';
@@ -14,10 +16,10 @@ import { CalendarView, DayView, MonthView, WeekView, YearView } from './views';
 type View = 'day' | 'calendar' | 'week' | 'month' | 'year';
 const VIEWS: Array<[View, string]> = [['day', 'Day'], ['calendar', 'Calendar'], ['week', 'Week'], ['month', 'Month'], ['year', 'Year']];
 
-export function SpendingApp() {
+export function SpendingApp({ user }: { user: AuthUser }) {
   const { expenses, ready, usingLocal } = useSyncExternalStore(spendingStore.subscribe, spendingStore.getState);
   const conn = useConnection();
-  const [appearance, setAppearance] = useAppearance('spendly', SPEND_ROOT);
+  const [appearance, setAppearance] = useAppearance('spendly', userRoot(user.uid, SPEND_ROOT));
 
   // One anchor per view, so switching views and back keeps your place.
   const today = todayISO();
@@ -47,6 +49,7 @@ export function SpendingApp() {
         headerActions={<>
           <ConnPill status={status} localLabel={localLabel} />
           <AppearanceMenu appearance={appearance} onChange={setAppearance} />
+          <AccountMenu user={user} />
         </>}
       >
         <div className="tabs-wrap">

@@ -2,6 +2,14 @@
 
 Newest first. Keep each entry short.
 
+## 2026-10-24 — Accounts (log in, register, change password, per-user data)
+- Added `AuthService` (Firebase email/password | sample `MemoryAuth`), `AuthGate` on every page, `AccountMenu` with
+  Change password / Sign out. Data now lives under `users/<uid>/…`; rules lock each account to its own subtree.
+- `legacy.ts` copies the pre-login root data into `geraldjohnt`'s account on its first sign-in; the root nodes stay
+  untouched and read-only. 42 tests. Checked end to end in sample mode with Playwright.
+- The owner's account couldn't be created from the session (sign-up API call was blocked). **Owner to do:** enable
+  Email/Password auth → merge/deploy → register `geraldjohnt` → publish `database.rules.json` → reload.
+
 ## 2026-10-24 — Phase 5 (cleanup) — migration complete
 - CLAUDE.md and README rewritten for React/TS/Vite (removed the "single-file, no build" guidance; fixed the ₱ and kg/lb notes).
 - Added `src/shared/rules.test.ts`: a CRUD pass on both stores must only write keys allowed by `database.rules.json`. 35 tests.

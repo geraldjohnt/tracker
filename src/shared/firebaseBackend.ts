@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getDatabase, onValue, ref, remove, set, update, type Database } from 'firebase/database';
 import type { Backend, ConnState, Unsubscribe } from './backend';
 
@@ -14,12 +14,16 @@ export const firebaseConfig = {
   appId: '1:686440896820:web:e4a2b3b18f4b7d94cb2d61',
 };
 
+let app: FirebaseApp | undefined;
+/** The one Firebase app per page, shared by the database backend and auth. */
+export const firebaseApp = () => (app ??= initializeApp(firebaseConfig));
+
 export class FirebaseBackend implements Backend {
   readonly kind = 'firebase' as const;
   private db: Database;
 
   constructor() {
-    this.db = getDatabase(initializeApp(firebaseConfig));
+    this.db = getDatabase(firebaseApp());
   }
 
   on(path: string, cb: (value: unknown) => void, onError?: (err: Error) => void): Unsubscribe {

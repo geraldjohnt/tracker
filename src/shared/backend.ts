@@ -108,3 +108,16 @@ export class MemoryBackend implements Backend {
     for (const l of [...this.listeners]) l.cb(this.get(l.path));
   }
 }
+
+/** Read a path once. */
+export function once(b: Backend, path: string): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    let done = false;
+    // Firebase may answer synchronously from its cache, before `unsub` is assigned.
+    const unsub: Unsubscribe = b.on(
+      path,
+      v => { if (done) return; done = true; queueMicrotask(() => unsub()); resolve(v); },
+      err => { if (done) return; done = true; reject(err); },
+    );
+  });
+}
