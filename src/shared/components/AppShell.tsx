@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import logoUrl from '../../../logo.png';
 
 export type PageKey = 'dashboard' | 'weight' | 'spending';
@@ -24,11 +24,13 @@ export function AppShell({ page, title, subtitle, sidebarKey, sidebarExtra, head
   });
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  useEffect(() => {
-    try { localStorage.setItem(sidebarKey, collapsed ? '1' : '0'); } catch { /* ignore */ }
-  }, [sidebarKey, collapsed]);
-
-  const toggle = () => (isMobile() ? setMobileOpen(o => !o) : setCollapsed(c => !c));
+  // Only a desktop toggle saves the preference — loading on a phone must not overwrite it.
+  const toggle = () => {
+    if (isMobile()) { setMobileOpen(o => !o); return; }
+    const next = !collapsed;
+    setCollapsed(next);
+    try { localStorage.setItem(sidebarKey, next ? '1' : '0'); } catch { /* ignore */ }
+  };
   const link = (key: PageKey, href: string, icon: string, label: string) => (
     <a href={href} className={'sidebar-link' + (page === key ? ' active' : '')} title={label}>
       <i className={'bi ' + icon}></i><span>{label}</span>
