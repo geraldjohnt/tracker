@@ -246,6 +246,14 @@ table.at tbody tr:hover td{ background:var(--card-2); }
 }
 .tabs button.active{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; box-shadow:0 6px 16px -8px var(--accent); }
 
+/* This Week / All Weeks toggle: mobile only (desktop switches views from the sidebar). */
+.page-toggle-wrap{ display:none; }
+@media (max-width:767.98px){
+  .page-toggle-wrap{ display:block; margin:1rem 0 0; }
+  .page-toggle{ display:flex; width:100%; }
+  .page-toggle button{ flex:1 1 0; }
+}
+
 .empty{
   text-align:center; padding:3.5rem 1.25rem;
   background:var(--card); border:1px dashed var(--border-strong); border-radius:var(--r-lg);

@@ -2,6 +2,12 @@
 
 Newest first. Keep each entry short.
 
+## 2026-10-24 — Mobile bottom nav
+- Below 768px the sidebar and menu button are hidden; `AppShell` renders a bottom tab bar (Home / Weight / Spendly).
+  Each page passes `page=`. Toasts sit above the bar.
+- WeighIn: This Week / All Weeks merged into one tab with a segmented toggle at the top (mobile only).
+- Home (dashboard) is in the bar too, since the sidebar was the only way back to it on mobile.
+
 ## 2026-10-24 — Accounts (log in, register, change password, per-user data)
 - Added `AuthService` (Firebase email/password | sample `MemoryAuth`), `AuthGate` on every page, `AccountMenu` with
   Change password / Sign out. Data now lives under `users/<uid>/…`; rules lock each account to its own subtree.
