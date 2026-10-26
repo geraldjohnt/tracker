@@ -49,7 +49,7 @@ src/
   shared/        types, dates, format, backend (Firebase | in-memory sample), auth (Firebase | sample),
                  legacy (one-time import), store selection, appearance + useAppearance, toast, hooks,
                  sampleData
-    components/  AuthGate, AccountMenu (+change password), AppShell (+SidebarLink/SidebarDivider),
+    components/  AuthGate, AccountMenu (+change password), PasswordInput (show/hide eye), AppShell (+SidebarLink/SidebarDivider),
                  AppearanceMenu, ConnPill, ChartCanvas,
                  DraftInput, ConfirmModal, useBsModal, Toasts
   dashboard/     Dashboard, WeightCard, SpendCard, dashboard.css

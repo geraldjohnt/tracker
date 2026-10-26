@@ -6,6 +6,7 @@ import { AuthError, passwordProblem, usernameProblem, type AuthUser } from '../a
 import { importLegacyData, LEGACY_OWNER } from '../legacy';
 import { getAuthService, getBackend, isSampleMode } from '../store';
 import { toast } from '../toast';
+import { PasswordInput } from './PasswordInput';
 import { Toasts } from './Toasts';
 
 const IMPORT_TIMEOUT_MS = 8000; // offline, Firebase never answers; open the app anyway and retry next time
@@ -123,11 +124,11 @@ function AuthScreen({ title, subtitle }: { title: string; subtitle: string }) {
         <input id="authUsername" className="auth-input" value={username} onChange={e => setUsername(e.target.value)}
           autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoFocus />
         <label className="auth-label" htmlFor="authPassword">Password</label>
-        <input id="authPassword" className="auth-input" type="password" value={password} onChange={e => setPassword(e.target.value)}
+        <PasswordInput id="authPassword" value={password} onChange={e => setPassword(e.target.value)}
           autoComplete={registering ? 'new-password' : 'current-password'} />
         {registering && <>
           <label className="auth-label" htmlFor="authConfirm">Confirm password</label>
-          <input id="authConfirm" className="auth-input" type="password" value={confirm} onChange={e => setConfirm(e.target.value)} autoComplete="new-password" />
+          <PasswordInput id="authConfirm" value={confirm} onChange={e => setConfirm(e.target.value)} autoComplete="new-password" />
         </>}
 
         {error && <div className="auth-error" role="alert"><i className="bi bi-exclamation-circle"></i><span>{error}</span></div>}

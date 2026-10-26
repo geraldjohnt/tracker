@@ -31,6 +31,14 @@
   border-radius:var(--r-sm); font-weight:600; padding:.6rem .75rem; outline:none;
 }
 .auth-input:focus{ background:var(--card); border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.auth-password{ position:relative; margin-bottom:.85rem; }
+.auth-password .auth-input{ margin-bottom:0; padding-right:2.6rem; }
+.auth-reveal{
+  position:absolute; top:0; right:0; bottom:0; width:2.5rem;
+  display:flex; align-items:center; justify-content:center;
+  background:none; border:none; color:var(--muted); border-radius:0 var(--r-sm) var(--r-sm) 0;
+}
+.auth-reveal:hover, .auth-reveal:focus-visible{ color:var(--accent); }
 .auth-error{
   display:flex; align-items:flex-start; gap:.45rem; margin:-.2rem 0 .85rem;
   padding:.55rem .7rem; border-radius:var(--r-sm);
