@@ -9,7 +9,8 @@ Newest first. Keep each entry short.
 - Camera skeleton: green only when the position is right (`CounterState.formOk`: in view, starting position seen,
   form checks pass), red otherwise; watch mode (no form checks) draws white. Pill: Not in view / Fix your position / Good form.
 - Proposed a proper calisthenics programme on top of the level system (see `exercise.md` → "Programme proposal");
-  waiting for the owner's choice. Next is still phase 6 unless the owner reorders.
+  owner deferred it until phases 6–9 are done; full recommendations saved there. Fixes merged (geraldjohnt/tracker#16).
+  Next: phase 6 when the owner says continue.
 
 ## 2026-10-26 — LevelUp phase 5: camera form check
 - Owner: quests need the camera (video never saved); no camera / access denied → still completable for half XP, rounded down.
