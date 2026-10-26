@@ -7,6 +7,9 @@ Three trackers + a dashboard sharing one Firebase Realtime Database project, hos
 camera form check part 2** (wait for the owner to say continue). The phase plan, spec, owner decisions
 and known issues are in [exercise.md](exercise.md). Read it before touching `src/exercise/`.
 
+**After phases 6–9:** revisit the calisthenics programme proposal (progression ladders on top of the level system;
+recommendations saved in [exercise.md](exercise.md) → "Programme proposal"). Owner deferred it on 2026-10-26.
+
 **Status:** fully migrated (Oct 2026) from three self-contained HTML files to **React 19 +
 TypeScript + Vite 7**, built by GitHub Actions and deployed from `dist/`. History and the
 parity-testing method are in [migration.md](migration.md). The pre-migration code is at commit

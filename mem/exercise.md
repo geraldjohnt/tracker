@@ -71,6 +71,7 @@ Owner rule: PR + merge to `main` after **each** phase (CI green), then **stop** 
 | 7 | Dashboard card for LevelUp | Not started | |
 | 8 | Better visuals (movement illustrations/animations) | Not started | |
 | 9 | Extras (owner picks) | Not started | |
+| — | **Then:** calisthenics programme (ladders), see "Programme proposal" below; owner deferred it until 6–9 are done | Deferred | |
 
 The owner may move 7–9 before the camera phases.
 
@@ -109,21 +110,40 @@ The owner may move 7–9 before the camera phases.
 - Achievements, streak bonuses, rest days in the weekly plan (needs a penalty rule), rank-up celebration
   screen, weekly challenge quest.
 
-### Programme proposal (2026-10-26, waiting for the owner)
-Owner asked how to add a proper calisthenics programme while keeping the level system. Proposed (Recommended):
-- **Progression ladders** per movement pattern (push, pull, squat, hinge/bridge, core), each a list of catalog
-  exercises from easiest to hardest (e.g. wall → incline → knee → full → diamond → archer push-up). Each player has
-  a current step per ladder (`programme/ladders/<pattern>` = step index).
-- **Sets × rep range with double progression** (e.g. 3 × 8–12): add reps each session; hitting the top of the range on
-  every set (camera-checked) *graduates* to the next step, back to the bottom of the range. Reps follow the ladder,
-  not the player level (today reps rise with level, which mixes XP with strength).
-- **Placement test** on first use (max reps per ladder, camera-counted) to pick starting steps.
-- **Weekly template**: 3 full-body strength days + light days (mobility/core/skill) + scheduled rest days that protect
-  the day from the missed-day penalty (needs the owner's penalty rule). Deload week every ~6 weeks.
-- **XP stays**: XP per completed set/session (camera vs manual unchanged), a big bonus for each graduation, PRs.
-  Optional quests stay as side quests. Possible **rank trials**: a new rank needs XP *and* a skill milestone.
-- Suggested phases if accepted: P-A ladders + placement, P-B session (sets, rest timer, double progression),
-  P-C weekly template + rest days, P-D rank trials/deloads. Fits before or after camera phase 6 (owner picks).
+### Programme proposal (2026-10-26) — DEFERRED until phases 6–9 are done
+**Owner (2026-10-26):** save this now; come back to it only after the whole first plan (phases 6–9) is finished.
+At that point, re-present these options and the open questions to the owner before building anything.
+
+Why: today reps rise with the player **level**, which mixes XP (effort/consistency) with strength. A real programme
+lets strength drive the exercises and keeps XP as the reward layer.
+
+**Recommended: progression ladders + XP on top**
+- **Ladders** per movement pattern: push, pull, squat, hinge/bridge, core. Each is an ordered list of catalog exercises,
+  easiest → hardest. E.g. push: wall → incline → knee → full → diamond → archer → (one-arm); squat: squat → split squat
+  → Bulgarian split squat → shrimp → pistol; pull (home kit only): table/towel row → negatives → pull-up → archer.
+  Each player has a current step per ladder (e.g. `programme/ladders/<pattern>` = step index; needs rules + types).
+- **Sets × rep range, double progression** (e.g. 3 × 8–12; holds 3 × 20–45 s): add reps each session; hitting the top
+  of the range on every set (camera-checked) **graduates** to the next step, back to the bottom of the range.
+  Manual (no-camera) sets count for XP (half, as now) but should not graduate a step. Reps follow the ladder, not the level.
+- **Placement test** on first use: max reps per ladder, counted by the camera, picks the starting steps (re-test any time).
+- **Weekly template**: 3 full-body strength days (e.g. Mon/Wed/Fri) + 2 light days (mobility/core/skill) + 2 rest days.
+  Recommended penalty rule: **scheduled rest days never get a penalty** and don't break the streak; at most 3 rest days
+  a week; strength/light days keep today's rule (≥1 daily quest done or lose that day's XP). Deload week every ~6 weeks
+  (lower volume, same XP).
+- **XP stays**: XP per completed set/session (camera vs manual unchanged), a big bonus per graduation, small bonus for a
+  personal record. Optional quests stay as side quests; the curve, tiers, ranks and badges are unchanged.
+- **Rank trials** (optional): reaching a new rank needs the XP **and** a skill milestone (e.g. Athlete: 10 full
+  push-ups on camera). Recommended as a later add-on, opt-in at first.
+
+**Lighter alternatives (not recommended)**
+- *Sets only*: keep quests, show them as sets. Quick, but not a programme.
+- *Fixed plans*: pick a ready-made plan (Beginner / Intermediate, N weeks). Simple, doesn't adapt.
+
+**Suggested phases (after phase 9):** P-A ladders + placement test · P-B session view (sets, rest timer, double
+progression, graduations) · P-C weekly template + rest days + deload · P-D rank trials. Same rule: PR + merge per phase.
+
+**Open questions for the owner then:** ladders vs alternatives; rest-day penalty rule above; whether existing daily
+quests are replaced by programme sessions or kept alongside them; rank trials yes/no.
 
 ### Known issues to fix (small, any time)
 - Ranks tab on mobile with large phone text: the 5-badge tier row can overflow the right edge
