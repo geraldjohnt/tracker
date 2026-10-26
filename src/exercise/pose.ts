@@ -66,6 +66,11 @@ export interface CounterState {
   seconds: number;
   /** The person (the joints this exercise needs) is in view. */
   inView: boolean;
+  /**
+   * In view and in the right position right now (form checks pass, starting position seen).
+   * Drives the green/red skeleton. Watch counters have no form checks, so it only means "in view".
+   */
+  formOk: boolean;
   /** Short coaching cue, or '' when everything looks right. */
   cue: string;
   /** 0 = resting position, 1 = deepest point; drives the little depth meter. */
@@ -150,7 +155,7 @@ const REP_SPECS: Partial<Record<TrackerKind, RepSpec>> = {
 
 class RepCounter implements Counter {
   readonly mode = 'reps' as const;
-  private s: CounterState = { reps: 0, seconds: 0, inView: false, cue: '', depth: 0 };
+  private s: CounterState = { reps: 0, seconds: 0, inView: false, formOk: false, cue: '', depth: 0 };
   /** 'idle' until the resting position is seen once, so getting into place never counts. */
   private phase: 'idle' | 'rest' | 'moving' | 'work' = 'idle';
   private smooth: number | null = null;
@@ -176,7 +181,7 @@ class RepCounter implements Counter {
   update(lms: Landmark[] | undefined, _t: number, aspect: number): CounterState {
     const f = lms?.length ? new Frame(lms, aspect) : null;
     const got = f && this.measure(f);
-    if (!f || !got) return (this.s = { ...this.s, inView: false, cue: 'Step back so your whole body is in view' });
+    if (!f || !got) return (this.s = { ...this.s, inView: false, formOk: false, cue: 'Step back so your whole body is in view' });
 
     const { dir, work, rest, partial, shallow, form } = this.spec;
     this.smooth = this.smooth === null ? got.m : this.smooth + SMOOTHING * (got.m - this.smooth);
@@ -205,7 +210,8 @@ class RepCounter implements Counter {
     }
 
     const depth = this.phase === 'idle' ? 0 : Math.max(0, Math.min(1, (m - rest) / (work - rest)));
-    return (this.s = { reps, seconds: 0, inView: true, cue, depth });
+    const formOk = this.phase !== 'idle' && !formCue;
+    return (this.s = { reps, seconds: 0, inView: true, formOk, cue, depth });
   }
 }
 
@@ -237,7 +243,7 @@ const HOLD_SPECS: Partial<Record<TrackerKind, HoldSpec>> = {
 
 class HoldCounter implements Counter {
   readonly mode = 'hold' as const;
-  private s: CounterState = { reps: 0, seconds: 0, inView: false, cue: '', depth: 0 };
+  private s: CounterState = { reps: 0, seconds: 0, inView: false, formOk: false, cue: '', depth: 0 };
   private last: number | null = null;
   constructor(private spec: HoldSpec) {}
   state() { return this.s; }
@@ -246,10 +252,10 @@ class HoldCounter implements Counter {
     this.last = t;
     const f = lms?.length ? new Frame(lms, aspect) : null;
     const side = f?.side(this.spec.joints) ?? null;
-    if (!f || !side) return (this.s = { ...this.s, inView: false, cue: 'Step back so your whole body is in view', depth: 0 });
+    if (!f || !side) return (this.s = { ...this.s, inView: false, formOk: false, cue: 'Step back so your whole body is in view', depth: 0 });
     const cue = this.spec.check(f, side);
     const seconds = this.s.seconds + (!cue && dt > 0 && dt <= MAX_FRAME_GAP ? dt : 0);
-    return (this.s = { reps: 0, seconds, inView: true, cue, depth: cue ? 0 : 1 });
+    return (this.s = { reps: 0, seconds, inView: true, formOk: !cue, cue, depth: cue ? 0 : 1 });
   }
 }
 
@@ -258,16 +264,16 @@ class HoldCounter implements Counter {
 /** For exercises without a counter yet: counts the seconds a person is in view. */
 class WatchCounter implements Counter {
   readonly mode = 'watch' as const;
-  private s: CounterState = { reps: 0, seconds: 0, inView: false, cue: '', depth: 0 };
+  private s: CounterState = { reps: 0, seconds: 0, inView: false, formOk: false, cue: '', depth: 0 };
   private last: number | null = null;
   state() { return this.s; }
   update(lms: Landmark[] | undefined, t: number): CounterState {
     const dt = this.last === null ? 0 : t - this.last;
     this.last = t;
     const seen = !!lms?.length && [LM.lShoulder, LM.rShoulder, LM.lHip, LM.rHip].filter(i => (lms[i]?.visibility ?? 1) >= MIN_VISIBILITY).length >= 2;
-    if (!seen) return (this.s = { ...this.s, inView: false, cue: 'Step into view of the camera' });
+    if (!seen) return (this.s = { ...this.s, inView: false, formOk: false, cue: 'Step into view of the camera' });
     const seconds = this.s.seconds + (dt > 0 && dt <= MAX_FRAME_GAP ? dt : 0);
-    return (this.s = { ...this.s, seconds, inView: true, cue: '' });
+    return (this.s = { ...this.s, seconds, inView: true, formOk: true, cue: '' });
   }
 }
 

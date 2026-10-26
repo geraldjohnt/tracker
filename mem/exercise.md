@@ -109,6 +109,22 @@ The owner may move 7–9 before the camera phases.
 - Achievements, streak bonuses, rest days in the weekly plan (needs a penalty rule), rank-up celebration
   screen, weekly challenge quest.
 
+### Programme proposal (2026-10-26, waiting for the owner)
+Owner asked how to add a proper calisthenics programme while keeping the level system. Proposed (Recommended):
+- **Progression ladders** per movement pattern (push, pull, squat, hinge/bridge, core), each a list of catalog
+  exercises from easiest to hardest (e.g. wall → incline → knee → full → diamond → archer push-up). Each player has
+  a current step per ladder (`programme/ladders/<pattern>` = step index).
+- **Sets × rep range with double progression** (e.g. 3 × 8–12): add reps each session; hitting the top of the range on
+  every set (camera-checked) *graduates* to the next step, back to the bottom of the range. Reps follow the ladder,
+  not the player level (today reps rise with level, which mixes XP with strength).
+- **Placement test** on first use (max reps per ladder, camera-counted) to pick starting steps.
+- **Weekly template**: 3 full-body strength days + light days (mobility/core/skill) + scheduled rest days that protect
+  the day from the missed-day penalty (needs the owner's penalty rule). Deload week every ~6 weeks.
+- **XP stays**: XP per completed set/session (camera vs manual unchanged), a big bonus for each graduation, PRs.
+  Optional quests stay as side quests. Possible **rank trials**: a new rank needs XP *and* a skill milestone.
+- Suggested phases if accepted: P-A ladders + placement, P-B session (sets, rest timer, double progression),
+  P-C weekly template + rest days, P-D rank trials/deloads. Fits before or after camera phase 6 (owner picks).
+
 ### Known issues to fix (small, any time)
 - Ranks tab on mobile with large phone text: the 5-badge tier row can overflow the right edge
   (e.g. "Olympian 5" clipped). Likely fix: `min-width:0` on `.tier`, smaller badges / wrapping labels below 400px.
