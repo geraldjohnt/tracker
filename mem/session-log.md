@@ -3,6 +3,13 @@
 Newest first. Keep each entry short.
 
 
+## 2026-10-26 — LevelUp phase 5: camera form check
+- Owner: quests need the camera (video never saved); no camera / access denied → still completable for half XP, rounded down.
+- Added `pose.ts` (rep counters with hysteresis + form checks, hold counters, watch timer), `poseModel.ts` (lazy MediaPipe),
+  `CameraModal.tsx`; Start replaces Complete; `manual: true` + halved XP on manual completions; catalog `tracker`, v3.
+- Rules changed (`tracker`, `manual`): **owner must re-publish**. 88 tests. Checked in Chromium with a fake camera.
+- Next: phase 6 (counters for the rest of the catalog) when the owner says continue.
+
 ## 2026-10-24 — Body map + badge pips (between phases 4 and 5)
 - `BodyMap.tsx` redrawn as an anatomical chart (200×450 per figure, mirrored halves, outline pass + fill pass for
   a clean silhouette; muscle heads separated by card-coloured gaps; untracked anatomy as muted `bm-part`s).

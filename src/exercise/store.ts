@@ -13,7 +13,7 @@ import { toast } from '../shared/toast';
 import { EXERCISE_ROOT, userRoot, type ISODate } from '../shared/types';
 import { CATALOG, CATALOG_VERSION, type Difficulty, type Exercise } from './catalog';
 import {
-  catalogRecord, DEFAULT_TARGETS, daySeed, focusOn, generateDaily, generateDay, levelInfo, normalizeBoard, normalizeCatalog, normalizeDays,
+  catalogRecord, DEFAULT_TARGETS, manualXp, daySeed, focusOn, generateDaily, generateDay, levelInfo, normalizeBoard, normalizeCatalog, normalizeDays,
   normalizeProfile, normalizeTargets, questAmount, questXp, rankOf, settle, totalXp, weekdayOf, type BoardEntry, type DailySlot, type DaysMap,
   type Focus, type Profile, type QuestKind, type Targets, type Weekday,
 } from './derive';
@@ -268,29 +268,34 @@ export class ExerciseStore {
 
   /* ---------- quests ---------- */
 
-  private complete(kind: QuestKind, key: string) {
+  /**
+   * Completes one of today's quests. `camera` says the camera form check counted it; without
+   * it (no camera, or access denied) the quest is worth half its XP, rounded down.
+   */
+  private complete(kind: QuestKind, key: string, camera: boolean) {
     const { today, days, byId } = this.state;
     const slot = kind === 'daily' ? days[today]?.daily?.[key as DailySlot] : days[today]?.optional?.[key as Difficulty];
     const ex = slot && byId[slot.ex];
     if (!slot || !ex || slot.done || (kind === 'optional' && !slot.accepted)) return;
     const before = levelInfo(this.xp()).level;
     const amount = questAmount(ex, before, kind);
-    const xp = questXp(ex.difficulty, before, kind);
+    const full = questXp(ex.difficulty, before, kind);
+    const xp = camera ? full : manualXp(full);
     const base = 'days/' + today + '/' + kind + '/' + key + '/';
-    this.write({ [base + 'done']: Date.now(), [base + 'amount']: amount, [base + 'xp']: xp });
+    this.write({ [base + 'done']: Date.now(), [base + 'amount']: amount, [base + 'xp']: xp, [base + 'manual']: camera ? null : true });
     const after = levelInfo(this.xp()).level;
     const rank = rankOf(after).label;
     if (rank !== rankOf(before).label) toast('Rank up! You’re now ' + rank);
     else if (after > before) toast('Level up! Level ' + after + ' · ' + rank);
-    else toast('+' + xp + ' XP · ' + ex.name);
+    else toast('+' + xp + ' XP · ' + ex.name + (camera ? '' : ' (half XP, no camera)'));
   }
 
   private undo(kind: QuestKind, key: string) {
     const base = 'days/' + this.state.today + '/' + kind + '/' + key + '/';
-    this.write({ [base + 'done']: null, [base + 'amount']: null, [base + 'xp']: null });
+    this.write({ [base + 'done']: null, [base + 'amount']: null, [base + 'xp']: null, [base + 'manual']: null });
   }
 
-  completeDaily(slot: DailySlot) { this.complete('daily', slot); }
+  completeDaily(slot: DailySlot, camera = true) { this.complete('daily', slot, camera); }
   undoDaily(slot: DailySlot) { this.undo('daily', slot); }
 
   acceptOptional(d: Difficulty) {
@@ -304,7 +309,7 @@ export class ExerciseStore {
     if (!q || q.done) return;
     this.write({ ['days/' + this.state.today + '/optional/' + d + '/accepted']: null });
   }
-  completeOptional(d: Difficulty) { this.complete('optional', d); }
+  completeOptional(d: Difficulty, camera = true) { this.complete('optional', d, camera); }
   undoOptional(d: Difficulty) { this.undo('optional', d); }
 }
 

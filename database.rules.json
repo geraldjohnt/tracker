@@ -64,6 +64,7 @@
                 "done":     { ".validate": "newData.isNumber()" },
                 "amount":   { ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "xp":       { ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "manual":   { ".validate": "newData.isBoolean()" },
                 "$other": { ".validate": false }
               } },
               "optional": { "$difficulty": {
@@ -73,6 +74,7 @@
                 "done":     { ".validate": "newData.isNumber()" },
                 "amount":   { ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "xp":       { ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "manual":   { ".validate": "newData.isBoolean()" },
                 "$other": { ".validate": false }
               } },
               "focus":   { ".validate": "newData.isString() && newData.val().matches(/^(legs|upper|core|full)$/)" },
@@ -120,6 +122,7 @@
           "form":       { "$i": { ".validate": "newData.isString() && newData.val().length <= 200" } },
           "mistakes":   { "$i": { ".validate": "newData.isString() && newData.val().length <= 200" } },
           "easier":     { ".validate": "newData.isString() && newData.val().length <= 300" },
+          "tracker":    { ".validate": "newData.isString() && newData.val().matches(/^(squat|lunge|pushup|wallpush|bridge|plank|wallsit)$/)" },
           "$other": { ".validate": false }
         }
       },

@@ -50,6 +50,27 @@ describe('ExerciseStore (sample data only)', () => {
     expect(backend.get(ROOT + '/days/2026-10-24/daily/q2/done')).toBeNull();
   });
 
+  it('completing without the camera gives half the XP, rounded down, and undo clears it', async () => {
+    const s = make();
+    await flush();
+    s.completeDaily('q0', false);
+    await flush();
+    const q0 = backend.get(ROOT + '/days/2026-10-24/daily/q0') as Record<string, unknown>;
+    expect(q0.xp).toBe(2); // 5 XP → 2.5 → 2
+    expect(q0.manual).toBe(true);
+    s.completeDaily('q1'); // with the camera: full XP, no flag
+    await flush();
+    expect(backend.get(ROOT + '/days/2026-10-24/daily/q1/manual')).toBeNull();
+    expect(s.xp()).toBe(7);
+    s.acceptOptional('hard');
+    s.completeOptional('hard', false);
+    expect(s.xp()).toBe(7 + 15); // hard optional 30 → 15
+    s.undoDaily('q0');
+    await flush();
+    expect(backend.get(ROOT + '/days/2026-10-24/daily/q0/manual')).toBeNull();
+    expect(s.getState().days['2026-10-24'].daily!.q0!.manual).toBeUndefined();
+  });
+
   it('optional quests must be accepted before they can be completed', async () => {
     const s = make();
     await flush();

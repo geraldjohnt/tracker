@@ -12,7 +12,7 @@
 // Exercises that need any equipment (`equipment` other than 'none') are optional quests
 // only; daily quests use bodyweight-only exercises.
 
-export const CATALOG_VERSION = 2;
+export const CATALOG_VERSION = 3;
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard', 'elite'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
@@ -32,6 +32,14 @@ export const MUSCLE_LABELS: Record<Muscle, string> = {
 export type Category = 'legs' | 'push' | 'pull' | 'core' | 'full';
 export type Measure = 'reps' | 'seconds';
 export type Gender = 'any' | 'female' | 'male';
+/**
+ * How the camera form check follows the exercise (see pose.ts): squat/lunge/pushup/wallpush/bridge
+ * count reps from a joint angle, plank/wallsit count seconds held in position. Exercises without
+ * one are still done on camera; the camera only checks that you're in view (phase 6 adds the rest).
+ */
+export const TRACKERS = ['squat', 'lunge', 'pushup', 'wallpush', 'bridge', 'plank', 'wallsit'] as const;
+export type TrackerKind = (typeof TRACKERS)[number];
+
 /** What you need at home. Anything but 'none' counts as equipment and is never a daily quest. */
 export type Equipment = 'none' | 'wall' | 'chair' | 'bar' | 'dip' | 'anchor';
 
@@ -63,6 +71,8 @@ export interface Exercise {
   form: string[];
   mistakes: string[];
   easier: string;
+  /** Camera counter for this exercise, if it has one yet. */
+  tracker?: TrackerKind;
 }
 
 type Def = Omit<Exercise, 'perSide' | 'gender' | 'equipment'> & Partial<Pick<Exercise, 'perSide' | 'gender' | 'equipment'>>;
@@ -72,7 +82,7 @@ export const CATALOG: Exercise[] = [
   /* ---------------- Easy ---------------- */
   ex({
     id: 'air-squat', name: 'Bodyweight Squat', variant: 'Air squat: feet shoulder-width apart, toes slightly out, arms reaching forward',
-    category: 'legs', difficulty: 'easy', measure: 'reps', base: 10, perLevel: 2,
+    category: 'legs', difficulty: 'easy', measure: 'reps', base: 10, perLevel: 2, tracker: 'squat',
     primary: ['quads', 'glutes'], secondary: ['hamstrings', 'calves', 'abs'],
     summary: 'The basic squat. Builds leg strength and teaches the hip-and-knee bend used in almost every lower-body move.',
     steps: [
@@ -88,7 +98,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'glute-bridge', name: 'Glute Bridge', variant: 'Two-leg floor bridge: lying on your back, knees bent, feet flat',
-    category: 'legs', difficulty: 'easy', measure: 'reps', base: 12, perLevel: 2, gender: 'female',
+    category: 'legs', difficulty: 'easy', measure: 'reps', base: 12, perLevel: 2, gender: 'female', tracker: 'bridge',
     primary: ['glutes'], secondary: ['hamstrings', 'lowerBack', 'abs'],
     summary: 'Lifts the hips off the floor to strengthen the glutes and back of the legs without loading the knees.',
     steps: [
@@ -104,7 +114,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'reverse-lunge', name: 'Reverse Lunge', variant: 'Alternating reverse lunge: stepping backward from a standing position',
-    category: 'legs', difficulty: 'easy', measure: 'reps', base: 6, perLevel: 1, perSide: true,
+    category: 'legs', difficulty: 'easy', measure: 'reps', base: 6, perLevel: 1, perSide: true, tracker: 'lunge',
     primary: ['quads', 'glutes'], secondary: ['hamstrings', 'calves'],
     summary: 'A one-leg-at-a-time squat that builds balance. Stepping back is easier on the knees than stepping forward.',
     steps: [
@@ -120,7 +130,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'wall-sit', name: 'Wall Sit', variant: 'Back flat against a wall, knees bent to 90 degrees, held still',
-    category: 'legs', difficulty: 'easy', measure: 'seconds', base: 20, perLevel: 5, equipment: 'wall',
+    category: 'legs', difficulty: 'easy', measure: 'seconds', base: 20, perLevel: 5, equipment: 'wall', tracker: 'wallsit',
     primary: ['quads'], secondary: ['glutes', 'calves'],
     summary: 'An isometric hold: you stay still in a half-squat to build leg endurance.',
     steps: [
@@ -151,7 +161,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'incline-pushup', name: 'Incline Push-up', variant: 'Hands on a sturdy chair, bench or table edge, body in a straight line',
-    category: 'push', difficulty: 'easy', measure: 'reps', base: 8, perLevel: 2, gender: 'female', equipment: 'chair',
+    category: 'push', difficulty: 'easy', measure: 'reps', base: 8, perLevel: 2, gender: 'female', equipment: 'chair', tracker: 'pushup',
     primary: ['chest', 'triceps'], secondary: ['shoulders', 'abs'],
     summary: 'A push-up with your hands raised. The higher the hands, the easier it is. A great first step toward floor push-ups.',
     steps: [
@@ -167,7 +177,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'knee-pushup', name: 'Knee Push-up', variant: 'Push-up from the knees, hands under the shoulders',
-    category: 'push', difficulty: 'easy', measure: 'reps', base: 8, perLevel: 1, gender: 'female',
+    category: 'push', difficulty: 'easy', measure: 'reps', base: 8, perLevel: 1, gender: 'female', tracker: 'pushup',
     primary: ['chest', 'triceps'], secondary: ['shoulders', 'abs'],
     summary: 'A shorter-lever push-up that builds the chest, shoulders and arms for full push-ups.',
     steps: [
@@ -183,7 +193,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'wall-pushup', name: 'Wall Push-up', variant: 'Standing push-up with hands flat on a wall at chest height',
-    category: 'push', difficulty: 'easy', measure: 'reps', base: 12, perLevel: 2, equipment: 'wall',
+    category: 'push', difficulty: 'easy', measure: 'reps', base: 12, perLevel: 2, equipment: 'wall', tracker: 'wallpush',
     primary: ['chest', 'shoulders'], secondary: ['triceps'],
     summary: 'The gentlest push-up. Good for complete beginners and for warming up the shoulders.',
     steps: [
@@ -230,7 +240,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'forearm-plank', name: 'Forearm Plank', variant: 'Elbows under shoulders, up on the toes, body in a straight line, held still',
-    category: 'core', difficulty: 'easy', measure: 'seconds', base: 20, perLevel: 5,
+    category: 'core', difficulty: 'easy', measure: 'seconds', base: 20, perLevel: 5, tracker: 'plank',
     primary: ['abs'], secondary: ['shoulders', 'glutes', 'obliques'],
     summary: 'The classic core hold. Teaches you to keep your trunk stiff, which protects your back in every other exercise.',
     steps: [
@@ -310,7 +320,7 @@ export const CATALOG: Exercise[] = [
   /* ---------------- Medium ---------------- */
   ex({
     id: 'pushup', name: 'Push-up', variant: 'Standard floor push-up: hands slightly wider than shoulders, up on the toes',
-    category: 'push', difficulty: 'medium', measure: 'reps', base: 10, perLevel: 1,
+    category: 'push', difficulty: 'medium', measure: 'reps', base: 10, perLevel: 1, tracker: 'pushup',
     primary: ['chest', 'triceps'], secondary: ['shoulders', 'abs'],
     summary: 'The foundation of upper-body calisthenics. Works the chest, shoulders, arms and core together.',
     steps: [
@@ -326,7 +336,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'wide-pushup', name: 'Wide Push-up', variant: 'Floor push-up with hands about one and a half shoulder-widths apart',
-    category: 'push', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1,
+    category: 'push', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1, tracker: 'pushup',
     primary: ['chest', 'shoulders'], secondary: ['triceps', 'abs'],
     summary: 'A push-up variation that shifts more work onto the chest.',
     steps: [
@@ -341,7 +351,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'jump-squat', name: 'Jump Squat', variant: 'Bodyweight squat with an explosive vertical jump, soft landing',
-    category: 'legs', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1,
+    category: 'legs', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1, tracker: 'squat',
     primary: ['quads', 'glutes', 'calves'], secondary: ['hamstrings'],
     summary: 'Adds a jump to the squat to build power and get your heart rate up.',
     steps: [
@@ -356,7 +366,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'walking-lunge', name: 'Walking Lunge', variant: 'Forward lunges that travel: step, lower, then step through with the back leg',
-    category: 'legs', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1, perSide: true,
+    category: 'legs', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1, perSide: true, tracker: 'lunge',
     primary: ['quads', 'glutes'], secondary: ['hamstrings', 'calves'],
     summary: 'A moving lunge that challenges balance and leg strength over distance.',
     steps: [
@@ -371,7 +381,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'bulgarian-split-squat', name: 'Bulgarian Split Squat', variant: 'Rear foot raised on a chair or bench behind you, front foot about two steps forward',
-    category: 'legs', difficulty: 'medium', measure: 'reps', base: 6, perLevel: 1, perSide: true, equipment: 'chair',
+    category: 'legs', difficulty: 'medium', measure: 'reps', base: 6, perLevel: 1, perSide: true, equipment: 'chair', tracker: 'lunge',
     primary: ['quads', 'glutes'], secondary: ['hamstrings'],
     summary: 'A single-leg squat with the back foot raised. One of the best leg exercises without weights.',
     steps: [
@@ -387,7 +397,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'single-leg-bridge', name: 'Single-Leg Glute Bridge', variant: 'Floor bridge with one foot down and the other leg straight up or extended',
-    category: 'legs', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1, perSide: true, gender: 'female',
+    category: 'legs', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1, perSide: true, gender: 'female', tracker: 'bridge',
     primary: ['glutes', 'hamstrings'], secondary: ['abs', 'lowerBack'],
     summary: 'A harder bridge that works one glute at a time and fixes left-right imbalances.',
     steps: [
@@ -403,7 +413,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'side-lunge', name: 'Side Lunge', variant: 'Lateral lunge: stepping wide to the side, sitting back into one hip',
-    category: 'legs', difficulty: 'medium', measure: 'reps', base: 6, perLevel: 1, perSide: true, gender: 'female',
+    category: 'legs', difficulty: 'medium', measure: 'reps', base: 6, perLevel: 1, perSide: true, gender: 'female', tracker: 'lunge',
     primary: ['quads', 'glutes'], secondary: ['hamstrings'],
     summary: 'Moves the legs sideways, working the inner thighs and hips that forward exercises miss.',
     steps: [
@@ -464,7 +474,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'side-plank', name: 'Side Plank', variant: 'On one forearm, elbow under shoulder, feet stacked, hips lifted, held still',
-    category: 'core', difficulty: 'medium', measure: 'seconds', base: 15, perLevel: 3, perSide: true,
+    category: 'core', difficulty: 'medium', measure: 'seconds', base: 15, perLevel: 3, perSide: true, tracker: 'plank',
     primary: ['obliques'], secondary: ['abs', 'shoulders', 'glutes'],
     summary: 'A sideways plank that strengthens the sides of the waist.',
     steps: [
@@ -542,7 +552,7 @@ export const CATALOG: Exercise[] = [
   /* ---------------- Hard ---------------- */
   ex({
     id: 'diamond-pushup', name: 'Diamond Push-up', variant: 'Floor push-up with thumbs and index fingers touching to make a diamond under the chest',
-    category: 'push', difficulty: 'hard', measure: 'reps', base: 6, perLevel: 1, gender: 'male',
+    category: 'push', difficulty: 'hard', measure: 'reps', base: 6, perLevel: 1, gender: 'male', tracker: 'pushup',
     primary: ['triceps', 'chest'], secondary: ['shoulders', 'abs'],
     summary: 'A close-hand push-up that puts most of the work on the triceps.',
     steps: [
@@ -557,7 +567,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'decline-pushup', name: 'Decline Push-up', variant: 'Feet raised on a chair or bench, hands on the floor',
-    category: 'push', difficulty: 'hard', measure: 'reps', base: 6, perLevel: 1, equipment: 'chair',
+    category: 'push', difficulty: 'hard', measure: 'reps', base: 6, perLevel: 1, equipment: 'chair', tracker: 'pushup',
     primary: ['chest', 'shoulders'], secondary: ['triceps', 'abs'],
     summary: 'Raising the feet shifts more of your body weight onto your upper chest and shoulders.',
     steps: [
@@ -632,7 +642,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'jumping-lunge', name: 'Jumping Lunge', variant: 'Lunge position, jumping to switch legs in the air, landing in a lunge',
-    category: 'legs', difficulty: 'hard', measure: 'reps', base: 6, perLevel: 1, perSide: true,
+    category: 'legs', difficulty: 'hard', measure: 'reps', base: 6, perLevel: 1, perSide: true, tracker: 'lunge',
     primary: ['quads', 'glutes', 'calves'], secondary: ['hamstrings'],
     summary: 'An explosive lunge that builds leg power and conditioning.',
     steps: [
@@ -694,7 +704,7 @@ export const CATALOG: Exercise[] = [
   /* ---------------- Elite ---------------- */
   ex({
     id: 'pistol-squat', name: 'Pistol Squat', variant: 'Single-leg squat to full depth, the other leg held straight out in front',
-    category: 'legs', difficulty: 'elite', measure: 'reps', base: 3, perLevel: 1, perSide: true,
+    category: 'legs', difficulty: 'elite', measure: 'reps', base: 3, perLevel: 1, perSide: true, tracker: 'lunge',
     primary: ['quads', 'glutes'], secondary: ['hamstrings', 'calves', 'abs'],
     summary: 'A full squat on one leg. Takes strength, balance and mobility.',
     steps: [
@@ -741,7 +751,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'clap-pushup', name: 'Clap Push-up', variant: 'Explosive floor push-up with a hand clap in the air',
-    category: 'push', difficulty: 'elite', measure: 'reps', base: 5, perLevel: 1, gender: 'male',
+    category: 'push', difficulty: 'elite', measure: 'reps', base: 5, perLevel: 1, gender: 'male', tracker: 'pushup',
     primary: ['chest', 'triceps'], secondary: ['shoulders'],
     summary: 'A plyometric push-up that builds upper-body explosive power.',
     steps: [
