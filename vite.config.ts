@@ -24,6 +24,7 @@ export default defineConfig({
           if (/[\/]src[\/](shared|styles)[\/]|[\/](weight|spending)[\/]derive\.ts$/.test(id)) return 'app-shared'; // the derive files the dashboard reuses
           if (!id.includes('node_modules')) return;
           if (id.includes('firebase')) return 'vendor-firebase';
+          if (id.includes('@mediapipe')) return 'vendor-pose'; // loaded only when a camera check opens
           if (id.includes('chart.js')) return 'vendor-chart';
           if (id.includes('react')) return 'vendor-react';
           if (id.includes('bootstrap')) return 'vendor-bootstrap';

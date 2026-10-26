@@ -292,3 +292,28 @@ button.rank-emblem:hover{ filter:brightness(1.06); }
   .plan-choices .chip{ justify-content:center; font-size:.68rem; padding:.35rem .2rem; white-space:nowrap; }
   .plan-choices .chip i{ display:none; }
 }
+
+/* Camera form check (CameraModal) */
+.done-tag.manual{ color:var(--muted); }
+.cam-stage{ position:relative; border-radius:var(--r-md); overflow:hidden; background:#0b0f19; aspect-ratio:4/3; }
+/* Front cameras feel natural mirrored; the overlay is mirrored the same way so it lines up. */
+.cam-video, .cam-overlay{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; transform:scaleX(-1); }
+.cam-loading{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:.5rem; color:#fff; font-weight:600; font-size:.88rem; background:rgba(0,0,0,.35); }
+.cam-view-pill{ position:absolute; left:.6rem; top:.6rem; display:inline-flex; align-items:center; gap:.3rem; padding:.25rem .6rem; border-radius:999px; font-size:.75rem; font-weight:700; color:#fff; background:rgba(220,38,38,.85); }
+.cam-view-pill.ok{ background:rgba(22,163,74,.85); }
+.cam-depth{ position:absolute; right:.6rem; top:.6rem; bottom:.6rem; width:8px; border-radius:999px; background:rgba(255,255,255,.25); display:flex; align-items:flex-end; overflow:hidden; }
+.cam-depth > div{ width:100%; background:#22c55e; border-radius:999px; transition:height .1s linear; }
+.cam-count{ margin-top:.85rem; }
+.cam-count-num{ font-size:.95rem; color:var(--muted); }
+.cam-count-num b{ font-size:1.6rem; font-weight:800; color:var(--text); letter-spacing:-.02em; }
+.cam-cue{ min-height:1.4em; margin-top:.5rem; font-weight:700; font-size:.88rem; color:var(--bad); opacity:0; transition:opacity .15s; }
+.cam-cue.show{ opacity:1; }
+.cam-setup, .cam-privacy{ display:flex; gap:.45rem; font-size:.8rem; color:var(--muted); margin:.6rem 0 0; }
+.cam-setup i, .cam-privacy i{ color:var(--accent); }
+.cam-skip{ display:block; margin:.85rem auto 0; font-size:.8rem; color:var(--muted); }
+.cam-blocked{ text-align:center; padding:1rem .5rem; }
+.cam-blocked h3{ font-weight:800; font-size:1.05rem; letter-spacing:-.02em; }
+.cam-blocked p{ color:var(--muted); font-size:.87rem; max-width:400px; margin:.4rem auto 0; }
+.cam-blocked .cam-half{ color:var(--text); }
+.cam-done{ color:var(--good); background:color-mix(in srgb, var(--good) 15%, transparent); }
+.cam-actions{ display:flex; gap:.5rem; justify-content:center; flex-wrap:wrap; margin-top:1rem; }

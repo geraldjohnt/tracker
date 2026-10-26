@@ -57,7 +57,8 @@ src/
   spending/      store, derive, SpendingApp, views (Day/Calendar/Week/Month/Year), BarChart, spending.css
   exercise/      catalog (48 exercises), derive (levels/ranks/targets/quests/penalties/board), store, ExerciseApp,
                  ExerciseModal, BodyMap (SVG muscle diagram), RankBadge (SVG rank badges), RanksView,
-                 WeeklyPlan, RankingView, parts, exercise.css
+                 WeeklyPlan, RankingView, CameraModal + pose (rep/hold counters) + poseModel (lazy
+                 MediaPipe), parts, exercise.css
 mem/             portable project memory (see above)
 ```
 
@@ -138,6 +139,14 @@ keeps snapshots and lb rounding from rewriting what the user is typing.
   updatedAt}`; any signed-in account reads it; each account writes only its own entry and the rules
   require `username + '@<domain>' === auth.token.email`. The store never creates an entry without
   `joinBoard()` (behind a confirm dialog), and keeps an existing one in sync (`syncBoard`).
+- **Camera form check** (`CameraModal.tsx`, `pose.ts`, `poseModel.ts`): a quest's Start button opens the
+  camera. MediaPipe Pose Landmarker runs on the device (loaded lazily into the `vendor-pose` chunk; Wasm
+  bundled, model fetched from Google's model storage); the video is never recorded, stored or uploaded.
+  The catalog's `tracker` (`squat|lunge|pushup|wallpush|bridge|plank|wallsit`) picks a counter: reps from
+  a joint angle with hysteresis and form checks, or seconds held in position. Exercises without one use
+  a watch timer (in view for amount × 1.5 s). The quest completes itself when the goal is reached
+  (per-side amounts count both sides). **Without the camera** (none, denied, or skipped) a quest is worth
+  `manualXp` = half its XP, rounded down, and the slot gets `manual: true`.
 - **Equipment rule**: only home calisthenics. Anything with `equipment !== 'none'` is optional-quest
   only; daily quests are bodyweight-only.
 - **Missed days** (`settle`): on load and when the date changes, each finished day since
@@ -183,7 +192,7 @@ Each page's `main.tsx` applies the saved choice before first paint.
 ### Data shape (Realtime Database)
 
 ```
-exercises/                        shared catalog: { version, items/<id>/{name, variant, …} }; read: any
+exercises/                        shared catalog: { version, items/<id>/{name, variant, …, tracker?} }; read: any
                                   signed-in account; write: owner only
 leaderboard/<uid>/                opt-in ranking: { username, level, xp, joinedAt, updatedAt }; read: any
                                   signed-in account; write: own entry, username must match the account
@@ -201,8 +210,8 @@ users/<uid>/                      read/write only by that account (auth.uid === 
     settings/ theme, template, palette, targets/<mon..sun>: "legs"|"upper"|"core"|"full"
     profile/ { startDate, settledThrough }   (ISO dates)
     days/<YYYY-MM-DD>/ { focus?, penalty?,
-      daily/q0..q2/ { ex, done?, amount?, xp? },
-      optional/easy|medium|hard|elite/ { ex, accepted?, done?, amount?, xp? } }
+      daily/q0..q2/ { ex, done?, amount?, xp?, manual? },
+      optional/easy|medium|hard|elite/ { ex, accepted?, done?, amount?, xp?, manual? } }
   meta/ legacyImported: <ms>
 
 weightTracker/, spendingTracker/  pre-login data (same shape), read-only, readable by geraldjohnt only

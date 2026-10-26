@@ -2,7 +2,7 @@
 // missed-day penalties. Everything here is deterministic and unit-tested.
 import { addDays, daysBetween } from '../shared/dates';
 import type { ISODate } from '../shared/types';
-import { CATALOG, DIFFICULTIES, MUSCLES, type Difficulty, type Exercise } from './catalog';
+import { CATALOG, DIFFICULTIES, MUSCLES, TRACKERS, type Difficulty, type Exercise, type TrackerKind } from './catalog';
 
 /* ---------------- levels & ranks ---------------- */
 
@@ -106,6 +106,12 @@ export function questXp(difficulty: Difficulty, level: number, kind: QuestKind):
   return Math.ceil((base * (10 + rankOf(level).index)) / 10);
 }
 
+/**
+ * XP for a quest completed without the camera (no camera, or camera access denied): half
+ * the quest's XP, rounded down. Camera-checked quests get the full amount.
+ */
+export const manualXp = (xp: number) => Math.floor(xp / 2);
+
 /** Hardest difficulty daily quests may use: easy until Level 10, medium from 10, hard from 20, elite from 30. */
 export function maxDailyDifficulty(level: number): Difficulty {
   return DIFFICULTIES[Math.min(DIFFICULTIES.length - 1, Math.floor(tierStep(level) / 2))];
@@ -171,6 +177,8 @@ export interface QuestSlot {
   done?: number;
   amount?: number;
   xp?: number;
+  /** Completed without the camera, for half XP. */
+  manual?: boolean;
 }
 
 export interface DayRecord {
@@ -325,6 +333,7 @@ function normSlot(v: unknown): QuestSlot | undefined {
   if (!isObj(v) || typeof v.ex !== 'string') return undefined;
   const s: QuestSlot = { ex: v.ex };
   for (const k of ['accepted', 'done', 'amount', 'xp'] as const) { const n = numOr(v[k]); if (n !== undefined) s[k] = n; }
+  if (v.manual === true) s.manual = true;
   return s;
 }
 
@@ -381,6 +390,7 @@ export function normalizeCatalog(v: unknown): { version: number; items: Exercise
       primary: muscles(e.primary), secondary: muscles(e.secondary),
       summary: String(e.summary ?? ''), steps: strings(e.steps), form: strings(e.form), mistakes: strings(e.mistakes),
       easier: String(e.easier ?? ''),
+      ...((TRACKERS as readonly unknown[]).includes(e.tracker) ? { tracker: e.tracker as TrackerKind } : {}),
     });
   }
   const order = new Map(CATALOG.map((e, i) => [e.id, i]));

@@ -11,6 +11,7 @@ import { isSampleMode } from '../shared/store';
 import { EXERCISE_ROOT, userRoot } from '../shared/types';
 import { useAppearance } from '../shared/useAppearance';
 import { BodyMap } from './BodyMap';
+import { CameraModal, type CameraModalHandle, type CameraQuest } from './CameraModal';
 import { DIFFICULTIES, MUSCLE_LABELS, type Difficulty, type Exercise } from './catalog';
 import {
   DAILY_SLOTS, dailyDone, dailyXpTotal, dayGain, DIFFICULTY_INFO, focusOn, FOCUS_INFO, levelInfo, nextRank, questAmount, questXp, rankOf,
@@ -34,6 +35,7 @@ export function ExerciseApp({ user }: { user: AuthUser }) {
   const [view, setView] = useState<View>('quests');
   const modalRef = useRef<ExerciseModalHandle>(null);
   const planRef = useRef<WeeklyPlanHandle>(null);
+  const camRef = useRef<CameraModalHandle>(null);
   const info = levelInfo(totalXp(state.days));
   const openEx = (ex: Exercise) => modalRef.current?.open(ex);
 
@@ -71,7 +73,7 @@ export function ExerciseApp({ user }: { user: AuthUser }) {
         {!state.ready || !state.today
           ? <div className="text-center py-5"><div className="spinner-border spinner-border-sm" role="status"><span className="visually-hidden">Loading</span></div></div>
           : <>
-            {view === 'quests' && <QuestsView state={state} level={info.level} onInfo={openEx} onRanks={() => setView('ranks')} onPlan={() => planRef.current?.open()} />}
+            {view === 'quests' && <QuestsView state={state} level={info.level} onInfo={openEx} onRanks={() => setView('ranks')} onPlan={() => planRef.current?.open()} onCamera={q => camRef.current?.open(q)} />}
             {view === 'ranks' && <RanksView state={state} />}
             {view === 'ranking' && <RankingView state={state} uid={user.uid} />}
             {view === 'library' && <LibraryView catalog={state.catalog} level={info.level} onInfo={openEx} />}
@@ -79,6 +81,7 @@ export function ExerciseApp({ user }: { user: AuthUser }) {
           </>}
       </AppShell>
       <ExerciseModal ref={modalRef} level={info.level} />
+      <CameraModal ref={camRef} />
       {state.today && <WeeklyPlanModal ref={planRef} targets={state.targets} today={state.today} canRetargetToday={exerciseStore.canRetargetToday()} />}
       <Toasts />
     </>
@@ -118,8 +121,8 @@ function PlayerCard({ state, onRanks }: { state: ExerciseState; onRanks: () => v
   );
 }
 
-function QuestsView({ state, level, onInfo, onRanks, onPlan }: {
-  state: ExerciseState; level: number; onInfo: (ex: Exercise) => void; onRanks: () => void; onPlan: () => void;
+function QuestsView({ state, level, onInfo, onRanks, onPlan, onCamera }: {
+  state: ExerciseState; level: number; onInfo: (ex: Exercise) => void; onRanks: () => void; onPlan: () => void; onCamera: (q: CameraQuest) => void;
 }) {
   const day = state.days[state.today];
   const focus = FOCUS_INFO[day?.focus ?? focusOn(state.targets, state.today)];
@@ -155,8 +158,8 @@ function QuestsView({ state, level, onInfo, onRanks, onPlan }: {
             const q = day?.daily?.[slot];
             const ex = q && state.byId[q.ex];
             if (!q || !ex) return null;
-            return <QuestRow key={slot} kind="daily" q={q} ex={ex} level={level} onInfo={onInfo}
-              onComplete={() => exerciseStore.completeDaily(slot)} onUndo={() => exerciseStore.undoDaily(slot)} />;
+            return <QuestRow key={slot} kind="daily" q={q} ex={ex} level={level} onInfo={onInfo} onCamera={onCamera}
+              onComplete={camera => exerciseStore.completeDaily(slot, camera)} onUndo={() => exerciseStore.undoDaily(slot)} />;
           })}
         </div>
       </div>
@@ -171,23 +174,24 @@ function QuestsView({ state, level, onInfo, onRanks, onPlan }: {
             const q = day?.optional?.[d];
             const ex = q && state.byId[q.ex];
             if (!q || !ex) return null;
-            return <QuestRow key={d} kind="optional" q={q} ex={ex} level={level} onInfo={onInfo}
+            return <QuestRow key={d} kind="optional" q={q} ex={ex} level={level} onInfo={onInfo} onCamera={onCamera}
               onAccept={() => exerciseStore.acceptOptional(d)} onAbandon={() => exerciseStore.abandonOptional(d)}
-              onComplete={() => exerciseStore.completeOptional(d)} onUndo={() => exerciseStore.undoOptional(d)} />;
+              onComplete={camera => exerciseStore.completeOptional(d, camera)} onUndo={() => exerciseStore.undoOptional(d)} />;
           })}
         </div>
       </div>
       <WeeklyStrip targets={state.targets} today={state.today} onEdit={onPlan} />
       <p className="fine-print">
-        Quests reset at midnight. Rep targets grow with your level. Honour system for now: tap Complete only after you’ve done every rep with good form.
+        Quests reset at midnight. Rep targets grow with your level. Start opens the camera, which counts your reps and checks your form;
+        the video stays on your device and is never recorded. No camera, or access blocked? You can still complete a quest for half the XP (rounded down).
       </p>
     </>
   );
 }
 
-function QuestRow({ kind, q, ex, level, onInfo, onComplete, onUndo, onAccept, onAbandon }: {
-  kind: QuestKind; q: QuestSlot; ex: Exercise; level: number; onInfo: (ex: Exercise) => void;
-  onComplete: () => void; onUndo: () => void; onAccept?: () => void; onAbandon?: () => void;
+function QuestRow({ kind, q, ex, level, onInfo, onCamera, onComplete, onUndo, onAccept, onAbandon }: {
+  kind: QuestKind; q: QuestSlot; ex: Exercise; level: number; onInfo: (ex: Exercise) => void; onCamera: (q: CameraQuest) => void;
+  onComplete: (camera: boolean) => void; onUndo: () => void; onAccept?: () => void; onAbandon?: () => void;
 }) {
   const done = !!q.done;
   const amount = done && q.amount ? q.amount : questAmount(ex, level, kind);
@@ -214,7 +218,9 @@ function QuestRow({ kind, q, ex, level, onInfo, onComplete, onUndo, onAccept, on
         <span className="xp-chip">+{xp} XP</span>
         {done ? (
           <div className="quest-actions">
-            <span className="done-tag"><i className="bi bi-check-circle-fill"></i>Done</span>
+            {q.manual
+              ? <span className="done-tag manual" title="Completed without the camera: half XP"><i className="bi bi-camera-video-off"></i>Done · ½ XP</span>
+              : <span className="done-tag"><i className="bi bi-check-circle-fill"></i>Done</span>}
             <button type="button" className="btn btn-ghost btn-sm btn-icon" title="Undo" aria-label="Undo" onClick={onUndo}><i className="bi bi-arrow-counterclockwise"></i></button>
           </div>
         ) : locked ? (
@@ -222,7 +228,8 @@ function QuestRow({ kind, q, ex, level, onInfo, onComplete, onUndo, onAccept, on
         ) : (
           <div className="quest-actions">
             {kind === 'optional' && <button type="button" className="btn btn-ghost btn-sm btn-icon" title="Abandon" aria-label="Abandon" onClick={onAbandon}><i className="bi bi-x-lg"></i></button>}
-            <button type="button" className="btn-primary-x btn-sm-x" onClick={onComplete}>Complete</button>
+            <button type="button" className="btn-primary-x btn-sm-x" title="Do it on camera to complete it"
+              onClick={() => onCamera({ ex, amount, xp, onComplete })}><i className="bi bi-camera-video me-1"></i>Start</button>
           </div>
         )}
       </div>

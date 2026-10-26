@@ -3,8 +3,8 @@
 Three trackers + a dashboard sharing one Firebase Realtime Database project, hosted on GitHub Pages:
 `index.html` (dashboard), `weight.html` (WeighIn), `spending.html` (Spendly), `exercise.html` (LevelUp).
 
-**In progress:** LevelUp (calisthenics quests), a 9-phase plan; phases 1–4 are done. **Next: phase 5,
-camera form check part 1** (ask the owner the open question first). The phase plan, spec, owner decisions
+**In progress:** LevelUp (calisthenics quests), a 9-phase plan; phases 1–5 are done. **Next: phase 6,
+camera form check part 2** (wait for the owner to say continue). The phase plan, spec, owner decisions
 and known issues are in [exercise.md](exercise.md). Read it before touching `src/exercise/`.
 
 **Status:** fully migrated (Oct 2026) from three self-contained HTML files to **React 19 +

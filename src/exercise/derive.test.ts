@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CATALOG, CATALOG_BY_ID, DIFFICULTIES, MUSCLES } from './catalog';
 import {
-  catalogRecord, dailyDone, dailyXpTotal, DAILY_SLOTS, DEFAULT_TARGETS, FOCUSES, generateDay, levelInfo, maxDailyDifficulty, nextRank,
+  catalogRecord, dailyDone, dailyXpTotal, DAILY_SLOTS, DEFAULT_TARGETS, FOCUSES, generateDay, levelInfo, manualXp, maxDailyDifficulty, nextRank,
   normalizeCatalog, normalizeDays, normalizeBoard, normalizeTargets, questAmount, questXp, rankBoard, rankLevel, rankOf, settle, streak,
   totalXp, weekdayOf, xpForLevel, xpToNext, type DaysMap,
 } from './derive';
@@ -90,6 +90,15 @@ describe('quests', () => {
     expect(maxDailyDifficulty(0)).toBe('easy');
     expect(maxDailyDifficulty(10)).toBe('medium');
     expect(maxDailyDifficulty(45)).toBe('elite');
+  });
+});
+
+describe('completing without the camera', () => {
+  it('is worth half the XP, rounded down', () => {
+    expect(manualXp(5)).toBe(2);
+    expect(manualXp(8)).toBe(4);
+    expect(manualXp(33)).toBe(16);
+    expect(manualXp(1)).toBe(0);
   });
 });
 
@@ -206,8 +215,8 @@ describe('catalog', () => {
   });
 
   it('normalizes day snapshots, dropping junk', () => {
-    const days = normalizeDays({ '2026-10-24': { focus: 'legs', daily: { q0: { ex: 'a', done: 5, xp: 5 }, q9: { ex: 'b' } }, penalty: 0 }, '2026-10-25': { focus: 'arms' }, junk: {} });
-    expect(days).toEqual({ '2026-10-24': { focus: 'legs', daily: { q0: { ex: 'a', done: 5, xp: 5 } } }, '2026-10-25': {} });
+    const days = normalizeDays({ '2026-10-24': { focus: 'legs', daily: { q0: { ex: 'a', done: 5, xp: 5 }, q1: { ex: 'c', done: 6, xp: 2, manual: true }, q2: { ex: 'd', manual: 'yes' }, q9: { ex: 'b' } }, penalty: 0 }, '2026-10-25': { focus: 'arms' }, junk: {} });
+    expect(days).toEqual({ '2026-10-24': { focus: 'legs', daily: { q0: { ex: 'a', done: 5, xp: 5 }, q1: { ex: 'c', done: 6, xp: 2, manual: true }, q2: { ex: 'd' } } }, '2026-10-25': {} });
   });
 });
 

@@ -30,6 +30,9 @@ tracker. Code: `src/exercise/`. Architecture notes are in CLAUDE.md → "Exercis
 - Only daily quests protect a day from the penalty (optional ones don't).
 - **Level-ups change reps immediately**: unfinished quests always show amounts for the current
   level (only the exercise choice is fixed for the day). Completed quests freeze amount/XP.
+- **Camera (owner, 2026-10-26, answered the phase-5 open question):** completing a quest requires the camera
+  to check the exercise; the video is never saved. If the user can't use a camera or denies access, they can
+  still complete the quest, but for **half the XP, rounded down** (`manualXp`; 5 → 2, 15 → 7).
 
 ## Choices made without asking (cheap to change)
 - Phase 3: focus names/default plan above; no "rest day" option (a rest day would need a penalty rule: ask
@@ -37,8 +40,17 @@ tracker. Code: `src/exercise/`. Architecture notes are in CLAUDE.md → "Exercis
 - XP curve: the +10%/level curve made high ranks unreachable (Warrior ≈ 3.3M XP). The owner compared three
   options (simulated) and chose C above: "moderate". The owner's first idea (+5 per *rank*) reached Legend in ~3 months.
   Existing XP is kept; levels are recomputed from it (the ledger has no stored level).
-- App name "LevelUp"; rank names; XP numbers above; undo is allowed for today's completions only
-  (honour system until the camera exists).
+- App name "LevelUp"; rank names; XP numbers above; undo is allowed for today's completions only.
+- Phase 5 camera details: the "Complete for half XP" link is always shown under the camera view (denying camera
+  access is always possible anyway, so hiding it only adds friction). A quest completes itself the moment the
+  camera reaches the goal. Exercises without a counter yet use a **watch** timer (person in view for
+  amount × 1.5 s, or the hold's seconds) and still get full XP; phase 6 replaces these with real counters.
+  Per-side amounts must be done on both sides (6 each side = 12 counted). Pose model: MediaPipe Pose Landmarker
+  lite (GPU, falls back to CPU), Wasm bundled from npm, model from storage.googleapis.com (cached by the browser).
+  Form checks that fail during a rep make it not count ("Hips sagging … (rep not counted)"); a shallow rep shows
+  "Go lower". Holds count only while the position is right, and pause when out of view.
+- Undoing a camera-checked quest and redoing it is allowed (same as before); the client is still trusted, so XP
+  is not tamper-proof (there's no server).
 - Non-participants can still *view* the ranking board; they just aren't on it.
 - Board values are self-reported by each client (like XP itself) until there's server-side
   verification; the rules stop impersonation, not inflated numbers.
@@ -53,9 +65,9 @@ Owner rule: PR + merge to `main` after **each** phase (CI green), then **stop** 
 | 3 | Tiers every 5 levels / ranks every 25, SVG rank badges, Ranks tab, badge on player emblem + board, weekly plan driving daily quests | Done | geraldjohnt/tracker#10 |
 | 4 | Moderate XP curve (option C): 15 XP/level +5 per tier; quest XP +10% per rank | Done | geraldjohnt/tracker#11 |
 | — | Fix: mobile bottom tab bar covered page bottoms (pad `.content-col` by measured `--bottom-nav-h`) | Done | geraldjohnt/tracker#12 |
-| — | Realistic anatomical body map; badge pips in two rows for tiers 4–5 | Done | (this PR) |
-| 5 | **Camera form check, part 1** (next) | Not started | |
-| 6 | Camera form check, part 2 | Not started | |
+| — | Realistic anatomical body map; badge pips in two rows for tiers 4–5 | Done | geraldjohnt/tracker#13, #14 |
+| 5 | Camera form check, part 1: camera required to complete; half XP without it; counters for squat, lunge, push-up, wall push-up, bridge, plank, wall sit | Done | (this PR) |
+| 6 | **Camera form check, part 2** (next) | Not started | |
 | 7 | Dashboard card for LevelUp | Not started | |
 | 8 | Better visuals (movement illustrations/animations) | Not started | |
 | 9 | Extras (owner picks) | Not started | |
@@ -72,12 +84,19 @@ The owner may move 7–9 before the camera phases.
 - Add a per-exercise `tracker` definition (joints, angle thresholds, form rules) to the catalog →
   bump `CATALOG_VERSION`, extend `database.rules.json` (`exercises/items/$id`), update tests.
 - Load the pose model lazily (only when the camera opens) so the page stays light.
-- **Open question for the owner (ask before starting):** keep the manual Complete button once the camera works?
-  Recommended: keep it as a setting, off by default (fallback for no camera / bad lighting).
+- **Done (2026-10-26).** Owner answered the open question differently: no setting; manual completion is always
+  possible but worth half XP (rounded down). Implemented in `pose.ts` (counters, unit-tested on synthetic poses),
+  `poseModel.ts`, `CameraModal.tsx`; catalog `tracker` field, `CATALOG_VERSION` 3; rules: `exercises/items/$id/tracker`
+  and `manual` on quest slots (**owner must re-publish the rules**, then open the page as geraldjohnt to publish v3).
+- Checked in Chromium with a fake camera fed a real photo (MediaPipe's `pose.jpg`, a lunge): detection, skeleton
+  overlay, idle guard, watch-mode auto-complete, denied → half XP. Real rep counting on video was not possible here
+  (no exercise video reachable); worth a quick real-phone check by the owner.
 
 ### Phase 6: camera form check, part 2
-- Trackers for the rest of the catalog; detailed form feedback ("hips sagging", "go lower", "knees caving");
-  the manual-Complete setting decided in phase 5.
+- Trackers for the rest of the catalog (everything still on the watch timer: calf raises, jumping jacks, superman,
+  crunches, dead bug, bird dog, mountain climbers, dips, rows, pull-ups, pike/archer push-ups, hollow hold, L-sit,
+  leg raises, burpees, jumps, V-ups, Nordic curls, dragon flag, side lunge tuning); more form feedback (e.g. knees
+  caving needs a front view); tune thresholds from the owner's real-phone feedback.
 
 ### Phase 7: dashboard card
 - LevelUp card on `index.html`: level, rank badge, XP progress, today's daily quests done / 3, streak.
@@ -102,8 +121,9 @@ The owner may move 7–9 before the camera phases.
   weekly targets driving daily quests. Rules: `settings/targets`, `days/<date>/focus` (**owner must re-publish**).
 - **Phase 2 (done, 2026-10-24):** opt-in ranking board (Ranking tab); daily quests are bodyweight-only;
   L-sit moved to the floor version (no equipment); `CATALOG_VERSION` 2.
-- **Owner to do:** re-publish `database.rules.json` (new `exercises/`, `leaderboard/` and `users/$uid/exerciseTracker`),
-  then open `exercise.html` signed in as `geraldjohnt` once, which publishes the catalog.
+- **Phase 5 (done, 2026-10-26):** camera form check; half XP without the camera. Rules: `tracker`, `manual`.
+- **Owner to do:** re-publish `database.rules.json` (latest: `tracker` on catalog items, `manual` on quest slots),
+  then open `exercise.html` signed in as `geraldjohnt` once, which publishes the catalog (version 3).
 
 ## Roadmap
 See "Phase plan" above (phases 5–9). Notes for the camera phases: per-exercise rep counters from joint angles,
