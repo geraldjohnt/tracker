@@ -148,6 +148,20 @@ describe('hold counters', () => {
     expect(st.seconds).toBeCloseTo(1, 1);
   });
 
+  it('formOk (the green skeleton) needs the right position, not just being in view', () => {
+    const c = createCounter({ tracker: 'pushup' });
+    expect(c.update(pushup(170, 0, 85), 0, 1)).toMatchObject({ inView: true, formOk: false }); // standing
+    expect(c.update(pushup(170), 0.1, 1)).toMatchObject({ inView: true, formOk: true });
+    expect(c.update(pushup(120, 25), 0.2, 1)).toMatchObject({ inView: true, formOk: false }); // hips sagging
+    expect(c.update(undefined, 0.3, 1).formOk).toBe(false);
+    const s = createCounter({ tracker: 'squat' });
+    expect(s.update(squat(90), 0, 1).formOk).toBe(false); // not in the starting position yet
+    expect(run(s, Array.from({ length: 6 }, () => squat(170)), 0.1).formOk).toBe(true);
+    const p = createCounter({ tracker: 'plank' });
+    expect(p.update(plank(), 0, 1).formOk).toBe(true);
+    expect(p.update(plank(20), 0.1, 1).formOk).toBe(false);
+  });
+
   it('long gaps between frames (background tab) are not counted', () => {
     const c = createCounter({ tracker: 'plank' });
     c.update(plank(), 0, 1);

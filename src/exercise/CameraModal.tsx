@@ -38,7 +38,9 @@ const BONES: Array<[number, number]> = [
   [LM.lHip, LM.lKnee], [LM.lKnee, LM.lAnkle], [LM.rHip, LM.rKnee], [LM.rKnee, LM.rAnkle],
 ];
 
-const EMPTY: CounterState = { reps: 0, seconds: 0, inView: false, cue: '', depth: 0 };
+const EMPTY: CounterState = { reps: 0, seconds: 0, inView: false, formOk: false, cue: '', depth: 0 };
+
+const GOOD = '#22c55e', BAD = '#ef4444', NEUTRAL = 'rgba(255,255,255,.8)';
 
 /**
  * Camera form check for a quest. Pose detection runs on the device; the video is shown
@@ -145,8 +147,9 @@ export function CameraModal({ ref }: { ref: Ref<CameraModalHandle> }) {
         let lms: Landmark[] | undefined;
         try { lms = model.detectForVideo(video, now).landmarks[0]; } catch (err) { console.error(err); return; }
         const st = counter.update(lms, now / 1000, video.videoWidth / (video.videoHeight || 1));
-        draw(canvasRef.current, video, lms, st.inView);
-        const key = [st.reps, Math.floor(st.seconds), st.cue, st.inView, Math.round(st.depth * 10)].join('|');
+        // Green only when the position is right; watch mode has no form checks, so it never claims that.
+        draw(canvasRef.current, video, lms, !st.inView ? BAD : counter.mode === 'watch' ? NEUTRAL : st.formOk ? GOOD : BAD);
+        const key = [st.reps, Math.floor(st.seconds), st.cue, st.inView, st.formOk, Math.round(st.depth * 10)].join('|');
         if (key !== shown) { shown = key; setLive(st); }
         if (cameraProgress(st, counter.mode) >= goal) finishRef.current(true);
       };
@@ -208,9 +211,7 @@ export function CameraModal({ ref }: { ref: Ref<CameraModalHandle> }) {
                       </div>
                     )}
                     {status === 'running' && !loadingModel && (
-                      <span className={'cam-view-pill' + (live.inView ? ' ok' : '')}>
-                        <i className={'bi ' + (live.inView ? 'bi-person-check' : 'bi-person-x')}></i>{live.inView ? 'In view' : 'Not in view'}
-                      </span>
+                      <ViewPill state={live} watch={counter.mode === 'watch'} />
                     )}
                     {counter.mode === 'reps' && <div className="cam-depth" aria-hidden="true"><div style={{ height: live.depth * 100 + '%' }}></div></div>}
                   </div>
@@ -233,8 +234,16 @@ export function CameraModal({ ref }: { ref: Ref<CameraModalHandle> }) {
   );
 }
 
-/** Draws the detected stick figure over the video (green when in view, grey otherwise). */
-function draw(canvas: HTMLCanvasElement | null, video: HTMLVideoElement, lms: Landmark[] | undefined, ok: boolean) {
+/** Top-left status: not in view / fix your position / good form (watch mode: just in view). */
+function ViewPill({ state, watch }: { state: CounterState; watch: boolean }) {
+  const [cls, icon, label] = !state.inView ? ['', 'bi-person-x', 'Not in view']
+    : watch ? [' ok', 'bi-person-check', 'In view']
+      : state.formOk ? [' ok', 'bi-person-check', 'Good form'] : ['', 'bi-exclamation-triangle', 'Fix your position'];
+  return <span className={'cam-view-pill' + cls}><i className={'bi ' + icon}></i>{label}</span>;
+}
+
+/** Draws the detected stick figure over the video in the given colour. */
+function draw(canvas: HTMLCanvasElement | null, video: HTMLVideoElement, lms: Landmark[] | undefined, color: string) {
   if (!canvas) return;
   const w = video.videoWidth, h = video.videoHeight;
   if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
@@ -242,7 +251,6 @@ function draw(canvas: HTMLCanvasElement | null, video: HTMLVideoElement, lms: La
   if (!ctx) return;
   ctx.clearRect(0, 0, w, h);
   if (!lms?.length) return;
-  const color = ok ? '#22c55e' : 'rgba(255,255,255,.65)';
   ctx.lineWidth = Math.max(2, w / 160);
   ctx.strokeStyle = color;
   ctx.lineCap = 'round';

@@ -2,6 +2,14 @@
 
 Newest first. Keep each entry short.
 
+## 2026-10-26 — LevelUp fixes (after phase 5) + programme proposal
+- Mobile: quest icon glyph sat low (button padding + Bootstrap Icons' line box) and didn't centre on two-row cards →
+  `.quest` is a grid on phones with the icon spanning both rows. Tabs wrapped out of the pill → one row on phones,
+  tighter tabs, sideways scroll as a fallback. Checked at 390px in Chromium.
+- Camera skeleton: green only when the position is right (`CounterState.formOk`: in view, starting position seen,
+  form checks pass), red otherwise; watch mode (no form checks) draws white. Pill: Not in view / Fix your position / Good form.
+- Proposed a proper calisthenics programme on top of the level system (see `exercise.md` → "Programme proposal");
+  waiting for the owner's choice. Next is still phase 6 unless the owner reorders.
 
 ## 2026-10-26 — LevelUp phase 5: camera form check
 - Owner: quests need the camera (video never saved); no camera / access denied → still completable for half XP, rounded down.
