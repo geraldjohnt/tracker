@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { AuthError, passwordProblem, type AuthUser } from '../auth';
 import { getAuthService } from '../store';
 import { toast } from '../toast';
+import { PasswordInput } from './PasswordInput';
 import { useBsModal } from './useBsModal';
 
 /** Header account button: who's signed in, Change password, Sign out. */
@@ -78,11 +79,11 @@ function ChangePasswordModal({ ref }: { ref: Ref<ChangePasswordHandle> }) {
           </div>
           <div className="modal-body">
             <label className="auth-label" htmlFor="pwCurrent">Current password</label>
-            <input id="pwCurrent" className="auth-input" type="password" autoComplete="current-password" value={current} onChange={e => setCurrent(e.target.value)} />
+            <PasswordInput id="pwCurrent" autoComplete="current-password" value={current} onChange={e => setCurrent(e.target.value)} />
             <label className="auth-label" htmlFor="pwNew">New password</label>
-            <input id="pwNew" className="auth-input" type="password" autoComplete="new-password" value={next} onChange={e => setNext(e.target.value)} />
+            <PasswordInput id="pwNew" autoComplete="new-password" value={next} onChange={e => setNext(e.target.value)} />
             <label className="auth-label" htmlFor="pwConfirm">Confirm new password</label>
-            <input id="pwConfirm" className="auth-input" type="password" autoComplete="new-password" value={confirm} onChange={e => setConfirm(e.target.value)} />
+            <PasswordInput id="pwConfirm" autoComplete="new-password" value={confirm} onChange={e => setConfirm(e.target.value)} />
             {error && <div className="auth-error mb-0" role="alert"><i className="bi bi-exclamation-circle"></i><span>{error}</span></div>}
           </div>
           <div className="modal-footer">

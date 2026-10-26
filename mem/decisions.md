@@ -78,3 +78,13 @@ Append new entries at the top. Format: date · decision · why · rejected alter
 - Bootstrap 5.3, Bootstrap Icons, Chart.js 4 and Firebase are bundled from npm. Only the Inter
   font still loads from Google Fonts. Charts use Chart.js directly through a small `ChartCanvas`
   component (destroy/recreate on change, same as legacy), not react-chartjs-2.
+
+## 2026-10-26 · Keep Firebase email/password auth (Dynamic Links notice)
+- Firebase warned that Dynamic Links shutting down breaks **email-link sign-in for mobile apps** and
+  **Cordova OAuth**. We use neither: sign-in is plain email/password (`signInWithEmailAndPassword`),
+  which is unaffected, so no auth change is needed.
+- Owner proposed replacing it with our own hashed passwords stored in the database, then agreed not to
+  migrate once told the app is unaffected. Why not: Firebase already salts and hashes passwords
+  (scrypt) server-side; a client-side hash in the Realtime DB would be readable/brute-forceable, could
+  be bypassed in the browser, and would lose `auth.uid`, which every security rule depends on.
+- Added a show/hide eye (`PasswordInput`) to the sign-in, register and Change password fields.

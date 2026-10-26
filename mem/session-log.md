@@ -2,6 +2,10 @@
 
 Newest first. Keep each entry short.
 
+## 2026-10-26 — Firebase Dynamic Links notice + show-password toggle
+- Notice only affects email-link sign-in (mobile) and Cordova OAuth; we use email/password, so no migration
+  (owner agreed; see decisions.md). Added `PasswordInput` (eye toggle) to sign-in/register/Change password.
+
 ## 2026-10-26 — LevelUp fixes (after phase 5) + programme proposal
 - Mobile: quest icon glyph sat low (button padding + Bootstrap Icons' line box) and didn't centre on two-row cards →
   `.quest` is a grid on phones with the icon spanning both rows. Tabs wrapped out of the pill → one row on phones,
