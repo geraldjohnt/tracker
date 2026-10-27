@@ -142,9 +142,13 @@ keeps snapshots and lb rounding from rewriting what the user is typing.
 - **Camera form check** (`CameraModal.tsx`, `pose.ts`, `poseModel.ts`): a quest's Start button opens the
   camera. MediaPipe Pose Landmarker runs on the device (loaded lazily into the `vendor-pose` chunk; Wasm
   bundled, model fetched from Google's model storage); the video is never recorded, stored or uploaded.
-  The catalog's `tracker` (`squat|lunge|pushup|wallpush|bridge|plank|wallsit`) picks a counter: reps from
-  a joint angle with hysteresis and form checks, or seconds held in position. Exercises without one use
-  a watch timer (in view for amount × 1.5 s). The quest completes itself when the goal is reached
+  The catalog's `tracker` (`TRACKERS` in `catalog.ts`, 33 kinds; every exercise has one) picks a counter
+  (`REP_SPECS`/`HOLD_SPECS` in `pose.ts`): reps from a joint angle with hysteresis, form checks (`form`
+  voids a rep), a must-reach condition at depth (`need`), an optional jump check (`jump`), and per-side modes
+  (`sides`: best / either / each); or seconds held in position. Squats also work facing the camera (depth from
+  thigh height; knees caving checked). A kind the page doesn't know (newer catalog, older page) falls back to
+  a watch timer (in view for amount × 1.5 s). New kinds need the `tracker` regex in `database.rules.json`
+  updated too. The quest completes itself when the goal is reached
   (per-side amounts count both sides). **Without the camera** (none, denied, or skipped) a quest is worth
   `manualXp` = half its XP, rounded down, and the slot gets `manual: true`.
 - **Equipment rule**: only home calisthenics. Anything with `equipment !== 'none'` is optional-quest

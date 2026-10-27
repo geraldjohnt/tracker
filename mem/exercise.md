@@ -66,9 +66,9 @@ Owner rule: PR + merge to `main` after **each** phase (CI green), then **stop** 
 | 4 | Moderate XP curve (option C): 15 XP/level +5 per tier; quest XP +10% per rank | Done | geraldjohnt/tracker#11 |
 | — | Fix: mobile bottom tab bar covered page bottoms (pad `.content-col` by measured `--bottom-nav-h`) | Done | geraldjohnt/tracker#12 |
 | — | Realistic anatomical body map; badge pips in two rows for tiers 4–5 | Done | geraldjohnt/tracker#13, #14 |
-| 5 | Camera form check, part 1: camera required to complete; half XP without it; counters for squat, lunge, push-up, wall push-up, bridge, plank, wall sit | Done | (this PR) |
-| 6 | **Camera form check, part 2** (next) | Not started | |
-| 7 | Dashboard card for LevelUp | Not started | |
+| 5 | Camera form check, part 1: camera required to complete; half XP without it; counters for squat, lunge, push-up, wall push-up, bridge, plank, wall sit | Done | geraldjohnt/tracker#15 |
+| 6 | Camera form check, part 2: counters for all 48 exercises (33 kinds), front-view squats + knee caving, jump checks | Done | (this PR) |
+| 7 | **Dashboard card for LevelUp** (next) | Not started | |
 | 8 | Better visuals (movement illustrations/animations) | Not started | |
 | 9 | Extras (owner picks) | Not started | |
 | — | **Then:** calisthenics programme (ladders), see "Programme proposal" below; owner deferred it until 6–9 are done | Deferred | |
@@ -98,6 +98,23 @@ The owner may move 7–9 before the camera phases.
   crunches, dead bug, bird dog, mountain climbers, dips, rows, pull-ups, pike/archer push-ups, hollow hold, L-sit,
   leg raises, burpees, jumps, V-ups, Nordic curls, dragon flag, side lunge tuning); more form feedback (e.g. knees
   caving needs a front view); tune thresholds from the owner's real-phone feedback.
+- **Done (2026-10-27).** Every catalog exercise now has a `tracker` (33 kinds, `CATALOG_VERSION` 4); watch mode only
+  remains as a fallback for kinds a page doesn't know. New counter features in `pose.ts`:
+  - `need`: a condition that must hold at depth (past the work threshold, not on the way back), e.g. chin over the
+    bar (pull-ups), other leg/arm straight (side lunge, archer), feet wide when facing the camera (jumping jacks),
+    straight plank (burpees), opposite arm reaching (bird dog), shoulders lifted (bicycle crunch).
+  - `jump`: ankles must rise 10% of leg length above a learned floor line, during the rep or up to 0.8 s after standing
+    (jump squats, tuck jumps, burpees). The floor is re-learned if the ankles stay "up" while standing for 1.5 s (camera moved).
+  - `sides: 'each'`: a state machine per leg for fast alternating moves (mountain climbers, bicycle crunch, dead bug,
+    bird dog); 'either' (lunges, side lunge, archer) is the phase-5 "whichever side bends most".
+  - Squats facing the camera: depth from the thigh's height vs the shin (`squatKnee`), and "knees caving in"
+    (knees < 70% of the feet's width on the way down) voids the rep. Side-on is unchanged.
+  - Holds: hollow hold, L-sit. Pull-up/chin-up share `pullup`; bench dip/parallel dip share `dip`; lying and hanging
+    leg raises share `legraise`; jump squat moved from `squat` to `jumpsquat`.
+  - Setup tip per kind in `CameraModal.tsx`; foot landmarks (heel, toes) drawn on the skeleton (calf raises use them).
+- All thresholds are from geometry on synthetic poses (unit-tested), not real video; **expect tuning after the owner
+  tries them on a phone.** Least certain: superman (small lift), calf raise (heel landmarks), L-sit (legs off the
+  floor), hollow hold (small lifts), jumping jacks from the side (arms only).
 
 ### Phase 7: dashboard card
 - LevelUp card on `index.html`: level, rank badge, XP progress, today's daily quests done / 3, streak.
@@ -110,7 +127,7 @@ The owner may move 7–9 before the camera phases.
 - Achievements, streak bonuses, rest days in the weekly plan (needs a penalty rule), rank-up celebration
   screen, weekly challenge quest.
 
-### Programme proposal (2026-10-26) — DEFERRED until phases 6–9 are done
+### Programme proposal (2026-10-26) — DEFERRED until phases 6–9 are done (6 done)
 **Owner (2026-10-26):** save this now; come back to it only after the whole first plan (phases 6–9) is finished.
 At that point, re-present these options and the open questions to the owner before building anything.
 
@@ -158,8 +175,10 @@ quests are replaced by programme sessions or kept alongside them; rank trials ye
 - **Phase 2 (done, 2026-10-24):** opt-in ranking board (Ranking tab); daily quests are bodyweight-only;
   L-sit moved to the floor version (no equipment); `CATALOG_VERSION` 2.
 - **Phase 5 (done, 2026-10-26):** camera form check; half XP without the camera. Rules: `tracker`, `manual`.
-- **Owner to do:** re-publish `database.rules.json` (latest: `tracker` on catalog items, `manual` on quest slots),
-  then open `exercise.html` signed in as `geraldjohnt` once, which publishes the catalog (version 3).
+- **Phase 6 (done, 2026-10-27):** counters for every exercise; rules: `tracker` regex extended (33 kinds).
+- **Owner to do:** re-publish `database.rules.json` (latest: the longer `tracker` list on catalog items),
+  then open `exercise.html` signed in as `geraldjohnt` once, which publishes the catalog (version 4). Until then
+  everyone uses the bundled catalog (v4 > stored v3), so nothing breaks.
 
 ## Roadmap
 See "Phase plan" above (phases 5–9). Notes for the camera phases: per-exercise rep counters from joint angles,

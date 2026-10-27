@@ -20,15 +20,42 @@ export interface CameraModalHandle { open(q: CameraQuest): void }
 
 type Status = 'starting' | 'running' | 'complete' | 'denied' | 'nocamera' | 'error';
 
+const SIDE_ON = 'side-on to the camera';
 const SETUP: Record<TrackerKind | 'watch', string> = {
-  squat: 'Stand side-on to the camera, about 2–3 m away, with your whole body in the picture.',
-  lunge: 'Stand side-on to the camera with your whole body in the picture. Lunges on both legs count.',
-  pushup: 'Put the phone on the floor, side-on to you, so your head, hips and knees are all in the picture.',
-  wallpush: 'Stand side-on to the camera at the wall, with your head, hips and knees in the picture.',
-  bridge: 'Lie on your back side-on to the camera, with your shoulders, hips and knees in the picture.',
-  plank: 'Set up side-on to the camera with your whole body, head to feet, in the picture. Seconds count while your body is straight.',
-  wallsit: 'Sit against the wall side-on to the camera, with hips, knees and ankles in the picture. Seconds count while you hold the position.',
-  watch: 'Keep your whole body in the picture while you do the exercise. Automatic counting for this one comes in a later update; the camera checks that you’re there for long enough.',
+  squat: `Stand ${SIDE_ON}, about 2–3 m away, with your whole body in the picture. Facing the camera works too, and checks that your knees don’t cave in.`,
+  jumpsquat: `Stand ${SIDE_ON} (or facing it), 2–3 m away, with your whole body and some floor in the picture. Each rep needs a real jump.`,
+  lunge: `Stand ${SIDE_ON} with your whole body in the picture. Lunges on both legs count.`,
+  sidelunge: 'Face the camera, 2–3 m away, with your whole body in the picture. Lunges to both sides count.',
+  calfraise: `Stand ${SIDE_ON} with your legs and feet clearly in the picture (the phone low, on the floor, works best).`,
+  pushup: `Put the phone on the floor, ${SIDE_ON}, so your head, hips and knees are all in the picture.`,
+  wallpush: `Stand ${SIDE_ON} at the wall, with your head, hips and knees in the picture.`,
+  pike: `Put the phone on the floor, ${SIDE_ON}, with your hands, hips and feet in the picture.`,
+  archer: 'Put the phone on the floor in front of you, facing you, so both arms are in the picture. Reps to both sides count.',
+  hspu: `Set the phone ${SIDE_ON} and the wall, far enough back that your hands, head and hips are in the picture.`,
+  dip: `Set the phone ${SIDE_ON}, with your hands, elbows, shoulders and hips in the picture.`,
+  pullup: 'Set the phone back from the bar (front or side), so your hands, head and elbows are all in the picture.',
+  row: `Set the phone ${SIDE_ON}, low down, so your hands, shoulders, hips and feet are in the picture.`,
+  bridge: `Lie on your back ${SIDE_ON}, with your shoulders, hips and knees in the picture.`,
+  superman: `Lie face down ${SIDE_ON}, arms reaching forward, with your hands and feet in the picture.`,
+  snowangel: `Lie face down ${SIDE_ON}, with your arms, shoulders and hips in the picture.`,
+  crunch: `Lie on your back ${SIDE_ON}, knees bent, with your shoulders, hips and knees in the picture.`,
+  bicycle: `Lie on your back ${SIDE_ON}, with your shoulders, hips and knees in the picture. Both legs count.`,
+  deadbug: `Lie on your back ${SIDE_ON}, with your whole body in the picture. Each leg counts as it straightens.`,
+  birddog: `Get on your hands and knees ${SIDE_ON}, with your whole body in the picture. Both sides count.`,
+  legraise: `Set up ${SIDE_ON}, with your shoulders, hips and feet in the picture. Keep your legs straight.`,
+  kneeraise: `Hang from the bar ${SIDE_ON}, with your hands, hips and knees in the picture.`,
+  vup: `Lie on your back ${SIDE_ON}, arms overhead, with your hands and feet in the picture.`,
+  climber: `Get into a high plank ${SIDE_ON}, with your whole body in the picture. Both legs count.`,
+  jack: 'Face the camera, 2–3 m away, with your whole body in the picture, arms included.',
+  burpee: `Stand ${SIDE_ON}, 2–3 m away, so your whole body fits both standing and in the plank.`,
+  tuckjump: `Stand ${SIDE_ON}, 2–3 m away, with your whole body and some floor in the picture.`,
+  nordic: `Kneel ${SIDE_ON}, with your shoulders, hips, knees and ankles in the picture.`,
+  dragonflag: `Lie on the bench ${SIDE_ON}, far enough back that your whole body fits when your legs are up.`,
+  plank: `Set up ${SIDE_ON} with your whole body, head to feet, in the picture. Seconds count while your body is straight.`,
+  wallsit: `Sit against the wall ${SIDE_ON}, with hips, knees and ankles in the picture. Seconds count while you hold the position.`,
+  hollow: `Lie on your back ${SIDE_ON}, with your whole body in the picture. Seconds count while shoulders and feet are off the floor.`,
+  lsit: `Sit ${SIDE_ON}, with your arms, hips and feet in the picture. Seconds count while your legs are up and straight.`,
+  watch: 'Keep your whole body in the picture while you do the exercise. This page can’t count this one yet (reload to update); the camera checks that you’re there for long enough.',
 };
 
 /** Lines of the stick figure drawn over the video. */
@@ -36,6 +63,7 @@ const BONES: Array<[number, number]> = [
   [LM.lShoulder, LM.rShoulder], [LM.lHip, LM.rHip], [LM.lShoulder, LM.lHip], [LM.rShoulder, LM.rHip],
   [LM.lShoulder, LM.lElbow], [LM.lElbow, LM.lWrist], [LM.rShoulder, LM.rElbow], [LM.rElbow, LM.rWrist],
   [LM.lHip, LM.lKnee], [LM.lKnee, LM.lAnkle], [LM.rHip, LM.rKnee], [LM.rKnee, LM.rAnkle],
+  [LM.lAnkle, LM.lHeel], [LM.lHeel, LM.lFoot], [LM.lAnkle, LM.lFoot], [LM.rAnkle, LM.rHeel], [LM.rHeel, LM.rFoot], [LM.rAnkle, LM.rFoot],
 ];
 
 const EMPTY: CounterState = { reps: 0, seconds: 0, inView: false, formOk: false, cue: '', depth: 0 };
@@ -220,7 +248,7 @@ export function CameraModal({ ref }: { ref: Ref<CameraModalHandle> }) {
                     <div className="xp-bar"><div className="xp-fill" style={{ width: (goal ? (progress / goal) * 100 : 0) + '%' }}></div></div>
                     <div className={'cam-cue' + (live.cue ? ' show' : '')} role="status" aria-live="polite">{live.cue || ' '}</div>
                   </div>
-                  <p className="cam-setup"><i className="bi bi-info-circle"></i>{SETUP[quest.ex.tracker ?? 'watch']}</p>
+                  <p className="cam-setup"><i className="bi bi-info-circle"></i>{SETUP[counter.mode === 'watch' ? 'watch' : quest.ex.tracker!]}</p>
                   <p className="cam-privacy"><i className="bi bi-shield-lock"></i>The video stays on this device. Nothing is recorded or uploaded.</p>
                   <button type="button" className="link-btn cam-skip" onClick={() => finish(false)}>Can’t use the camera? Complete for half XP (+{half})</button>
                 </>
