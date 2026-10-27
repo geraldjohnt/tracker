@@ -2,6 +2,14 @@
 
 Newest first. Keep each entry short.
 
+## 2026-10-27 — LevelUp phase 6: camera form check, part 2
+- Counters for all 48 exercises (33 `tracker` kinds; `CATALOG_VERSION` 4). New in `pose.ts`: `need` (condition at
+  depth), `jump` (learned floor line), `sides: 'each'` (per-leg state machines), front-view squats + knees caving.
+  Bug caught by tests: `need` must be checked only past the work threshold, not on the way back up.
+- Rules: `tracker` regex extended: **owner must re-publish**. 106 tests. Checked in Chromium (fake camera): dialog,
+  setup tips and rep goals for the new kinds. Thresholds untested on real video; owner to try on a phone.
+- Next: phase 7 (dashboard card) when the owner says continue.
+
 ## 2026-10-26 — Firebase Dynamic Links notice + show-password toggle
 - Notice only affects email-link sign-in (mobile) and Cordova OAuth; we use email/password, so no migration
   (owner agreed; see decisions.md). Added `PasswordInput` (eye toggle) to sign-in/register/Change password.

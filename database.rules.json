@@ -122,7 +122,7 @@
           "form":       { "$i": { ".validate": "newData.isString() && newData.val().length <= 200" } },
           "mistakes":   { "$i": { ".validate": "newData.isString() && newData.val().length <= 200" } },
           "easier":     { ".validate": "newData.isString() && newData.val().length <= 300" },
-          "tracker":    { ".validate": "newData.isString() && newData.val().matches(/^(squat|lunge|pushup|wallpush|bridge|plank|wallsit)$/)" },
+          "tracker":    { ".validate": "newData.isString() && newData.val().matches(/^(squat|jumpsquat|lunge|sidelunge|calfraise|pushup|wallpush|pike|archer|hspu|dip|pullup|row|bridge|superman|snowangel|crunch|bicycle|deadbug|birddog|legraise|kneeraise|vup|climber|jack|burpee|tuckjump|nordic|dragonflag|plank|wallsit|hollow|lsit)$/)" },
           "$other": { ".validate": false }
         }
       },

@@ -12,7 +12,7 @@
 // Exercises that need any equipment (`equipment` other than 'none') are optional quests
 // only; daily quests use bodyweight-only exercises.
 
-export const CATALOG_VERSION = 3;
+export const CATALOG_VERSION = 4;
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard', 'elite'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
@@ -33,11 +33,16 @@ export type Category = 'legs' | 'push' | 'pull' | 'core' | 'full';
 export type Measure = 'reps' | 'seconds';
 export type Gender = 'any' | 'female' | 'male';
 /**
- * How the camera form check follows the exercise (see pose.ts): squat/lunge/pushup/wallpush/bridge
- * count reps from a joint angle, plank/wallsit count seconds held in position. Exercises without
- * one are still done on camera; the camera only checks that you're in view (phase 6 adds the rest).
+ * How the camera form check follows the exercise (see pose.ts): most kinds count reps from a joint
+ * angle (with form checks); plank/wallsit/hollow/lsit count seconds held in position. Every bundled
+ * exercise has one. A page that doesn't know a kind (an older page, a newer catalog) only checks
+ * that you're in view.
  */
-export const TRACKERS = ['squat', 'lunge', 'pushup', 'wallpush', 'bridge', 'plank', 'wallsit'] as const;
+export const TRACKERS = [
+  'squat', 'jumpsquat', 'lunge', 'sidelunge', 'calfraise', 'pushup', 'wallpush', 'pike', 'archer', 'hspu', 'dip', 'pullup', 'row',
+  'bridge', 'superman', 'snowangel', 'crunch', 'bicycle', 'deadbug', 'birddog', 'legraise', 'kneeraise', 'vup', 'climber', 'jack',
+  'burpee', 'tuckjump', 'nordic', 'dragonflag', 'plank', 'wallsit', 'hollow', 'lsit',
+] as const;
 export type TrackerKind = (typeof TRACKERS)[number];
 
 /** What you need at home. Anything but 'none' counts as equipment and is never a daily quest. */
@@ -146,7 +151,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'calf-raise', name: 'Standing Calf Raise', variant: 'Two-leg calf raise on flat ground (or on a step edge for extra range)',
-    category: 'legs', difficulty: 'easy', measure: 'reps', base: 15, perLevel: 2,
+    category: 'legs', difficulty: 'easy', measure: 'reps', base: 15, perLevel: 2, tracker: 'calfraise',
     primary: ['calves'], secondary: [],
     summary: 'Rising onto your toes to strengthen the calves and ankles, which helps with walking, running and jumping.',
     steps: [
@@ -209,7 +214,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'superman', name: 'Superman', variant: 'Lying face down, lifting arms and legs together, short hold at the top',
-    category: 'pull', difficulty: 'easy', measure: 'reps', base: 10, perLevel: 1,
+    category: 'pull', difficulty: 'easy', measure: 'reps', base: 10, perLevel: 1, tracker: 'superman',
     primary: ['lowerBack', 'glutes'], secondary: ['back', 'shoulders', 'hamstrings'],
     summary: 'Strengthens the muscles along the back of the body that keep your posture upright.',
     steps: [
@@ -225,7 +230,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'reverse-snow-angel', name: 'Reverse Snow Angel', variant: 'Lying face down, chest slightly lifted, arms sweeping from hips to overhead',
-    category: 'pull', difficulty: 'easy', measure: 'reps', base: 8, perLevel: 1,
+    category: 'pull', difficulty: 'easy', measure: 'reps', base: 8, perLevel: 1, tracker: 'snowangel',
     primary: ['back', 'shoulders', 'traps'], secondary: ['lowerBack'],
     summary: 'Works the upper back and rear shoulders without equipment. Helps undo hunched posture.',
     steps: [
@@ -255,7 +260,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'dead-bug', name: 'Dead Bug', variant: 'Lying on your back, arms up, knees bent at 90 degrees, extending opposite arm and leg',
-    category: 'core', difficulty: 'easy', measure: 'reps', base: 6, perLevel: 1, perSide: true,
+    category: 'core', difficulty: 'easy', measure: 'reps', base: 6, perLevel: 1, perSide: true, tracker: 'deadbug',
     primary: ['abs'], secondary: ['obliques'],
     summary: 'A slow core exercise that trains your stomach to keep your lower back flat while your limbs move.',
     steps: [
@@ -271,7 +276,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'crunch', name: 'Crunch', variant: 'Lying on your back, knees bent, lifting only the shoulder blades',
-    category: 'core', difficulty: 'easy', measure: 'reps', base: 12, perLevel: 2,
+    category: 'core', difficulty: 'easy', measure: 'reps', base: 12, perLevel: 2, tracker: 'crunch',
     primary: ['abs'], secondary: ['obliques'],
     summary: 'A short, controlled curl of the upper body that targets the front of the stomach.',
     steps: [
@@ -287,7 +292,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'bird-dog', name: 'Bird Dog', variant: 'On hands and knees, reaching the opposite arm and leg out straight',
-    category: 'core', difficulty: 'easy', measure: 'reps', base: 6, perLevel: 1, perSide: true, gender: 'female',
+    category: 'core', difficulty: 'easy', measure: 'reps', base: 6, perLevel: 1, perSide: true, gender: 'female', tracker: 'birddog',
     primary: ['lowerBack', 'glutes', 'abs'], secondary: ['shoulders'],
     summary: 'A balance exercise that strengthens the core and back together. Good for back health.',
     steps: [
@@ -303,7 +308,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'jumping-jacks', name: 'Jumping Jacks', variant: 'Standard star jump: feet together to wide, arms down to overhead',
-    category: 'full', difficulty: 'easy', measure: 'reps', base: 20, perLevel: 3,
+    category: 'full', difficulty: 'easy', measure: 'reps', base: 20, perLevel: 3, tracker: 'jack',
     primary: ['calves', 'shoulders'], secondary: ['quads', 'glutes'],
     summary: 'A whole-body warm-up move that raises your heart rate.',
     steps: [
@@ -351,7 +356,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'jump-squat', name: 'Jump Squat', variant: 'Bodyweight squat with an explosive vertical jump, soft landing',
-    category: 'legs', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1, tracker: 'squat',
+    category: 'legs', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1, tracker: 'jumpsquat',
     primary: ['quads', 'glutes', 'calves'], secondary: ['hamstrings'],
     summary: 'Adds a jump to the squat to build power and get your heart rate up.',
     steps: [
@@ -413,7 +418,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'side-lunge', name: 'Side Lunge', variant: 'Lateral lunge: stepping wide to the side, sitting back into one hip',
-    category: 'legs', difficulty: 'medium', measure: 'reps', base: 6, perLevel: 1, perSide: true, gender: 'female', tracker: 'lunge',
+    category: 'legs', difficulty: 'medium', measure: 'reps', base: 6, perLevel: 1, perSide: true, gender: 'female', tracker: 'sidelunge',
     primary: ['quads', 'glutes'], secondary: ['hamstrings'],
     summary: 'Moves the legs sideways, working the inner thighs and hips that forward exercises miss.',
     steps: [
@@ -429,7 +434,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'bench-dip', name: 'Bench Dip', variant: 'Hands on the edge of a chair or bench behind you, knees bent, feet flat',
-    category: 'push', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1, equipment: 'chair',
+    category: 'push', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1, equipment: 'chair', tracker: 'dip',
     primary: ['triceps'], secondary: ['shoulders', 'chest'],
     summary: 'Works the back of the arms using just a chair.',
     steps: [
@@ -444,7 +449,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'inverted-row', name: 'Inverted Row', variant: 'Hanging under a low bar or sturdy table, heels on the floor, pulling the chest up',
-    category: 'pull', difficulty: 'medium', measure: 'reps', base: 6, perLevel: 1, equipment: 'bar',
+    category: 'pull', difficulty: 'medium', measure: 'reps', base: 6, perLevel: 1, equipment: 'bar', tracker: 'row',
     primary: ['back', 'biceps'], secondary: ['traps', 'shoulders', 'forearms'],
     summary: 'A horizontal pull that builds the back and arms, and prepares you for pull-ups.',
     steps: [
@@ -459,7 +464,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'mountain-climbers', name: 'Mountain Climbers', variant: 'From a high plank, driving knees to the chest one at a time',
-    category: 'core', difficulty: 'medium', measure: 'reps', base: 10, perLevel: 2, perSide: true,
+    category: 'core', difficulty: 'medium', measure: 'reps', base: 10, perLevel: 2, perSide: true, tracker: 'climber',
     primary: ['abs'], secondary: ['shoulders', 'quads', 'obliques'],
     summary: 'A fast core exercise that also works as cardio.',
     steps: [
@@ -489,7 +494,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'bicycle-crunch', name: 'Bicycle Crunch', variant: 'Lying on your back, elbow to opposite knee while the other leg extends',
-    category: 'core', difficulty: 'medium', measure: 'reps', base: 10, perLevel: 1, perSide: true,
+    category: 'core', difficulty: 'medium', measure: 'reps', base: 10, perLevel: 1, perSide: true, tracker: 'bicycle',
     primary: ['obliques', 'abs'], secondary: [],
     summary: 'A twisting crunch that works both the front and sides of the stomach.',
     steps: [
@@ -504,7 +509,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'lying-leg-raise', name: 'Lying Leg Raise', variant: 'On your back, legs straight, lifting them to vertical and lowering slowly',
-    category: 'core', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1,
+    category: 'core', difficulty: 'medium', measure: 'reps', base: 8, perLevel: 1, tracker: 'legraise',
     primary: ['abs'], secondary: ['obliques'],
     summary: 'Works the lower part of the stomach by lifting your legs.',
     steps: [
@@ -519,7 +524,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'hollow-hold', name: 'Hollow Body Hold', variant: 'On your back, arms overhead, shoulders and legs lifted into a shallow banana shape',
-    category: 'core', difficulty: 'medium', measure: 'seconds', base: 15, perLevel: 3,
+    category: 'core', difficulty: 'medium', measure: 'seconds', base: 15, perLevel: 3, tracker: 'hollow',
     primary: ['abs'], secondary: ['obliques', 'quads'],
     summary: 'A gymnastics core hold that builds the body tension used in advanced moves.',
     steps: [
@@ -534,7 +539,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'burpee', name: 'Burpee', variant: 'Squat, kick back to a plank, jump feet in, jump up (no push-up)',
-    category: 'full', difficulty: 'medium', measure: 'reps', base: 6, perLevel: 1,
+    category: 'full', difficulty: 'medium', measure: 'reps', base: 6, perLevel: 1, tracker: 'burpee',
     primary: ['quads', 'chest', 'shoulders'], secondary: ['abs', 'triceps', 'calves', 'glutes'],
     summary: 'A full-body move that combines a squat, a plank and a jump. Great for conditioning.',
     steps: [
@@ -582,7 +587,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'pike-pushup', name: 'Pike Push-up', variant: 'Hips high in an upside-down V, lowering the head toward the floor',
-    category: 'push', difficulty: 'hard', measure: 'reps', base: 5, perLevel: 1,
+    category: 'push', difficulty: 'hard', measure: 'reps', base: 5, perLevel: 1, tracker: 'pike',
     primary: ['shoulders', 'triceps'], secondary: ['traps', 'chest'],
     summary: 'A push-up done in a pike shape to target the shoulders. The first step toward handstand push-ups.',
     steps: [
@@ -597,7 +602,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'pull-up', name: 'Pull-up', variant: 'Overhand grip (palms facing away), hands slightly wider than shoulders, from a dead hang',
-    category: 'pull', difficulty: 'hard', measure: 'reps', base: 3, perLevel: 1, gender: 'male', equipment: 'bar',
+    category: 'pull', difficulty: 'hard', measure: 'reps', base: 3, perLevel: 1, gender: 'male', equipment: 'bar', tracker: 'pullup',
     primary: ['back', 'biceps'], secondary: ['forearms', 'shoulders', 'traps', 'abs'],
     summary: 'The king of upper-body pulling exercises. Builds a strong back and arms.',
     steps: [
@@ -612,7 +617,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'chin-up', name: 'Chin-up', variant: 'Underhand grip (palms facing you), hands shoulder-width apart, from a dead hang',
-    category: 'pull', difficulty: 'hard', measure: 'reps', base: 4, perLevel: 1, equipment: 'bar',
+    category: 'pull', difficulty: 'hard', measure: 'reps', base: 4, perLevel: 1, equipment: 'bar', tracker: 'pullup',
     primary: ['biceps', 'back'], secondary: ['forearms', 'abs'],
     summary: 'A pull-up with palms facing you, which brings in more biceps and is usually a little easier.',
     steps: [
@@ -627,7 +632,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'parallel-dip', name: 'Parallel Bar Dip', variant: 'Supporting yourself on two parallel bars (or two sturdy chairs), lowering until elbows reach 90 degrees',
-    category: 'push', difficulty: 'hard', measure: 'reps', base: 5, perLevel: 1, gender: 'male', equipment: 'dip',
+    category: 'push', difficulty: 'hard', measure: 'reps', base: 5, perLevel: 1, gender: 'male', equipment: 'dip', tracker: 'dip',
     primary: ['triceps', 'chest'], secondary: ['shoulders'],
     summary: 'A powerful upper-body push that builds the triceps, chest and shoulders.',
     steps: [
@@ -657,7 +662,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'v-up', name: 'V-up', variant: 'On your back, lifting straight arms and straight legs to meet above the hips',
-    category: 'core', difficulty: 'hard', measure: 'reps', base: 8, perLevel: 1,
+    category: 'core', difficulty: 'hard', measure: 'reps', base: 8, perLevel: 1, tracker: 'vup',
     primary: ['abs'], secondary: ['obliques', 'quads'],
     summary: 'A full-range sit-up where the arms and legs meet in a V. Very demanding on the stomach.',
     steps: [
@@ -672,7 +677,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'hanging-knee-raise', name: 'Hanging Knee Raise', variant: 'Hanging from a bar, bringing the knees up to chest height',
-    category: 'core', difficulty: 'hard', measure: 'reps', base: 6, perLevel: 1, equipment: 'bar',
+    category: 'core', difficulty: 'hard', measure: 'reps', base: 6, perLevel: 1, equipment: 'bar', tracker: 'kneeraise',
     primary: ['abs'], secondary: ['forearms', 'obliques'],
     summary: 'Works the stomach while also building grip strength from hanging.',
     steps: [
@@ -687,7 +692,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'tuck-jump', name: 'Tuck Jump', variant: 'Jumping straight up and pulling both knees to the chest',
-    category: 'full', difficulty: 'hard', measure: 'reps', base: 6, perLevel: 1,
+    category: 'full', difficulty: 'hard', measure: 'reps', base: 6, perLevel: 1, tracker: 'tuckjump',
     primary: ['quads', 'calves', 'glutes'], secondary: ['abs'],
     summary: 'An explosive jump that builds power and spikes the heart rate.',
     steps: [
@@ -720,7 +725,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'nordic-curl', name: 'Nordic Hamstring Curl', variant: 'Kneeling with ankles anchored, lowering the body forward slowly with straight hips',
-    category: 'legs', difficulty: 'elite', measure: 'reps', base: 3, perLevel: 1, equipment: 'anchor',
+    category: 'legs', difficulty: 'elite', measure: 'reps', base: 3, perLevel: 1, equipment: 'anchor', tracker: 'nordic',
     primary: ['hamstrings'], secondary: ['glutes', 'calves'],
     summary: 'One of the hardest hamstring exercises. Strongly protects against hamstring injuries.',
     steps: [
@@ -736,7 +741,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'archer-pushup', name: 'Archer Push-up', variant: 'Very wide hands; lowering toward one hand while the other arm stays straight',
-    category: 'push', difficulty: 'elite', measure: 'reps', base: 3, perLevel: 1, perSide: true, gender: 'male',
+    category: 'push', difficulty: 'elite', measure: 'reps', base: 3, perLevel: 1, perSide: true, gender: 'male', tracker: 'archer',
     primary: ['chest', 'triceps'], secondary: ['shoulders', 'abs'],
     summary: 'A one-sided push-up that bridges the gap to one-arm push-ups.',
     steps: [
@@ -766,7 +771,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'wall-hspu', name: 'Wall Handstand Push-up', variant: 'Kick up to a handstand facing away from a wall, lowering the head toward the floor',
-    category: 'push', difficulty: 'elite', measure: 'reps', base: 3, perLevel: 1, equipment: 'wall',
+    category: 'push', difficulty: 'elite', measure: 'reps', base: 3, perLevel: 1, equipment: 'wall', tracker: 'hspu',
     primary: ['shoulders', 'triceps'], secondary: ['traps', 'abs'],
     summary: 'A push-up upside down. Moves your full body weight with your shoulders.',
     steps: [
@@ -782,7 +787,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'l-sit', name: 'L-sit', variant: 'Floor L-sit: seated, hands flat beside the hips, pressing the body up with straight legs held level',
-    category: 'core', difficulty: 'elite', measure: 'seconds', base: 10, perLevel: 2,
+    category: 'core', difficulty: 'elite', measure: 'seconds', base: 10, perLevel: 2, tracker: 'lsit',
     primary: ['abs', 'quads'], secondary: ['triceps', 'shoulders'],
     summary: 'A gymnastics hold where your body makes an L shape. Very hard on the core and hip flexors.',
     steps: [
@@ -797,7 +802,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'hanging-leg-raise', name: 'Hanging Leg Raise', variant: 'Hanging from a bar, lifting straight legs to at least hip height',
-    category: 'core', difficulty: 'elite', measure: 'reps', base: 5, perLevel: 1, equipment: 'bar',
+    category: 'core', difficulty: 'elite', measure: 'reps', base: 5, perLevel: 1, equipment: 'bar', tracker: 'legraise',
     primary: ['abs'], secondary: ['obliques', 'forearms'],
     summary: 'A straight-leg version of the knee raise that works the entire stomach and grip.',
     steps: [
@@ -812,7 +817,7 @@ export const CATALOG: Exercise[] = [
   }),
   ex({
     id: 'dragon-flag', name: 'Dragon Flag', variant: 'Lying on a bench gripping it behind your head, lowering a straight body from vertical',
-    category: 'core', difficulty: 'elite', measure: 'reps', base: 3, perLevel: 1, equipment: 'chair',
+    category: 'core', difficulty: 'elite', measure: 'reps', base: 3, perLevel: 1, equipment: 'chair', tracker: 'dragonflag',
     primary: ['abs'], secondary: ['obliques', 'lowerBack'],
     summary: 'An advanced core move where your whole body is held straight while pivoting on your shoulders.',
     steps: [
