@@ -2,6 +2,13 @@
 
 Newest first. Keep each entry short.
 
+## 2026-10-28 — LevelUp phase 7: dashboard card
+- `src/dashboard/ExerciseCard.tsx` + pure `exerciseSummary()` in `src/exercise/derive.ts` (3 new tests, 109 total).
+  Full-width card under WeighIn/Spendly: rank badge, level, XP bar, Today x/3, streak, total and week XP, today's
+  daily quests, safe/at-risk chip, missed-days preview. Read-only: never creates quests or applies penalties.
+- No rules change. Checked in Chromium (sample mode): desktop light, mobile dark, empty state, missed-days warning.
+- Next: phase 8 (better visuals) when the owner says continue.
+
 ## 2026-10-27 — LevelUp phase 6: camera form check, part 2
 - Counters for all 48 exercises (33 `tracker` kinds; `CATALOG_VERSION` 4). New in `pose.ts`: `need` (condition at
   depth), `jump` (learned floor line), `sides: 'each'` (per-leg state machines), front-view squats + knees caving.

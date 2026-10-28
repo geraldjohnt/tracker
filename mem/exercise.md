@@ -67,9 +67,9 @@ Owner rule: PR + merge to `main` after **each** phase (CI green), then **stop** 
 | — | Fix: mobile bottom tab bar covered page bottoms (pad `.content-col` by measured `--bottom-nav-h`) | Done | geraldjohnt/tracker#12 |
 | — | Realistic anatomical body map; badge pips in two rows for tiers 4–5 | Done | geraldjohnt/tracker#13, #14 |
 | 5 | Camera form check, part 1: camera required to complete; half XP without it; counters for squat, lunge, push-up, wall push-up, bridge, plank, wall sit | Done | geraldjohnt/tracker#15 |
-| 6 | Camera form check, part 2: counters for all 48 exercises (33 kinds), front-view squats + knee caving, jump checks | Done | (this PR) |
-| 7 | **Dashboard card for LevelUp** (next) | Not started | |
-| 8 | Better visuals (movement illustrations/animations) | Not started | |
+| 6 | Camera form check, part 2: counters for all 48 exercises (33 kinds), front-view squats + knee caving, jump checks | Done | geraldjohnt/tracker#19 |
+| 7 | Dashboard card for LevelUp | Done | (this PR) |
+| 8 | **Better visuals (movement illustrations/animations)** (next) | Not started | |
 | 9 | Extras (owner picks) | Not started | |
 | — | **Then:** calisthenics programme (ladders), see "Programme proposal" below; owner deferred it until 6–9 are done | Deferred | |
 
@@ -118,6 +118,13 @@ The owner may move 7–9 before the camera phases.
 
 ### Phase 7: dashboard card
 - LevelUp card on `index.html`: level, rank badge, XP progress, today's daily quests done / 3, streak.
+- **Done (2026-10-28).** `ExerciseCard.tsx` spans both grid columns (one column below 900px): badge + level + XP bar,
+  stats (Today x/3, Streak, Total XP, This week), today's daily quests (name, amount, XP; done ticked, "no camera" for
+  manual), a Safe / "N XP at risk" chip, and the hero line adds "x/3 quests done". Pure `exerciseSummary()` in
+  `derive.ts` (tested). Choices made without asking: the dashboard stays read-only, so it doesn't create today's quests
+  ("appear once you open LevelUp") and doesn't apply missed-day penalties; it shows a red "N missed days: −X XP when
+  you next open LevelUp" preview instead, and the XP shown is before that deduction. It uses the bundled catalog for
+  names. No rules change.
 
 ### Phase 8: better visuals
 - An illustration or short animation of the movement per exercise, next to the body map (the body map only
@@ -176,6 +183,7 @@ quests are replaced by programme sessions or kept alongside them; rank trials ye
   L-sit moved to the floor version (no equipment); `CATALOG_VERSION` 2.
 - **Phase 5 (done, 2026-10-26):** camera form check; half XP without the camera. Rules: `tracker`, `manual`.
 - **Phase 6 (done, 2026-10-27):** counters for every exercise; rules: `tracker` regex extended (33 kinds).
+- **Phase 7 (done, 2026-10-28):** LevelUp card on the dashboard. No rules change.
 - **Owner to do:** re-publish `database.rules.json` (latest: the longer `tracker` list on catalog items),
   then open `exercise.html` signed in as `geraldjohnt` once, which publishes the catalog (version 4). Until then
   everyone uses the bundled catalog (v4 > stored v3), so nothing breaks.

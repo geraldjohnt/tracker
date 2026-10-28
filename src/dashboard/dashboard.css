@@ -18,7 +18,7 @@
 .card-x-title{ font-weight:700; font-size:.98rem; letter-spacing:-.01em; margin:0; display:flex; align-items:center; gap:.5rem; }
 .card-x-title i{ color:var(--accent); }
 .card-x-body{ padding:1.15rem; display:flex; flex-direction:column; flex:1 1 auto; }
-.card-x-body > #wContent, .card-x-body > #sContent, .card-x-body > #wEmpty, .card-x-body > #sEmpty{ flex:1 1 auto; }
+.card-x-body > #wContent, .card-x-body > #sContent, .card-x-body > #xContent, .card-x-body > #wEmpty, .card-x-body > #sEmpty, .card-x-body > #xEmpty{ flex:1 1 auto; }
 .section-label{ font-size:.7rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
 
 /* Hero */
@@ -108,3 +108,30 @@
 .fade-in{ animation:fi .3s ease both; }
 @keyframes fi{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:none;} }
 @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+
+/* LevelUp card: full width under the other two, player + stats beside today's quests */
+.ex-card{ grid-column:1 / -1; }
+.ex-grid{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:1.25rem; }
+@media (max-width:900px){ .ex-grid{ grid-template-columns:1fr; gap:.25rem; } }
+.ex-player{ display:flex; align-items:center; gap:1rem; }
+.ex-badge{ flex:0 0 auto; filter:drop-shadow(0 4px 8px rgba(0,0,0,.22)); }
+.ex-player-main{ flex:1 1 auto; min-width:0; }
+.ex-rank{ font-size:.7rem; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
+.ex-level{ font-size:1.45rem; font-weight:800; letter-spacing:-.03em; line-height:1.15; }
+.ex-xp-bar{ height:9px; border-radius:999px; background:var(--card-2); border:1px solid var(--border); overflow:hidden; margin-top:.45rem; }
+.ex-xp-fill{ height:100%; border-radius:999px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); transition:width .4s ease; }
+.ex-xp-meta{ display:flex; justify-content:space-between; gap:.5rem; flex-wrap:wrap; font-size:.74rem; color:var(--muted); font-weight:600; margin-top:.3rem; }
+.ex-xp-meta b{ color:var(--text); }
+.ex-of{ font-size:.85rem; color:var(--muted); font-weight:700; }
+.ex-quests-label{ margin-top:1rem; }
+.ex-quests{ margin-top:.55rem; }
+.ex-quest-name{ display:flex; align-items:center; gap:.55rem; min-width:0; }
+.ex-quest-name > .bi{ color:var(--muted); font-size:1rem; }
+.ex-quests .recent-row.done .ex-quest-name > .bi{ color:var(--good); }
+.ex-quests .recent-row.done .recent-price{ color:var(--good); }
+.ex-note{ color:var(--muted); font-size:.82rem; margin:.55rem 0 0; }
+.ex-warn{
+  display:flex; align-items:center; gap:.5rem; margin-top:.75rem; padding:.5rem .65rem; border-radius:var(--r-sm);
+  font-size:.8rem; font-weight:600; color:var(--bad); background:var(--bad-soft);
+  border:1px solid color-mix(in srgb,var(--bad) 30%, transparent);
+}

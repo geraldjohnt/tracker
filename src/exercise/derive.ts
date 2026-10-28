@@ -1,8 +1,8 @@
 // Pure game rules for the Exercise view: levels, ranks, quest generation, XP and
 // missed-day penalties. Everything here is deterministic and unit-tested.
-import { addDays, daysBetween } from '../shared/dates';
+import { addDays, daysBetween, startOfWeek } from '../shared/dates';
 import type { ISODate } from '../shared/types';
-import { CATALOG, DIFFICULTIES, MUSCLES, TRACKERS, type Difficulty, type Exercise, type TrackerKind } from './catalog';
+import { CATALOG, CATALOG_BY_ID, DIFFICULTIES, MUSCLES, TRACKERS, type Difficulty, type Exercise, type TrackerKind } from './catalog';
 
 /* ---------------- levels & ranks ---------------- */
 
@@ -321,6 +321,69 @@ export function streak(days: DaysMap, today: ISODate): number {
   let n = 0;
   while (dailyDone(days[d])) { n++; d = addDays(d, -1); }
   return n;
+}
+
+/* ---------------- dashboard summary ---------------- */
+
+export interface TodayQuest { ex: Exercise | undefined; id: string; done: boolean; amount: number; xp: number; manual: boolean }
+
+export interface ExerciseSummary {
+  /** The account has opened LevelUp at least once. */
+  started: boolean;
+  info: LevelInfo;
+  rank: Rank;
+  next: { level: number; rank: Rank };
+  streak: number;
+  /** XP earned since Monday (gains only; penalties aren't subtracted). */
+  weekXp: number;
+  focus: Focus;
+  /** Today's daily quests, or null when LevelUp hasn't been opened today yet (it creates them). */
+  quests: TodayQuest[] | null;
+  doneCount: number;
+  /** At least one daily quest is done, so today can't be penalised. */
+  safe: boolean;
+  /** What today costs if no daily quest gets done (capped at current XP). */
+  atRisk: number;
+  /** Missed days not settled yet: LevelUp deducts them the next time it opens. */
+  pending: { missedDays: number; xpLost: number };
+}
+
+/**
+ * Read-only overview for the dashboard card. It never writes: quests that don't exist yet and
+ * unsettled missed days are reported, not created (the LevelUp page does that when it opens).
+ */
+export function exerciseSummary(
+  days: DaysMap, profile: Profile, targets: Targets, today: ISODate, uid: string, byId: Record<string, Exercise> = CATALOG_BY_ID,
+): ExerciseSummary {
+  const info = levelInfo(totalXp(days));
+  const day = days[today];
+  const quests = day?.daily
+    ? DAILY_SLOTS.flatMap(slot => {
+      const q = day.daily![slot];
+      if (!q) return [];
+      const ex = byId[q.ex];
+      const done = !!q.done;
+      return [{
+        ex, id: q.ex, done, manual: !!q.manual,
+        amount: done && q.amount ? q.amount : ex ? questAmount(ex, info.level, 'daily') : 0,
+        xp: done && q.xp !== undefined ? q.xp : questXp(ex ? ex.difficulty : 'easy', info.level, 'daily'),
+      }];
+    })
+    : null;
+  const monday = startOfWeek(today);
+  const weekXp = Object.keys(days).filter(d => d >= monday && d <= today).reduce((sum, d) => sum + dayGain(days[d]), 0);
+  const started = !!profile.startDate || Object.keys(days).length > 0;
+  const preview = started ? settle(days, profile, today, uid, Object.values(byId), targets) : null;
+  return {
+    started, info, rank: rankOf(info.level), next: nextRank(info.level),
+    streak: streak(days, today), weekXp,
+    focus: day?.focus ?? focusOn(targets, today),
+    quests,
+    doneCount: quests ? quests.filter(q => q.done).length : 0,
+    safe: dailyDone(day),
+    atRisk: Math.min(info.total, quests ? dailyXpTotal(day, info.level, byId) : 0),
+    pending: { missedDays: preview?.missedDays ?? 0, xpLost: preview?.xpLost ?? 0 },
+  };
 }
 
 /* ---------------- snapshot normalization ---------------- */
