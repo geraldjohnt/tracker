@@ -15,7 +15,7 @@ update `mem/` (decisions, facts, session log) before you finish.
 Three trackers plus a dashboard that share one Firebase Realtime Database project, hosted on GitHub
 Pages. Every page requires sign-in (username + password); each account sees only its own data:
 
-- `index.html`: the dashboard, a read-only overview of both trackers
+- `index.html`: the dashboard, a read-only overview of all three trackers
 - `weight.html`: **WeighIn**, a weekly weight-challenge tracker
 - `spending.html`: **Spendly**, a daily spending tracker
 - `exercise.html`: **LevelUp**, calisthenics quests (levels, ranks, XP; see `mem/exercise.md`)
@@ -52,7 +52,7 @@ src/
     components/  AuthGate, AccountMenu (+change password), PasswordInput (show/hide eye), AppShell (+SidebarLink/SidebarDivider),
                  AppearanceMenu, ConnPill, ChartCanvas,
                  DraftInput, ConfirmModal, useBsModal, Toasts
-  dashboard/     Dashboard, WeightCard, SpendCard, dashboard.css
+  dashboard/     Dashboard, WeightCard, SpendCard, ExerciseCard, dashboard.css
   weight/        store, derive, units, WeightApp, WeekView, AllWeeksPage, WeekModal, weight.css
   spending/      store, derive, SpendingApp, views (Day/Calendar/Week/Month/Year), BarChart, spending.css
   exercise/      catalog (48 exercises), derive (levels/ranks/targets/quests/penalties/board), store, ExerciseApp,
@@ -153,6 +153,9 @@ keeps snapshots and lb rounding from rewriting what the user is typing.
   `manualXp` = half its XP, rounded down, and the slot gets `manual: true`.
 - **Equipment rule**: only home calisthenics. Anything with `equipment !== 'none'` is optional-quest
   only; daily quests are bodyweight-only.
+- **Dashboard card** (`src/dashboard/ExerciseCard.tsx`, `exerciseSummary` in `derive.ts`): read-only. Level, rank
+  badge, XP bar, today's daily quests (done / 3), streak, week XP. It never writes: if LevelUp hasn't been opened
+  today it says so instead of generating quests, and unsettled missed days are previewed with `settle()`, not applied.
 - **Missed days** (`settle`): on load and when the date changes, each finished day since
   `profile/settledThrough` with no completed *daily* quest gets `penalty` = that day's daily XP at
   the level then, capped at current XP. Optional quests never protect a day.

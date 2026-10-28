@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CATALOG, CATALOG_BY_ID, DIFFICULTIES, MUSCLES } from './catalog';
 import {
-  catalogRecord, dailyDone, dailyXpTotal, DAILY_SLOTS, DEFAULT_TARGETS, FOCUSES, generateDay, levelInfo, manualXp, maxDailyDifficulty, nextRank,
+  catalogRecord, dailyDone, exerciseSummary, dailyXpTotal, DAILY_SLOTS, DEFAULT_TARGETS, FOCUSES, generateDay, levelInfo, manualXp, maxDailyDifficulty, nextRank,
   normalizeCatalog, normalizeDays, normalizeBoard, normalizeTargets, questAmount, questXp, rankBoard, rankLevel, rankOf, settle, streak,
   totalXp, weekdayOf, xpForLevel, xpToNext, type DaysMap,
 } from './derive';
@@ -180,6 +180,49 @@ describe('XP ledger and missed days', () => {
     expect(streak(days, '2026-10-24')).toBe(2);
     expect(streak({ ...days, '2026-10-24': { daily: { q2: done(5) } } }, '2026-10-24')).toBe(3);
     expect(streak(days, '2026-10-25')).toBe(0);
+  });
+});
+
+describe('dashboard summary', () => {
+  // 2026-10-28 is a Wednesday (core day in the default plan); the week started Monday 2026-10-26.
+  const today = '2026-10-28';
+
+  it('reports a fresh account as not started', () => {
+    const s = exerciseSummary({}, {}, DEFAULT_TARGETS, today, 'u1');
+    expect(s).toMatchObject({ started: false, quests: null, doneCount: 0, safe: false, atRisk: 0, streak: 0, weekXp: 0, focus: 'core' });
+    expect(s.pending).toEqual({ missedDays: 0, xpLost: 0 });
+  });
+
+  it("summarises today's quests, streak and the week's XP", () => {
+    const days: DaysMap = {
+      '2026-10-25': { daily: { q0: done(20) } }, // Sunday: last week
+      '2026-10-26': { daily: { q0: done(5) } },
+      '2026-10-27': { daily: { q0: done(5) }, optional: { easy: { ex: 'air-squat', accepted: 1, done: 1, amount: 10, xp: 8 } } },
+      [today]: { focus: 'legs', daily: { q0: done(5), q1: { ex: 'glute-bridge' }, q2: { ex: 'air-squat', done: 1, amount: 9, xp: 2, manual: true } } },
+    };
+    const s = exerciseSummary(days, { startDate: '2026-10-25', settledThrough: '2026-10-27' }, DEFAULT_TARGETS, today, 'u1');
+    expect(s.started).toBe(true);
+    expect(s.info.total).toBe(45);
+    expect(s.rank.label).toBe('Rookie 1');
+    expect(s.focus).toBe('legs'); // the stored focus wins over the plan
+    expect(s.weekXp).toBe(5 + 13 + 7);
+    expect(s.streak).toBe(4);
+    expect(s.doneCount).toBe(2);
+    expect(s.safe).toBe(true);
+    expect(s.quests!.map(q => [q.id, q.done, q.manual])).toEqual([['air-squat', true, false], ['glute-bridge', false, false], ['air-squat', true, true]]);
+    expect(s.quests![1].amount).toBe(questAmount(CATALOG_BY_ID['glute-bridge'], s.info.level, 'daily'));
+    expect(s.quests![2]).toMatchObject({ amount: 9, xp: 2 }); // frozen when completed
+    expect(s.pending.missedDays).toBe(0);
+  });
+
+  it("puts today's daily XP at risk and previews unsettled missed days without writing", () => {
+    const days: DaysMap = { '2026-10-24': { daily: { q0: done(60) } }, [today]: { daily: { q0: { ex: 'air-squat' } } } };
+    const s = exerciseSummary(days, { startDate: '2026-10-24', settledThrough: '2026-10-24' }, DEFAULT_TARGETS, today, 'u1');
+    expect(s.safe).toBe(false);
+    expect(s.atRisk).toBeGreaterThan(0);
+    expect(s.pending.missedDays).toBe(3); // 25th, 26th, 27th
+    expect(s.pending.xpLost).toBeGreaterThan(0);
+    expect(days['2026-10-25']).toBeUndefined();
   });
 });
 
