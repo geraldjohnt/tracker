@@ -3,12 +3,10 @@
 Three trackers + a dashboard sharing one Firebase Realtime Database project, hosted on GitHub Pages:
 `index.html` (dashboard), `weight.html` (WeighIn), `spending.html` (Spendly), `exercise.html` (LevelUp).
 
-**In progress:** LevelUp (calisthenics quests), a 9-phase plan; phases 1–8 are done. **Next: phase 9,
-extras: offer the list in exercise.md and let the owner pick** (wait for the owner to say continue). The phase plan, spec, owner decisions
-and known issues are in [exercise.md](exercise.md). Read it before touching `src/exercise/`.
-
-**After phases 8–9:** revisit the calisthenics programme proposal (progression ladders on top of the level system;
-recommendations saved in [exercise.md](exercise.md) → "Programme proposal"). Owner deferred it on 2026-10-26.
+**LevelUp's 9-phase plan is finished** (phase 9 extras: achievements, celebrations, streak bonus, rest days, weekly
+challenge). **Next:** re-present the calisthenics programme proposal (progression ladders) and its open questions to the
+owner before building anything: [exercise.md](exercise.md) → "Programme proposal". Read exercise.md before touching
+`src/exercise/`. The owner must re-publish `database.rules.json` (phase 9 changed it).
 
 **Status:** fully migrated (Oct 2026) from three self-contained HTML files to **React 19 +
 TypeScript + Vite 7**, built by GitHub Actions and deployed from `dist/`. History and the

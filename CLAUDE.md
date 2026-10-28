@@ -57,7 +57,8 @@ src/
   spending/      store, derive, SpendingApp, views (Day/Calendar/Week/Month/Year), BarChart, spending.css
   exercise/      catalog (48 exercises), derive (levels/ranks/targets/quests/penalties/board), store, ExerciseApp,
                  ExerciseModal, BodyMap (SVG muscle diagram), motion + MovementFigure (animated movement demos),
-                 RankBadge (SVG rank badges), RanksView,
+                 RankBadge (SVG rank badges), RanksView, achievements (pure) + AchievementBadge + AchievementsView,
+                 Celebration (rank-up / achievement screen),
                  WeeklyPlan, RankingView, CameraModal + pose (rep/hold counters) + poseModel (lazy
                  MediaPipe), parts, exercise.css
 mem/             portable project memory (see above)
@@ -129,9 +130,24 @@ keeps snapshots and lb rounding from rewriting what the user is typing.
   gets +10% per **rank**; daily difficulty unlocks by tier step (`tierStep`: medium at 10, hard 20, elite 30).
 - **Badges** (`RankBadge.tsx`): the rank sets how ornate the SVG is (disc → hexagon → shield → swords,
   laurels, crest, rays, gem → crown and wings); the tier sets the colours (1 pale … 5 purple), same for every rank.
-- **Weekly targets**: `settings/targets/<mon..sun>` = `legs|upper|core|full` over `DEFAULT_TARGETS`. The day's
+- **Weekly targets**: `settings/targets/<mon..sun>` = `legs|upper|core|full|rest` over `DEFAULT_TARGETS` (Sunday rest). The day's
   3 daily quests are picked for that focus (`generateDaily`) and the focus is stored in `days/<date>/focus`.
   Changing today's target re-picks today's quests only while none of them is done.
+- **Rest days** (`rest`, at most `MAX_REST_DAYS` = 3 a week): no daily quests (the day stores only `focus: 'rest'` and its
+  optional quests), never penalised. **Streak** (`streak`, `streakDay`): a day counts when a daily quest is done, or on a
+  rest day when any quest is done; a rest day with nothing done is skipped (doesn't break it).
+- **Streak bonus**: daily quests completed while the streak counting today is ≥ 7 / 14 / 30 days get +10 / 20 / 30% of
+  their XP (rounded up), frozen in the slot's `bonus` (part of `dayGain`). Optional quests get none.
+- **Weekly challenge** (`weeks/<monday>/challenge`, `generateChallenge`): one bodyweight, two-sided exercise, target =
+  5 days of daily reps at the level when picked, reward 40 XP +10% per rank. Camera reps (`cam`) and reps logged without
+  it (`man`, the camera modal's skip link) add up over the week; the camera modal saves partial counts on close
+  (`onPartial`). On reaching the target its XP (`floor(reward × (cam + man/2) / (cam + man))`) goes into
+  `days/<date>/challengeXp`, so the ledger stays days-only.
+- **Achievements** (`achievements.ts`): 18 achievements × 10 levels, all derived from history (nothing stored).
+  Badge colour by level (`LEVEL_COLORS`: bronze … prismatic), frame ornaments by level, symbol by type (a Bootstrap Icons
+  glyph drawn as SVG text), gem crest for difficulty-3 achievements. New thresholds must stay rising and 10 long.
+- **Celebrations**: `ExerciseStore.celebrate()` compares rank and achievement levels before/after a completion and
+  queues `celebrations` (rank-ups replace the old toast); `CelebrationOverlay` shows them one at a time.
 - A day's quests (`generateDay`, seeded by `uid:date`, so devices agree) store only the exercise
   ids. Reps and XP are computed from the **current** level until completed, then frozen into
   `amount`/`xp`. Daily = legs + upper + core, home equipment only; optional = one per difficulty,
@@ -222,11 +238,12 @@ users/<uid>/                      read/write only by that account (auth.uid === 
     expenses/
       e_<id>/ { date: "YYYY-MM-DD", item, price, createdAt: <ms> }   (no `id` field: rules reject it)
   exerciseTracker/
-    settings/ theme, template, palette, targets/<mon..sun>: "legs"|"upper"|"core"|"full"
+    settings/ theme, template, palette, targets/<mon..sun>: "legs"|"upper"|"core"|"full"|"rest"
     profile/ { startDate, settledThrough }   (ISO dates)
-    days/<YYYY-MM-DD>/ { focus?, penalty?,
-      daily/q0..q2/ { ex, done?, amount?, xp?, manual? },
+    days/<YYYY-MM-DD>/ { focus?, penalty?, challengeXp?,
+      daily/q0..q2/ { ex, done?, amount?, xp?, manual?, bonus? },
       optional/easy|medium|hard|elite/ { ex, accepted?, done?, amount?, xp?, manual? } }
+    weeks/<monday YYYY-MM-DD>/challenge/ { ex, target, reward, cam?, man?, done?, xp? }
   meta/ legacyImported: <ms>
 
 weightTracker/, spendingTracker/  pre-login data (same shape), read-only, readable by geraldjohnt only

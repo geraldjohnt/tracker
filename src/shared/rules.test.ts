@@ -33,7 +33,11 @@ describe('database.rules.json accepts everything the app writes', () => {
   it('sample data and a full CRUD pass on both trackers', async () => {
     vi.useFakeTimers();
     localStorage.clear();
-    const backend = new MemoryBackend({ users: { u1: sampleTree('2026-10-24') } });
+    // A week of done daily quests before the 24th, so completing one there earns a streak bonus.
+    const week = Object.fromEntries(Array.from({ length: 7 }, (_, i) => ['2026-10-' + (17 + i),
+      { focus: 'legs', daily: { q0: { ex: 'air-squat', done: 1, amount: 10, xp: 5 } } }]));
+    const exerciseTracker = { profile: { startDate: '2026-10-17', settledThrough: '2026-10-23' }, days: week };
+    const backend = new MemoryBackend({ users: { u1: { ...sampleTree('2026-10-24'), exerciseTracker } } });
 
     const w = new WeightStore(() => backend, 'rules.w');
     w.start('u1'); await flush();
@@ -50,10 +54,16 @@ describe('database.rules.json accepts everything the app writes', () => {
 
     const x = new ExerciseStore(() => backend, 'rules.x', () => '2026-10-24');
     x.start('u1'); await flush();
-    x.setTarget('mon', 'upper'); x.setTarget('sat', 'legs'); x.completeDaily('q0'); x.completeDaily('q1', false); x.acceptOptional('easy'); x.completeOptional('easy'); x.acceptOptional('hard'); await flush();
-    const later = new ExerciseStore(() => backend, 'rules.x2', () => '2026-10-28'); // settles missed days
+    x.setTarget('mon', 'upper'); x.setTarget('sat', 'legs'); x.setTarget('wed', 'rest'); x.completeDaily('q0'); x.completeDaily('q1', false);
+    x.acceptOptional('easy'); x.completeOptional('easy'); x.acceptOptional('hard');
+    x.logChallenge(2, true); x.logChallenge(10_000, false); await flush();
+    expect(backend.get('users/u1/exerciseTracker/days/2026-10-24/daily/q0/bonus')).toBeGreaterThan(0);
+    expect(backend.get('users/u1/exerciseTracker/days/2026-10-24/challengeXp')).toBeGreaterThan(0);
+    const later = new ExerciseStore(() => backend, 'rules.x2', () => '2026-10-28'); // settles missed days (the 25th is a rest day)
     later.start('u1'); await flush();
-    expect(backend.get('users/u1/exerciseTracker/days/2026-10-25/penalty')).toBeGreaterThan(0);
+    expect(backend.get('users/u1/exerciseTracker/days/2026-10-26/penalty')).toBeGreaterThan(0);
+    expect(backend.get('users/u1/exerciseTracker/days/2026-10-28/focus')).toBe('rest');
+    expect(backend.get('users/u1/exerciseTracker/weeks/2026-10-26/challenge/target')).toBeGreaterThan(0);
 
     vi.advanceTimersByTime(1000); await flush();
     const userRule = ((rules.rules as unknown as RuleNode).users as RuleNode).$uid as RuleNode;

@@ -17,10 +17,10 @@ export const tierColors = (tier: number) => TIER_COLORS[Math.min(Math.max(tier, 
 
 /* ---------- geometry (viewBox -50 -50 100 100) ---------- */
 
-const pts = (list: Array<[number, number]>) => list.map(([x, y]) => x.toFixed(2) + ',' + y.toFixed(2)).join(' ');
-const polar = (r: number, deg: number): [number, number] => [r * Math.cos((deg * Math.PI) / 180), r * Math.sin((deg * Math.PI) / 180)];
+export const pts = (list: Array<[number, number]>) => list.map(([x, y]) => x.toFixed(2) + ',' + y.toFixed(2)).join(' ');
+export const polar = (r: number, deg: number): [number, number] => [r * Math.cos((deg * Math.PI) / 180), r * Math.sin((deg * Math.PI) / 180)];
 
-function starPoints(points: number, outer: number, inner: number, cy = 0): string {
+export function starPoints(points: number, outer: number, inner: number, cy = 0): string {
   return pts(Array.from({ length: points * 2 }, (_, i) => {
     const [x, y] = polar(i % 2 ? inner : outer, -90 + (180 / points) * i);
     return [x, y + cy] as [number, number];
@@ -38,7 +38,7 @@ function Shape({ kind, ...p }: { kind: ShapeKind } & React.SVGProps<SVGPathEleme
 }
 
 /** One side's laurel branch (the left one; the right is mirrored). */
-function Laurel({ fill, stroke }: { fill: string; stroke: string }) {
+export function Laurel({ fill, stroke }: { fill: string; stroke: string }) {
   const leaves = [];
   for (let i = 0; i < 7; i++) {
     const deg = 108 + i * 16;
@@ -66,7 +66,7 @@ function Sword({ angle, steel, guard, edge }: { angle: number; steel: string; gu
 }
 
 /** One side's wing (the left one; the right is mirrored). */
-function Wing({ feathers, fill, stroke }: { feathers: number; fill: string; stroke: string }) {
+export function Wing({ feathers, fill, stroke }: { feathers: number; fill: string; stroke: string }) {
   return (
     <g>
       {Array.from({ length: feathers }, (_, i) => {
@@ -79,7 +79,7 @@ function Wing({ feathers, fill, stroke }: { feathers: number; fill: string; stro
   );
 }
 
-function Gem({ fill, facet }: { fill: string; facet: string }) {
+export function Gem({ fill, facet }: { fill: string; facet: string }) {
   return (
     <g>
       <polygon points="-15,-6 -8,-16 8,-16 15,-6 0,18" fill={fill} stroke={facet} strokeWidth={1.2} strokeLinejoin="round" />

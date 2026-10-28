@@ -113,7 +113,7 @@ describe('weekly targets', () => {
 
   it('daily quests follow the day’s focus, bodyweight only, no repeats', () => {
     const cats = { legs: [['legs'], ['legs'], ['legs', 'full']], upper: [['push'], ['pull'], ['push', 'pull']], core: [['core'], ['core'], ['core', 'full']], full: [['legs'], ['push', 'pull'], ['core', 'full']] };
-    for (const focus of FOCUSES) {
+    for (const focus of FOCUSES.filter(f => f !== 'rest')) {
       for (const level of [0, 12, 30, 60]) {
         for (let i = 0; i < 20; i++) {
           const day = generateDay(level, 'u1:seed' + i, undefined, focus);
@@ -220,7 +220,7 @@ describe('dashboard summary', () => {
     const s = exerciseSummary(days, { startDate: '2026-10-24', settledThrough: '2026-10-24' }, DEFAULT_TARGETS, today, 'u1');
     expect(s.safe).toBe(false);
     expect(s.atRisk).toBeGreaterThan(0);
-    expect(s.pending.missedDays).toBe(3); // 25th, 26th, 27th
+    expect(s.pending.missedDays).toBe(2); // 26th, 27th (the 25th is a Sunday, a rest day by default)
     expect(s.pending.xpLost).toBeGreaterThan(0);
     expect(days['2026-10-25']).toBeUndefined();
   });

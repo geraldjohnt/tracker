@@ -16,6 +16,11 @@ export interface CameraQuest {
   xp: number;
   /** Called once: `camera` is true when the camera counted it, false for a half-XP manual completion. */
   onComplete: (camera: boolean) => void;
+  /**
+   * Weekly challenge: the goal can be done over several sessions. When the dialog closes before
+   * the goal, the reps (or seconds) counted so far are passed here.
+   */
+  onPartial?: (counted: number) => void;
 }
 export interface CameraModalHandle { open(q: CameraQuest): void }
 
@@ -89,6 +94,7 @@ export function CameraModal({ ref }: { ref: Ref<CameraModalHandle> }) {
   const stream = useRef<MediaStream | null>(null);
   const raf = useRef(0);
   const finished = useRef(false);
+  const counted = useRef(0); // camera progress so far, saved through onPartial if the dialog closes early
 
   const stop = useCallback(() => {
     session.current++;
@@ -108,11 +114,14 @@ export function CameraModal({ ref }: { ref: Ref<CameraModalHandle> }) {
 
   const finishRef = useRef(finish);
   finishRef.current = finish;
+  const questRef = useRef(quest);
+  questRef.current = quest;
 
   /** (Re)starts the check for a quest; a new quest object re-runs the camera effect below. */
   const begin = useCallback((q: CameraQuest) => {
     stop();
     finished.current = false;
+    counted.current = 0;
     setQuest(q);
     setCounter(createCounter(q.ex));
     setLive(EMPTY);
@@ -126,7 +135,12 @@ export function CameraModal({ ref }: { ref: Ref<CameraModalHandle> }) {
   useEffect(() => {
     const el = modal.ref.current;
     if (!el) return;
-    const onHidden = () => { stop(); setQuest(null); };
+    const onHidden = () => {
+      stop();
+      const q = questRef.current;
+      if (q?.onPartial && !finished.current && counted.current > 0) { finished.current = true; q.onPartial(counted.current); }
+      setQuest(null);
+    };
     el.addEventListener('hidden.bs.modal', onHidden);
     return () => { el.removeEventListener('hidden.bs.modal', onHidden); stop(); };
   }, [modal.ref, stop]);
@@ -180,6 +194,7 @@ export function CameraModal({ ref }: { ref: Ref<CameraModalHandle> }) {
         draw(canvasRef.current, video, lms, !st.inView ? BAD : counter.mode === 'watch' ? NEUTRAL : st.formOk ? GOOD : BAD);
         const key = [st.reps, Math.floor(st.seconds), st.cue, st.inView, st.formOk, Math.round(st.depth * 10)].join('|');
         if (key !== shown) { shown = key; setLive(st); }
+        if (counter.mode !== 'watch') counted.current = Math.min(goal, cameraProgress(st, counter.mode));
         if (cameraProgress(st, counter.mode) >= goal) finishRef.current(true);
       };
       loop();
@@ -200,7 +215,7 @@ export function CameraModal({ ref }: { ref: Ref<CameraModalHandle> }) {
             <div className="modal-header">
               <div className="min-w-0">
                 <h5 className="modal-title" id="cameraModalTitle"><i className="bi bi-camera-video me-2"></i>{quest.ex.name}</h5>
-                <div className="ex-variant">{fmtAmount(quest.ex, quest.amount)} · +{quest.xp} XP with the camera</div>
+                <div className="ex-variant">{fmtAmount(quest.ex, quest.amount)}{quest.onPartial ? ' to go' : ''} · +{quest.xp} XP with the camera</div>
               </div>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -253,6 +268,9 @@ export function CameraModal({ ref }: { ref: Ref<CameraModalHandle> }) {
                     <MovementFigure key={quest.ex.id} exId={quest.ex.id} compact />
                     <p className="cam-setup"><i className="bi bi-info-circle"></i>{SETUP[counter.mode === 'watch' ? 'watch' : quest.ex.tracker!]}</p>
                   </div>
+                  {quest.onPartial && counter.mode !== 'watch' && (
+                    <p className="cam-privacy"><i className="bi bi-floppy"></i>Stop any time: closing this saves what the camera has counted toward the challenge.</p>
+                  )}
                   <p className="cam-privacy"><i className="bi bi-shield-lock"></i>The video stays on this device. Nothing is recorded or uploaded.</p>
                   <button type="button" className="link-btn cam-skip" onClick={() => finish(false)}>Can’t use the camera? Complete for half XP (+{half})</button>
                 </>
