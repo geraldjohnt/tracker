@@ -2,6 +2,13 @@
 
 Newest first. Keep each entry short.
 
+## 2026-10-28 — LevelUp phase 8: movement demos
+- Phase 7 merged (geraldjohnt/tracker#20).
+- `src/exercise/motion.ts` (2D skeleton, IK, keyframes for all 48 exercises) and `MovementFigure.tsx` (rAF SVG animation,
+  play/pause, reduced motion, only while visible). In the detail modal above the body map, and in the camera modal.
+- `motion.test.ts`: bone lengths, nothing below the floor, smooth loop, a demo per catalog id. 114 tests.
+- No schema/rules change. Next: phase 9 (owner picks the extras).
+
 ## 2026-10-28 — LevelUp phase 7: dashboard card
 - `src/dashboard/ExerciseCard.tsx` + pure `exerciseSummary()` in `src/exercise/derive.ts` (3 new tests, 109 total).
   Full-width card under WeighIn/Spendly: rank badge, level, XP bar, Today x/3, streak, total and week XP, today's

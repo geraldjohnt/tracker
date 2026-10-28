@@ -2,13 +2,14 @@ import { useImperativeHandle, useState, type Ref } from 'react';
 import { createPortal } from 'react-dom';
 import { useBsModal } from '../shared/components/useBsModal';
 import { BodyMap } from './BodyMap';
+import { MovementFigure } from './MovementFigure';
 import { EQUIPMENT_LABELS, MUSCLE_LABELS, type Exercise } from './catalog';
 import { DIFFICULTY_INFO, questAmount } from './derive';
 import { fmtAmount, GenderTag } from './parts';
 
 export interface ExerciseModalHandle { open(ex: Exercise): void }
 
-/** How to do an exercise: form, steps, mistakes, the muscles it works, and today's targets at your level. */
+/** How to do an exercise: a movement demo, form, steps, mistakes, the muscles it works, and today's targets at your level. */
 export function ExerciseModal({ ref, level }: { ref: Ref<ExerciseModalHandle>; level: number }) {
   const modal = useBsModal();
   const [ex, setEx] = useState<Exercise | null>(null);
@@ -36,6 +37,7 @@ export function ExerciseModal({ ref, level }: { ref: Ref<ExerciseModalHandle>; l
 
               <div className="ex-detail-grid">
                 <div className="ex-map-wrap">
+                  <MovementFigure key={ex.id} exId={ex.id} className="ex-movement" />
                   <BodyMap primary={ex.primary} secondary={ex.secondary} />
                   <div className="bm-legend">
                     <span><i className="bm-dot bm-primary"></i>Main: {ex.primary.map(m => MUSCLE_LABELS[m]).join(', ')}</span>

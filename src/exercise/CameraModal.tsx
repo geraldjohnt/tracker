@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useBsModal } from '../shared/components/useBsModal';
 import type { Exercise, TrackerKind } from './catalog';
 import { manualXp } from './derive';
+import { MovementFigure } from './MovementFigure';
 import { fmtAmount } from './parts';
 import { cameraGoal, cameraProgress, createCounter, LM, type Counter, type CounterState, type Landmark } from './pose';
 import { loadPoseModel } from './poseModel';
@@ -248,7 +249,10 @@ export function CameraModal({ ref }: { ref: Ref<CameraModalHandle> }) {
                     <div className="xp-bar"><div className="xp-fill" style={{ width: (goal ? (progress / goal) * 100 : 0) + '%' }}></div></div>
                     <div className={'cam-cue' + (live.cue ? ' show' : '')} role="status" aria-live="polite">{live.cue || ' '}</div>
                   </div>
-                  <p className="cam-setup"><i className="bi bi-info-circle"></i>{SETUP[counter.mode === 'watch' ? 'watch' : quest.ex.tracker!]}</p>
+                  <div className="cam-guide">
+                    <MovementFigure key={quest.ex.id} exId={quest.ex.id} compact />
+                    <p className="cam-setup"><i className="bi bi-info-circle"></i>{SETUP[counter.mode === 'watch' ? 'watch' : quest.ex.tracker!]}</p>
+                  </div>
                   <p className="cam-privacy"><i className="bi bi-shield-lock"></i>The video stays on this device. Nothing is recorded or uploaded.</p>
                   <button type="button" className="link-btn cam-skip" onClick={() => finish(false)}>Can’t use the camera? Complete for half XP (+{half})</button>
                 </>

@@ -68,9 +68,9 @@ Owner rule: PR + merge to `main` after **each** phase (CI green), then **stop** 
 | — | Realistic anatomical body map; badge pips in two rows for tiers 4–5 | Done | geraldjohnt/tracker#13, #14 |
 | 5 | Camera form check, part 1: camera required to complete; half XP without it; counters for squat, lunge, push-up, wall push-up, bridge, plank, wall sit | Done | geraldjohnt/tracker#15 |
 | 6 | Camera form check, part 2: counters for all 48 exercises (33 kinds), front-view squats + knee caving, jump checks | Done | geraldjohnt/tracker#19 |
-| 7 | Dashboard card for LevelUp | Done | (this PR) |
-| 8 | **Better visuals (movement illustrations/animations)** (next) | Not started | |
-| 9 | Extras (owner picks) | Not started | |
+| 7 | Dashboard card for LevelUp | Done | geraldjohnt/tracker#20 |
+| 8 | Better visuals: animated movement demo for every exercise | Done | (this PR) |
+| 9 | **Extras (owner picks)** (next) | Not started | |
 | — | **Then:** calisthenics programme (ladders), see "Programme proposal" below; owner deferred it until 6–9 are done | Deferred | |
 
 The owner may move 7–9 before the camera phases.
@@ -130,6 +130,14 @@ The owner may move 7–9 before the camera phases.
 - An illustration or short animation of the movement per exercise, next to the body map (the body map only
   shows muscles).
 
+- **Done (2026-10-28).** `motion.ts` + `MovementFigure.tsx`: a looping stick-figure demo for all 48 exercises, above the
+  body map in the detail modal (play/pause button) and small next to the setup tip in the camera modal. Choices made
+  without asking: stick figure in the accent colour (near limbs solid, far ones faded), side view except jumping jacks,
+  side lunge, reverse snow angel (from above) and wide/archer push-ups (from the front); props drawn for walls, benches,
+  bars and the Nordic anchor; paused by default under "reduce motion"; demos are bundled per exercise id (not stored in
+  the catalog), so no rules change. Library cards still show the mini body map. Checked every keyframe on a contact
+  sheet and the page in Chromium (desktop light, phone dark, fake camera).
+
 ### Phase 9: extras (offer the list; owner picks)
 - Achievements, streak bonuses, rest days in the weekly plan (needs a penalty rule), rank-up celebration
   screen, weekly challenge quest.
@@ -184,6 +192,7 @@ quests are replaced by programme sessions or kept alongside them; rank trials ye
 - **Phase 5 (done, 2026-10-26):** camera form check; half XP without the camera. Rules: `tracker`, `manual`.
 - **Phase 6 (done, 2026-10-27):** counters for every exercise; rules: `tracker` regex extended (33 kinds).
 - **Phase 7 (done, 2026-10-28):** LevelUp card on the dashboard. No rules change.
+- **Phase 8 (done, 2026-10-28):** animated movement demos. No rules change.
 - **Owner to do:** re-publish `database.rules.json` (latest: the longer `tracker` list on catalog items),
   then open `exercise.html` signed in as `geraldjohnt` once, which publishes the catalog (version 4). Until then
   everyone uses the bundled catalog (v4 > stored v3), so nothing breaks.

@@ -56,7 +56,8 @@ src/
   weight/        store, derive, units, WeightApp, WeekView, AllWeeksPage, WeekModal, weight.css
   spending/      store, derive, SpendingApp, views (Day/Calendar/Week/Month/Year), BarChart, spending.css
   exercise/      catalog (48 exercises), derive (levels/ranks/targets/quests/penalties/board), store, ExerciseApp,
-                 ExerciseModal, BodyMap (SVG muscle diagram), RankBadge (SVG rank badges), RanksView,
+                 ExerciseModal, BodyMap (SVG muscle diagram), motion + MovementFigure (animated movement demos),
+                 RankBadge (SVG rank badges), RanksView,
                  WeeklyPlan, RankingView, CameraModal + pose (rep/hold counters) + poseModel (lazy
                  MediaPipe), parts, exercise.css
 mem/             portable project memory (see above)
@@ -153,6 +154,13 @@ keeps snapshots and lb rounding from rewriting what the user is typing.
   `manualXp` = half its XP, rounded down, and the slot gets `manual: true`.
 - **Equipment rule**: only home calisthenics. Anything with `equipment !== 'none'` is optional-quest
   only; daily quests are bodyweight-only.
+- **Movement demos** (`motion.ts`, `MovementFigure.tsx`): a looping stick-figure animation per exercise id (`MOTIONS`, all 48),
+  shown above the body map in the detail modal and next to the setup tip in the camera modal. Keyframes pose a 2D
+  skeleton by absolute angles or by IK targets (planted hands/feet stay put); `poseAt` eases between them. Side view
+  (near limbs solid, far limbs faded) or front view (`view: 'front'`, `short` foreshortens a body pointing away). The
+  rAF loop writes SVG attributes directly, runs only while on screen, and starts paused under reduced motion.
+  `motion.test.ts` checks bone lengths, nothing through the floor, and a demo for every catalog id. **A new catalog
+  exercise needs a `MOTIONS` entry** (without one, no demo is shown).
 - **Dashboard card** (`src/dashboard/ExerciseCard.tsx`, `exerciseSummary` in `derive.ts`): read-only. Level, rank
   badge, XP bar, today's daily quests (done / 3), streak, week XP. It never writes: if LevelUp hasn't been opened
   today it says so instead of generating quests, and unsettled missed days are previewed with `settle()`, not applied.
