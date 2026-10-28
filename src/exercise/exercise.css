@@ -177,6 +177,30 @@ button.rank-emblem:hover{ filter:brightness(1.06); }
 .bm-dot.bm-primary{ background:var(--accent); }
 .bm-dot.bm-secondary{ background:color-mix(in srgb, var(--accent) 38%, transparent); border:1px solid var(--accent); }
 
+/* Movement demo (MovementFigure.tsx) */
+.mv{ position:relative; }
+.mv-svg{ display:block; width:100%; height:auto; overflow:visible; }
+.mv-limb{ fill:none; stroke:var(--accent); stroke-width:5; stroke-linecap:round; stroke-linejoin:round; }
+.mv-torso{ stroke-width:7; }
+.mv-far{ stroke:color-mix(in srgb, var(--accent) 42%, var(--card-2)); }
+.mv-head{ fill:var(--accent); }
+.mv-floor{ stroke:var(--border-strong); stroke-width:1.5; stroke-linecap:round; }
+.mv-prop{ fill:none; stroke:var(--muted); stroke-width:2.5; stroke-linecap:round; opacity:.7; }
+.mv-prop-fill{ fill:color-mix(in srgb, var(--muted) 30%, var(--card-2)); }
+.mv-bar{ stroke:var(--text); stroke-width:3; stroke-linecap:round; opacity:.75; }
+.mv-foot{ display:flex; align-items:center; gap:.5rem; margin-top:.15rem; min-height:28px; }
+.mv-note{ font-size:.74rem; color:var(--muted); }
+.mv-play{
+  margin-left:auto; width:28px; height:28px; border-radius:50%; border:1px solid var(--border); background:var(--card);
+  color:var(--muted); display:inline-flex; align-items:center; justify-content:center; padding:0; font-size:.95rem;
+}
+.mv-play:hover, .mv-play:focus-visible{ color:var(--accent); border-color:var(--accent); }
+.ex-movement{ padding-bottom:.6rem; margin-bottom:.75rem; border-bottom:1px solid var(--border); }
+.ex-movement .mv-svg{ max-width:300px; margin:0 auto; }
+.cam-guide{ display:flex; gap:.75rem; align-items:center; margin-top:.6rem; }
+.cam-guide .mv{ flex:0 0 96px; background:var(--card-2); border:1px solid var(--border); border-radius:var(--r-sm); padding:.2rem; }
+.cam-guide .cam-setup{ margin:0; }
+
 /* Exercise detail modal */
 .ex-variant{ font-size:.8rem; color:var(--muted); font-weight:500; margin-top:.15rem; }
 .ex-summary{ margin:.85rem 0 1rem; font-size:.9rem; }
