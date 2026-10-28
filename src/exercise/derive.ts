@@ -122,17 +122,22 @@ export type DailySlot = (typeof DAILY_SLOTS)[number];
 
 /* ---------------- weekly targets ---------------- */
 
-/** What a day's daily quests train. */
-export const FOCUSES = ['legs', 'upper', 'core', 'full'] as const;
+/** What a day's daily quests train, or a rest day (no daily quests, no penalty). */
+export const FOCUSES = ['legs', 'upper', 'core', 'full', 'rest'] as const;
 export type Focus = (typeof FOCUSES)[number];
-export const FOCUS_INFO: Record<Focus, { label: string; short: string; icon: string; note: string }> = {
-  legs: { label: 'Legs', short: 'Legs', icon: 'bi-person-walking', note: 'Squats, lunges, bridges' },
-  upper: { label: 'Upper body', short: 'Upper', icon: 'bi-arrow-up-circle', note: 'Push-ups and back work' },
-  core: { label: 'Core', short: 'Core', icon: 'bi-bullseye', note: 'Planks, crunches, holds' },
-  full: { label: 'Full body', short: 'Full', icon: 'bi-lightning-charge', note: 'One legs, one upper, one core' },
+export type TrainingFocus = Exclude<Focus, 'rest'>;
+/** `day` names the day itself: "Legs day", "Rest day". */
+export const FOCUS_INFO: Record<Focus, { label: string; short: string; day: string; icon: string; note: string }> = {
+  legs: { label: 'Legs', short: 'Legs', day: 'Legs day', icon: 'bi-person-walking', note: 'Squats, lunges, bridges' },
+  upper: { label: 'Upper body', short: 'Upper', day: 'Upper body day', icon: 'bi-arrow-up-circle', note: 'Push-ups and back work' },
+  core: { label: 'Core', short: 'Core', day: 'Core day', icon: 'bi-bullseye', note: 'Planks, crunches, holds' },
+  full: { label: 'Full body', short: 'Full', day: 'Full body day', icon: 'bi-lightning-charge', note: 'One legs, one upper, one core' },
+  rest: { label: 'Rest day', short: 'Rest', day: 'Rest day', icon: 'bi-moon-stars', note: 'No daily quests and no penalty' },
 };
+/** A week may have at most this many rest days. */
+export const MAX_REST_DAYS = 3;
 /** Daily quest slots per focus. Bodyweight only: equipment is for optional quests. */
-const FOCUS_SLOTS: Record<Focus, Record<DailySlot, Exercise['category'][]>> = {
+const FOCUS_SLOTS: Record<TrainingFocus, Record<DailySlot, Exercise['category'][]>> = {
   legs: { q0: ['legs'], q1: ['legs'], q2: ['legs', 'full'] },
   upper: { q0: ['push'], q1: ['pull'], q2: ['push', 'pull'] },
   core: { q0: ['core'], q1: ['core'], q2: ['core', 'full'] },
@@ -146,8 +151,10 @@ export const WEEKDAY_LABELS: Record<Weekday, string> = {
   mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday',
 };
 export type Targets = Record<Weekday, Focus>;
-/** The plan every account starts with; each day can be changed in the weekly plan. */
-export const DEFAULT_TARGETS: Targets = { mon: 'legs', tue: 'upper', wed: 'core', thu: 'legs', fri: 'upper', sat: 'core', sun: 'full' };
+/** The plan every account starts with (Sunday is the rest day); each day can be changed in the weekly plan. */
+export const DEFAULT_TARGETS: Targets = { mon: 'legs', tue: 'upper', wed: 'core', thu: 'legs', fri: 'upper', sat: 'full', sun: 'rest' };
+
+export const restDays = (targets: Targets) => WEEKDAYS.filter(d => targets[d] === 'rest').length;
 
 /** mon…sun for a local ISO date. */
 export function weekdayOf(date: ISODate): Weekday {
@@ -157,17 +164,25 @@ export function weekdayOf(date: ISODate): Weekday {
 
 export const focusOn = (targets: Targets, date: ISODate): Focus => targets[weekdayOf(date)];
 
-/** Stored targets (`settings/targets`) over the defaults; anything unknown is ignored. */
+/**
+ * Stored targets (`settings/targets`) over the defaults; anything unknown is ignored. If the
+ * defaults would push the week past MAX_REST_DAYS, the default rest days give way first.
+ */
 export function normalizeTargets(v: unknown): Targets {
   const out = { ...DEFAULT_TARGETS };
+  const stored = new Set<Weekday>();
   if (v && typeof v === 'object') {
     for (const wd of WEEKDAYS) {
       const f = (v as Record<string, unknown>)[wd];
-      if ((FOCUSES as readonly unknown[]).includes(f)) out[wd] = f as Focus;
+      if ((FOCUSES as readonly unknown[]).includes(f)) { out[wd] = f as Focus; stored.add(wd); }
     }
   }
+  for (const wd of WEEKDAYS) if (restDays(out) > MAX_REST_DAYS && out[wd] === 'rest' && !stored.has(wd)) out[wd] = 'full';
   return out;
 }
+
+/** The day is a rest day: its stored focus, or the plan's target for a day with no quests yet. */
+export const isRestDay = (day: DayRecord | undefined, targets: Targets, date: ISODate) => (day?.focus ?? focusOn(targets, date)) === 'rest';
 
 export interface QuestSlot {
   ex: string;
@@ -179,6 +194,8 @@ export interface QuestSlot {
   xp?: number;
   /** Completed without the camera, for half XP. */
   manual?: boolean;
+  /** Daily quests only: streak bonus XP on top of `xp`, frozen when completed. */
+  bonus?: number;
 }
 
 export interface DayRecord {
@@ -188,6 +205,8 @@ export interface DayRecord {
   optional?: Partial<Record<Difficulty, QuestSlot>>;
   /** XP taken away because no daily quest was completed that day. */
   penalty?: number;
+  /** XP from the weekly challenge, on the day it was completed. */
+  challengeXp?: number;
 }
 export type DaysMap = Record<ISODate, DayRecord>;
 
@@ -213,8 +232,9 @@ export function seededRandom(seed: string): () => number {
 
 const pickFrom = <T,>(list: T[], rnd: () => number): T => list[Math.floor(rnd() * list.length)];
 
-/** Today's 3 daily quests for a focus, bodyweight only, no exercise twice when the pool allows it. */
+/** Today's 3 daily quests for a focus, bodyweight only, no exercise twice when the pool allows it. Rest days have none. */
 export function generateDaily(level: number, seed: string, focus: Focus, catalog: Exercise[] = CATALOG): NonNullable<DayRecord['daily']> {
+  if (focus === 'rest') return {};
   const rnd = seededRandom(seed + ':' + focus);
   const allowed = DIFFICULTIES.slice(0, DIFFICULTIES.indexOf(maxDailyDifficulty(level)) + 1);
   const daily: DayRecord['daily'] = {};
@@ -250,13 +270,21 @@ export const daySeed = (uid: string, date: ISODate) => uid + ':' + date;
 const slotsOf = (day: DayRecord | undefined): QuestSlot[] =>
   [...Object.values(day?.daily ?? {}), ...Object.values(day?.optional ?? {})].filter((s): s is QuestSlot => !!s);
 
-/** XP earned on a day (completed quests, at the value they had when completed). */
+/** XP earned on a day (completed quests at the value they had when completed, streak bonuses, the weekly challenge). */
 export function dayGain(day: DayRecord | undefined): number {
-  return slotsOf(day).reduce((sum, s) => sum + (s.done ? s.xp ?? 0 : 0), 0);
+  return slotsOf(day).reduce((sum, s) => sum + (s.done ? (s.xp ?? 0) + (s.bonus ?? 0) : 0), day?.challengeXp ?? 0);
 }
 
 /** At least one daily quest was completed; only then is the day safe from the penalty. */
 export const dailyDone = (day: DayRecord | undefined) => Object.values(day?.daily ?? {}).some(s => !!s?.done);
+/** Any quest (daily or optional) was completed. */
+export const anyQuestDone = (day: DayRecord | undefined) => slotsOf(day).some(s => !!s.done);
+
+/**
+ * The day counts for the streak: a daily quest done, or, on a rest day, any quest done.
+ * A rest day with nothing done neither counts nor breaks the streak.
+ */
+export const streakDay = (day: DayRecord | undefined, rest: boolean) => dailyDone(day) || (rest && anyQuestDone(day));
 
 /** What the 3 daily quests are worth at a level: the amount a missed day costs. */
 export function dailyXpTotal(day: DayRecord | undefined, level: number, byId: Record<string, Exercise>): number {
@@ -304,7 +332,7 @@ export function settle(days: DaysMap, profile: Profile, today: ISODate, uid: str
     const day = days[date];
     xp += dayGain(day);
     if (day?.penalty) { xp = Math.max(0, xp - day.penalty); continue; } // already settled (e.g. on another device)
-    if (dailyDone(day)) continue;
+    if (dailyDone(day) || isRestDay(day, targets, date)) continue;
     missedDays++;
     const level = levelInfo(xp).level;
     const quests = day?.daily ? day : generateDay(level, daySeed(uid, date), catalog, focusOn(targets, date));
@@ -315,12 +343,84 @@ export function settle(days: DaysMap, profile: Profile, today: ISODate, uid: str
   return { patch, missedDays, xpLost };
 }
 
-/** Consecutive days with at least one daily quest done, ending today (or yesterday if today isn't done yet). */
-export function streak(days: DaysMap, today: ISODate): number {
-  let d = dailyDone(days[today]) ? today : addDays(today, -1);
+const firstDay = (days: DaysMap) => Object.keys(days).sort()[0];
+
+/** Streak days counted back from `from`: rest days with nothing done are skipped, any other day without a daily quest ends it. */
+function countBack(days: DaysMap, from: ISODate, targets: Targets): number {
+  const first = firstDay(days);
   let n = 0;
-  while (dailyDone(days[d])) { n++; d = addDays(d, -1); }
+  for (let d = from; first && d >= first; d = addDays(d, -1)) {
+    const rest = isRestDay(days[d], targets, d);
+    if (streakDay(days[d], rest)) n++;
+    else if (!rest) break;
+  }
   return n;
+}
+
+/**
+ * Days in a row with a daily quest done, ending today (or yesterday if today isn't done yet).
+ * Rest days don't break it, and count when a quest was done on them.
+ */
+export function streak(days: DaysMap, today: ISODate, targets: Targets = DEFAULT_TARGETS): number {
+  const rest = isRestDay(days[today], targets, today);
+  return (streakDay(days[today], rest) ? 1 : 0) + countBack(days, addDays(today, -1), targets);
+}
+
+/** The streak today has once a daily quest is done (what the streak bonus is based on). */
+export const streakWithToday = (days: DaysMap, today: ISODate, targets: Targets = DEFAULT_TARGETS) =>
+  1 + countBack(days, addDays(today, -1), targets);
+
+/* ---------------- streak bonus ---------------- */
+
+/** Extra XP on daily quests while the streak (counting today) is at least this long. */
+export const STREAK_BONUSES = [{ days: 30, pct: 30 }, { days: 14, pct: 20 }, { days: 7, pct: 10 }] as const;
+export const streakBonusPct = (streakDays: number) => STREAK_BONUSES.find(b => streakDays >= b.days)?.pct ?? 0;
+/** The bonus on a daily quest's XP (camera or manual), rounded up. */
+export const streakBonusXp = (xp: number, pct: number) => (pct && xp > 0 ? Math.ceil((xp * pct) / 100) : 0);
+
+/* ---------------- weekly challenge ---------------- */
+
+/** One bigger quest per week (Monday to Sunday): one exercise, a total to reach over the week, bonus XP. */
+export interface Challenge {
+  ex: string;
+  /** Reps (or seconds) to reach over the week, fixed when the week's challenge is picked. */
+  target: number;
+  /** Full XP with every rep camera-checked, fixed when picked. */
+  reward: number;
+  /** Reps counted by the camera / logged without it so far. */
+  cam?: number;
+  man?: number;
+  /** When it was completed, and the XP it paid. */
+  done?: number;
+  xp?: number;
+}
+export type WeeksMap = Record<ISODate, { challenge?: Challenge }>;
+
+/** A week's challenge asks for this many days' worth of daily reps of one exercise. */
+export const CHALLENGE_DAYS = 5;
+export const CHALLENGE_BASE_XP = 40;
+
+/** The challenge's bonus XP: 40, +10% per rank, like quest XP. */
+export const challengeReward = (level: number) => Math.ceil((CHALLENGE_BASE_XP * (10 + rankOf(level).index)) / 10);
+
+/** Picks a week's challenge: a bodyweight, two-sided exercise the daily quests could use at this level. */
+export function generateChallenge(level: number, seed: string, catalog: Exercise[] = CATALOG): Challenge {
+  const rnd = seededRandom(seed + ':challenge');
+  const allowed = DIFFICULTIES.slice(0, DIFFICULTIES.indexOf(maxDailyDifficulty(level)) + 1);
+  const pool = catalog.filter(e => e.equipment === 'none' && !e.perSide && allowed.includes(e.difficulty));
+  const ex = pickFrom(pool.length ? pool : catalog, rnd);
+  const total = questAmount(ex, level, 'daily') * CHALLENGE_DAYS;
+  const step = ex.measure === 'seconds' ? 30 : 5;
+  return { ex: ex.id, target: Math.ceil(total / step) * step, reward: challengeReward(level) };
+}
+
+/** Reps done toward a challenge, either way. */
+export const challengeProgress = (c: Challenge) => (c.cam ?? 0) + (c.man ?? 0);
+
+/** XP a finished challenge pays: the full reward for camera-checked reps, half for reps logged without the camera. */
+export function challengeXp(c: Challenge): number {
+  const cam = c.cam ?? 0, man = c.man ?? 0;
+  return cam + man ? Math.floor((c.reward * (cam + man / 2)) / (cam + man)) : 0;
 }
 
 /* ---------------- dashboard summary ---------------- */
@@ -337,6 +437,8 @@ export interface ExerciseSummary {
   /** XP earned since Monday (gains only; penalties aren't subtracted). */
   weekXp: number;
   focus: Focus;
+  /** Today is a rest day: no daily quests and no penalty. */
+  rest: boolean;
   /** Today's daily quests, or null when LevelUp hasn't been opened today yet (it creates them). */
   quests: TodayQuest[] | null;
   doneCount: number;
@@ -357,7 +459,8 @@ export function exerciseSummary(
 ): ExerciseSummary {
   const info = levelInfo(totalXp(days));
   const day = days[today];
-  const quests = day?.daily
+  const rest = isRestDay(day, targets, today);
+  const quests = rest ? [] : day?.daily
     ? DAILY_SLOTS.flatMap(slot => {
       const q = day.daily![slot];
       if (!q) return [];
@@ -376,12 +479,13 @@ export function exerciseSummary(
   const preview = started ? settle(days, profile, today, uid, Object.values(byId), targets) : null;
   return {
     started, info, rank: rankOf(info.level), next: nextRank(info.level),
-    streak: streak(days, today), weekXp,
+    streak: streak(days, today, targets), weekXp,
     focus: day?.focus ?? focusOn(targets, today),
+    rest,
     quests,
     doneCount: quests ? quests.filter(q => q.done).length : 0,
-    safe: dailyDone(day),
-    atRisk: Math.min(info.total, quests ? dailyXpTotal(day, info.level, byId) : 0),
+    safe: rest || dailyDone(day),
+    atRisk: rest ? 0 : Math.min(info.total, quests ? dailyXpTotal(day, info.level, byId) : 0),
     pending: { missedDays: preview?.missedDays ?? 0, xpLost: preview?.xpLost ?? 0 },
   };
 }
@@ -395,7 +499,7 @@ const numOr = (v: unknown) => (typeof v === 'number' && isFinite(v) ? v : undefi
 function normSlot(v: unknown): QuestSlot | undefined {
   if (!isObj(v) || typeof v.ex !== 'string') return undefined;
   const s: QuestSlot = { ex: v.ex };
-  for (const k of ['accepted', 'done', 'amount', 'xp'] as const) { const n = numOr(v[k]); if (n !== undefined) s[k] = n; }
+  for (const k of ['accepted', 'done', 'amount', 'xp', 'bonus'] as const) { const n = numOr(v[k]); if (n !== undefined) s[k] = n; }
   if (v.manual === true) s.manual = true;
   return s;
 }
@@ -417,7 +521,23 @@ export function normalizeDays(v: unknown): DaysMap {
     if ((FOCUSES as readonly unknown[]).includes(d.focus)) day.focus = d.focus as Focus;
     const p = numOr(d.penalty);
     if (p) day.penalty = p;
+    const c = numOr(d.challengeXp);
+    if (c) day.challengeXp = c;
     out[date] = day;
+  }
+  return out;
+}
+
+export function normalizeWeeks(v: unknown): WeeksMap {
+  const out: WeeksMap = {};
+  if (!isObj(v)) return out;
+  for (const [monday, w] of Object.entries(v)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(monday) || !isObj(w)) continue;
+    const c = w.challenge;
+    if (!isObj(c) || typeof c.ex !== 'string' || !numOr(c.target)) { out[monday] = {}; continue; }
+    const ch: Challenge = { ex: c.ex, target: numOr(c.target)!, reward: numOr(c.reward) ?? 0 };
+    for (const k of ['cam', 'man', 'done', 'xp'] as const) { const n = numOr(c[k]); if (n !== undefined) ch[k] = n; }
+    out[monday] = { challenge: ch };
   }
   return out;
 }

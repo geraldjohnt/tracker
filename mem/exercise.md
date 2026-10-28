@@ -69,8 +69,8 @@ Owner rule: PR + merge to `main` after **each** phase (CI green), then **stop** 
 | 5 | Camera form check, part 1: camera required to complete; half XP without it; counters for squat, lunge, push-up, wall push-up, bridge, plank, wall sit | Done | geraldjohnt/tracker#15 |
 | 6 | Camera form check, part 2: counters for all 48 exercises (33 kinds), front-view squats + knee caving, jump checks | Done | geraldjohnt/tracker#19 |
 | 7 | Dashboard card for LevelUp | Done | geraldjohnt/tracker#20 |
-| 8 | Better visuals: animated movement demo for every exercise | Done | (this PR) |
-| 9 | **Extras (owner picks)** (next) | Not started | |
+| 8 | Better visuals: animated movement demo for every exercise | Done | geraldjohnt/tracker#21 |
+| 9 | **Extras**: achievements, rank-up celebration, streak bonuses, rest days, weekly challenge | Done | (this PR) |
 | — | **Then:** calisthenics programme (ladders), see "Programme proposal" below; owner deferred it until 6–9 are done | Deferred | |
 
 The owner may move 7–9 before the camera phases.
@@ -141,6 +141,36 @@ The owner may move 7–9 before the camera phases.
 ### Phase 9: extras (offer the list; owner picks)
 - Achievements, streak bonuses, rest days in the weekly plan (needs a penalty rule), rank-up celebration
   screen, weekly challenge quest.
+- **Owner picked all of them (2026-10-28)**, with these instructions:
+  - **Achievements: many**, each with levels (**at least 10**), starting small at level 1. Example streak:
+    7, 14, 30, 50, 100, 500 days "and so on". The badge colour changes per level like the rank tiers; 10 colours,
+    each recognisable, colours may be mixed; the higher the level the cooler the colour; the hardest achievement
+    gets the coolest badge; the badge design relates to the achievement's type.
+  - **Rest days**: predefined in the weekly plan, user can choose and edit them. No penalty on a rest day if
+    nothing is done. The streak does **not** stop on a rest day. Optional quests can still be done on a rest
+    day: they earn XP and **the streak goes up**.
+  - Rank-up celebration, streak bonuses, weekly challenge: as recommended (celebration screen replaces the toast;
+    +XP on daily quests at 7/14/30-day streaks, frozen on the slot; one bigger quest per week for bonus XP).
+- **Done (2026-10-28).** See CLAUDE.md → Exercise for the mechanics. Choices made without asking (cheap to change):
+  - **18 achievements**, exactly 10 levels each: On Fire (longest streak 7, 14, 30, 50, 100, 500, 750, 1000, 1500,
+    2000 days, the owner's example then +), Quest Master, XP Hunter, Rep Machine, Iron Hold (time in holds), Leg Day,
+    Push Power, Pull Strength, Core of Steel, Perfect Day (3/3 dailies), Regular (days active), Side Quester,
+    Daredevil (hard/elite optional), Form Check (camera quests), Explorer (different exercises, up to 48), Climber
+    (highest level ever, up to 225 = Legend 1), Challenger (weekly challenges), No Days Off (quests on rest days).
+    Derived from history, so existing accounts start with what they've already earned (no celebration for those).
+  - Level colours I–X: Bronze, Silver, Gold, Emerald, Sapphire, Amethyst, Ruby, Aurora (teal→indigo→magenta),
+    Magma (yellow→red→black), Prismatic (rainbow, shimmering). Frames: 1 plain medal, 2 rim, 3 studs, 4 rosette,
+    5 ribbons, 6 rays, 7 laurels, 8 wings + glow, 9 crown, 10 sparkles. Roman numeral on every badge. "Hardest"
+    = difficulty 3 (On Fire, Daredevil, Climber, Challenger): a gem crest from level 4, a white crown jewel at 9–10.
+  - Rest days: default plan is now Mon legs, Tue upper, Wed core, Thu legs, Fri upper, **Sat full, Sun rest** (was Sat
+    core, Sun full); at most **3** rest days a week (guards against an all-rest week). Accounts that never edited the
+    plan get the new default from now on; stored days keep their focus.
+  - Streak bonus: +10% at 7 days, +20% at 14, +30% at 30 (of the quest's XP after the camera/manual halving, rounded
+    up), daily quests only.
+  - Weekly challenge: target = 5 × the daily amount (rounded up to 5 reps / 30 s), reward 40 XP +10% per rank,
+    bodyweight two-sided exercises only, no undo. Reps without the camera pay half.
+  - Celebration screen for each new rank **tier** (Rookie 2 …) and each new achievement level; plain level-ups keep
+    the toast.
 
 ### Programme proposal (2026-10-26) — DEFERRED until phases 6–9 are done (6 done)
 **Owner (2026-10-26):** save this now; come back to it only after the whole first plan (phases 6–9) is finished.
@@ -193,7 +223,9 @@ quests are replaced by programme sessions or kept alongside them; rank trials ye
 - **Phase 6 (done, 2026-10-27):** counters for every exercise; rules: `tracker` regex extended (33 kinds).
 - **Phase 7 (done, 2026-10-28):** LevelUp card on the dashboard. No rules change.
 - **Phase 8 (done, 2026-10-28):** animated movement demos. No rules change.
-- **Owner to do:** re-publish `database.rules.json` (latest: the longer `tracker` list on catalog items),
+- **Phase 9 (done, 2026-10-28):** achievements, celebrations, streak bonus, rest days, weekly challenge.
+  Rules: `rest` focus/target, slot `bonus`, `days/<date>/challengeXp`, `weeks/<monday>/challenge` (**owner must re-publish**).
+- **Owner to do:** re-publish `database.rules.json` (latest: phase 9's rest days, streak bonus and weekly challenge),
   then open `exercise.html` signed in as `geraldjohnt` once, which publishes the catalog (version 4). Until then
   everyone uses the bundled catalog (v4 > stored v3), so nothing breaks.
 

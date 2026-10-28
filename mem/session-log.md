@@ -2,6 +2,16 @@
 
 Newest first. Keep each entry short.
 
+## 2026-10-28 — LevelUp phase 9: extras
+- Phase 8 merged (geraldjohnt/tracker#21). Owner picked every extra and set the achievement/rest-day rules (exercise.md).
+- `achievements.ts` (18 × 10 levels, from history), `AchievementBadge.tsx`, `AchievementsView.tsx` (new tab + all-levels
+  modal), `Celebration.tsx` (rank tier / achievement screen with confetti). Rest days (`rest` focus, max 3, Sunday by
+  default; streak bridges them), streak bonus (`bonus` on daily slots), weekly challenge (`weeks/<monday>/challenge`,
+  XP into `days/<date>/challengeXp`; camera modal saves partial counts). Dashboard card handles rest days.
+- Rules changed (owner must re-publish). `extras.test.ts` + store/rules tests: 130 tests.
+- Checked in Chromium (sample mode): desktop light, phone dark, rest day, plan cap, celebration, badge sheets.
+- Next: re-present the programme proposal to the owner.
+
 ## 2026-10-28 — LevelUp phase 8: movement demos
 - Phase 7 merged (geraldjohnt/tracker#20).
 - `src/exercise/motion.ts` (2D skeleton, IK, keyframes for all 48 exercises) and `MovementFigure.tsx` (rAF SVG animation,

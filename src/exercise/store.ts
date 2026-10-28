@@ -1,21 +1,23 @@
 // Exercise (quests) state + persistence, outside React (exposed through useSyncExternalStore).
-// Live-syncs users/<uid>/exerciseTracker/{profile,days,settings/targets}, mirrors it to localStorage, and
+// Live-syncs users/<uid>/exerciseTracker/{profile,days,weeks,settings/targets}, mirrors it to localStorage, and
 // falls back to local-only mode like the other trackers. On load (and when the date
-// changes) it settles missed days and creates the day's quests. It also reads the shared
+// changes) it settles missed days and creates the day's quests and the week's challenge. It also reads the shared
 // catalog at `exercises/`, and the owner's account publishes the bundled catalog there
 // when it's newer. Accounts that opt in to the ranking board keep their entry at
 // `leaderboard/<uid>` up to date with their level and XP.
 import type { Backend } from '../shared/backend';
-import { addDays, todayISO } from '../shared/dates';
+import { addDays, startOfWeek, todayISO } from '../shared/dates';
 import { LEGACY_OWNER } from '../shared/legacy';
 import { getBackend, isSampleMode } from '../shared/store';
 import { toast } from '../shared/toast';
 import { EXERCISE_ROOT, userRoot, type ISODate } from '../shared/types';
+import { achievementLevels, ACHIEVEMENTS } from './achievements';
 import { CATALOG, CATALOG_VERSION, type Difficulty, type Exercise } from './catalog';
 import {
-  catalogRecord, DEFAULT_TARGETS, manualXp, daySeed, focusOn, generateDaily, generateDay, levelInfo, normalizeBoard, normalizeCatalog, normalizeDays,
-  normalizeProfile, normalizeTargets, questAmount, questXp, rankOf, settle, totalXp, weekdayOf, type BoardEntry, type DailySlot, type DaysMap,
-  type Focus, type Profile, type QuestKind, type Targets, type Weekday,
+  catalogRecord, challengeProgress, challengeXp, DEFAULT_TARGETS, manualXp, MAX_REST_DAYS, daySeed, focusOn, generateChallenge, generateDaily,
+  generateDay, levelInfo, normalizeBoard, normalizeCatalog, normalizeDays, normalizeProfile, normalizeTargets, normalizeWeeks, questAmount, questXp,
+  rankOf, restDays, settle, streakBonusPct, streakBonusXp, streakWithToday, totalXp, weekdayOf, type BoardEntry, type DailySlot, type DaysMap,
+  type Focus, type Profile, type QuestKind, type Rank, type Targets, type Weekday, type WeeksMap,
 } from './derive';
 
 const LS_KEY = 'exercise.cache.v1' + (isSampleMode() ? '.sample' : '');
@@ -25,9 +27,16 @@ export const BOARD_PATH = 'leaderboard';
 export const CATALOG_OWNER = LEGACY_OWNER;
 const DATE_CHECK_MS = 60_000;
 
+/** A full-screen moment after a quest: a new rank tier, or a new achievement level. */
+export type Celebration =
+  | { kind: 'rank'; rank: Rank; level: number }
+  | { kind: 'achievement'; id: string; level: number };
+
 export interface ExerciseState {
   profile: Profile;
   days: DaysMap;
+  /** Per week (keyed by its Monday): the weekly challenge. */
+  weeks: WeeksMap;
   /** The weekly plan: what each weekday's daily quests train. */
   targets: Targets;
   catalog: Exercise[];
@@ -41,6 +50,8 @@ export interface ExerciseState {
   boardReady: boolean;
   /** Set when opening the app settled missed days; shown once as a banner. */
   lastSettlement: { missedDays: number; xpLost: number } | null;
+  /** Rank-ups and achievements waiting to be shown, oldest first. */
+  celebrations: Celebration[];
 }
 
 type Obj = Record<string, unknown>;
@@ -62,8 +73,8 @@ const byIdOf = (c: Exercise[]) => Object.fromEntries(c.map(e => [e.id, e]));
 
 export class ExerciseStore {
   private state: ExerciseState = {
-    profile: {}, days: {}, targets: DEFAULT_TARGETS, catalog: CATALOG, byId: byIdOf(CATALOG), today: '', ready: false, usingLocal: false, lastSettlement: null,
-    board: [], boardReady: false,
+    profile: {}, days: {}, weeks: {}, targets: DEFAULT_TARGETS, catalog: CATALOG, byId: byIdOf(CATALOG), today: '', ready: false, usingLocal: false,
+    lastSettlement: null, board: [], boardReady: false, celebrations: [],
   };
   private listeners = new Set<() => void>();
   private backend: Backend | null = null;
@@ -86,11 +97,17 @@ export class ExerciseStore {
   }
 
   private syncFromRaw() {
-    this.set({ profile: normalizeProfile(this.raw.profile), days: normalizeDays(this.raw.days), targets: normalizeTargets(this.raw.targets) });
+    this.set({
+      profile: normalizeProfile(this.raw.profile), days: normalizeDays(this.raw.days), weeks: normalizeWeeks(this.raw.weeks),
+      targets: normalizeTargets(this.raw.targets),
+    });
   }
 
   private cacheLocal() {
-    try { localStorage.setItem(this.lsKey, JSON.stringify({ profile: this.raw.profile ?? null, days: this.raw.days ?? null, targets: this.raw.targets ?? null })); } catch { /* ignore */ }
+    try {
+      const { profile = null, days = null, weeks = null, targets = null } = this.raw;
+      localStorage.setItem(this.lsKey, JSON.stringify({ profile, days, weeks, targets }));
+    } catch { /* ignore */ }
   }
   private readLocal(): Obj | null {
     try { const raw = localStorage.getItem(this.lsKey); return raw ? JSON.parse(raw) : null; } catch { return null; }
@@ -105,7 +122,7 @@ export class ExerciseStore {
     this.root = userRoot(accountId, EXERCISE_ROOT);
     this.state = { ...this.state, today: this.todayFn() };
     const cached = this.readLocal();
-    if (cached) { this.raw = { profile: cached.profile, days: cached.days, targets: cached.targets }; this.syncFromRaw(); }
+    if (cached) { this.raw = { profile: cached.profile, days: cached.days, weeks: cached.weeks, targets: cached.targets }; this.syncFromRaw(); }
 
     this.backend = this.getBackendFn();
     if (!this.backend) {
@@ -124,7 +141,7 @@ export class ExerciseStore {
       this.syncBoard();
     }, err => { console.error(err); this.set({ boardReady: true }); });
     this.backend.on(this.root, v => {
-      this.raw = isObj(v) ? { profile: v.profile, days: v.days, targets: isObj(v.settings) ? v.settings.targets : undefined } : {};
+      this.raw = isObj(v) ? { profile: v.profile, days: v.days, weeks: v.weeks, targets: isObj(v.settings) ? v.settings.targets : undefined } : {};
       this.cacheLocal();
       const first = !this.state.ready;
       this.syncFromRaw();
@@ -177,19 +194,22 @@ export class ExerciseStore {
       if (s.patch) Object.assign(patch, s.patch);
       if (s.missedDays) lastSettlement = { missedDays: s.missedDays, xpLost: s.xpLost };
     }
-    // Today's quests are picked once, at the level after settling.
-    if (!days[today]?.daily) {
-      const after: DaysMap = JSON.parse(JSON.stringify(days));
-      for (const [k, v] of Object.entries(patch)) {
-        const m = /^days\/([^/]+)\/penalty$/.exec(k);
-        if (m) after[m[1]] = { ...after[m[1]], penalty: v as number };
-      }
-      const level = levelInfo(totalXp(after)).level;
+    // Today's quests and this week's challenge are picked once, at the level after settling.
+    const after: DaysMap = JSON.parse(JSON.stringify(days));
+    for (const [k, v] of Object.entries(patch)) {
+      const m = /^days\/([^/]+)\/penalty$/.exec(k);
+      if (m) after[m[1]] = { ...after[m[1]], penalty: v as number };
+    }
+    const level = levelInfo(totalXp(after)).level;
+    // A rest day has no daily quests to store, so its stored focus marks it as created.
+    if (!days[today]?.daily && days[today]?.focus !== 'rest') {
       const { focus, daily, optional } = generateDay(level, daySeed(this.accountId, today), catalog, focusOn(targets, today));
       patch['days/' + today + '/focus'] = focus;
-      patch['days/' + today + '/daily'] = daily;
+      if (Object.keys(daily).length) patch['days/' + today + '/daily'] = daily;
       if (!days[today]?.optional) patch['days/' + today + '/optional'] = optional;
     }
+    const monday = startOfWeek(today);
+    if (!this.state.weeks[monday]?.challenge) patch['weeks/' + monday + '/challenge'] = generateChallenge(level, daySeed(this.accountId, monday), catalog);
     this.state = { ...this.state, today, lastSettlement };
     if (Object.keys(patch).length) this.write(patch);
     else this.set({});
@@ -245,18 +265,22 @@ export class ExerciseStore {
   setTarget(day: Weekday, focus: Focus) {
     const { today, days, targets, catalog } = this.state;
     if (targets[day] === focus) return;
+    if (focus === 'rest' && restDays(targets) >= MAX_REST_DAYS) { toast('At most ' + MAX_REST_DAYS + ' rest days a week', true); return; }
     const patch: Obj = { ['settings/targets/' + day]: focus };
     const todays = days[today];
     if (weekdayOf(today) === day && !Object.values(todays?.daily ?? {}).some(q => q?.done)) {
+      const daily = generateDaily(levelInfo(this.xp()).level, daySeed(this.accountId, today), focus, catalog);
       patch['days/' + today + '/focus'] = focus;
-      patch['days/' + today + '/daily'] = generateDaily(levelInfo(this.xp()).level, daySeed(this.accountId, today), focus, catalog);
+      patch['days/' + today + '/daily'] = Object.keys(daily).length ? daily : null;
     }
     this.write(patch);
   }
 
   /** Puts every weekday back to the default plan (today's quests follow if none is done yet). */
   resetTargets() {
-    for (const [day, focus] of Object.entries(DEFAULT_TARGETS) as Array<[Weekday, Focus]>) this.setTarget(day, focus);
+    // Training days first, so the rest-day limit never blocks a default rest day.
+    const entries = Object.entries(DEFAULT_TARGETS) as Array<[Weekday, Focus]>;
+    for (const [day, focus] of [...entries.filter(e => e[1] !== 'rest'), ...entries.filter(e => e[1] === 'rest')]) this.setTarget(day, focus);
   }
 
   /** Today's daily quests can still follow a change of target (none of them is done). */
@@ -266,6 +290,29 @@ export class ExerciseStore {
 
   dismissSettlement() { this.set({ lastSettlement: null }); }
 
+  /* ---------- celebrations ---------- */
+
+  dismissCelebration() { this.set({ celebrations: this.state.celebrations.slice(1) }); }
+
+  private achievementLevels() {
+    const { days, weeks, byId, targets, today } = this.state;
+    return achievementLevels(days, weeks, byId, targets, today);
+  }
+
+  /** Runs a change and queues a celebration for a new rank tier and each new achievement level. */
+  private celebrate(change: () => void) {
+    const before = levelInfo(this.xp()).level;
+    const had = this.achievementLevels();
+    change();
+    const after = levelInfo(this.xp()).level;
+    const now = this.achievementLevels();
+    const queue: Celebration[] = [];
+    if (after > before && rankOf(after).label !== rankOf(before).label) queue.push({ kind: 'rank', rank: rankOf(after), level: after });
+    for (const a of ACHIEVEMENTS) if ((now[a.id] ?? 0) > (had[a.id] ?? 0)) queue.push({ kind: 'achievement', id: a.id, level: now[a.id] });
+    if (queue.length) this.set({ celebrations: [...this.state.celebrations, ...queue] });
+    return { before, after, rankUp: queue[0]?.kind === 'rank' };
+  }
+
   /* ---------- quests ---------- */
 
   /**
@@ -273,26 +320,29 @@ export class ExerciseStore {
    * it (no camera, or access denied) the quest is worth half its XP, rounded down.
    */
   private complete(kind: QuestKind, key: string, camera: boolean) {
-    const { today, days, byId } = this.state;
+    const { today, days, byId, targets } = this.state;
     const slot = kind === 'daily' ? days[today]?.daily?.[key as DailySlot] : days[today]?.optional?.[key as Difficulty];
     const ex = slot && byId[slot.ex];
     if (!slot || !ex || slot.done || (kind === 'optional' && !slot.accepted)) return;
-    const before = levelInfo(this.xp()).level;
-    const amount = questAmount(ex, before, kind);
-    const full = questXp(ex.difficulty, before, kind);
+    const level = levelInfo(this.xp()).level;
+    const amount = questAmount(ex, level, kind);
+    const full = questXp(ex.difficulty, level, kind);
     const xp = camera ? full : manualXp(full);
+    const bonus = kind === 'daily' ? streakBonusXp(xp, streakBonusPct(streakWithToday(days, today, targets))) : 0;
     const base = 'days/' + today + '/' + kind + '/' + key + '/';
-    this.write({ [base + 'done']: Date.now(), [base + 'amount']: amount, [base + 'xp']: xp, [base + 'manual']: camera ? null : true });
-    const after = levelInfo(this.xp()).level;
-    const rank = rankOf(after).label;
-    if (rank !== rankOf(before).label) toast('Rank up! You’re now ' + rank);
-    else if (after > before) toast('Level up! Level ' + after + ' · ' + rank);
-    else toast('+' + xp + ' XP · ' + ex.name + (camera ? '' : ' (half XP, no camera)'));
+    const { before, after, rankUp } = this.celebrate(() => this.write({
+      [base + 'done']: Date.now(), [base + 'amount']: amount, [base + 'xp']: xp, [base + 'manual']: camera ? null : true, [base + 'bonus']: bonus || null,
+    }));
+    if (after > before && !rankUp) toast('Level up! Level ' + after + ' · ' + rankOf(after).label);
+    else if (after <= before) {
+      const notes = [bonus ? 'streak bonus +' + bonus : '', camera ? '' : 'half XP, no camera'].filter(Boolean);
+      toast('+' + (xp + bonus) + ' XP · ' + ex.name + (notes.length ? ' (' + notes.join(', ') + ')' : ''));
+    }
   }
 
   private undo(kind: QuestKind, key: string) {
     const base = 'days/' + this.state.today + '/' + kind + '/' + key + '/';
-    this.write({ [base + 'done']: null, [base + 'amount']: null, [base + 'xp']: null, [base + 'manual']: null });
+    this.write({ [base + 'done']: null, [base + 'amount']: null, [base + 'xp']: null, [base + 'manual']: null, [base + 'bonus']: null });
   }
 
   completeDaily(slot: DailySlot, camera = true) { this.complete('daily', slot, camera); }
@@ -311,6 +361,35 @@ export class ExerciseStore {
   }
   completeOptional(d: Difficulty, camera = true) { this.complete('optional', d, camera); }
   undoOptional(d: Difficulty) { this.undo('optional', d); }
+
+  /* ---------- weekly challenge ---------- */
+
+  /** This week's challenge (keyed by the week's Monday), if it has been picked. */
+  challenge() { return this.state.weeks[startOfWeek(this.state.today)]?.challenge ?? null; }
+
+  /**
+   * Adds reps (or seconds) to this week's challenge: counted by the camera, or logged without it
+   * (those count half toward the XP). Reaching the target completes it and pays its XP today.
+   */
+  logChallenge(count: number, camera: boolean) {
+    const c = this.challenge();
+    const n = Math.floor(count);
+    if (!c || c.done || n <= 0) return;
+    const ex = this.state.byId[c.ex];
+    const base = 'weeks/' + startOfWeek(this.state.today) + '/challenge/';
+    const next = { ...c, [camera ? 'cam' : 'man']: (camera ? c.cam ?? 0 : c.man ?? 0) + Math.min(n, c.target - challengeProgress(c)) };
+    const patch: Obj = { [base + (camera ? 'cam' : 'man')]: next[camera ? 'cam' : 'man'] };
+    const finished = challengeProgress(next) >= c.target;
+    if (finished) {
+      const xp = challengeXp(next);
+      Object.assign(patch, { [base + 'done']: Date.now(), [base + 'xp']: xp, ['days/' + this.state.today + '/challengeXp']: xp });
+      this.celebrate(() => this.write(patch));
+      toast('Weekly challenge complete! +' + xp + ' XP');
+    } else {
+      this.write(patch);
+      toast('+' + n + (ex?.measure === 'seconds' ? ' s' : ' reps') + ' toward the weekly challenge');
+    }
+  }
 }
 
 export const exerciseStore = new ExerciseStore();

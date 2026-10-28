@@ -26,13 +26,13 @@ export function ExerciseCard({ summary: s, ready, today }: Props) {
           <div>
             <h2 className="card-x-title" style={{ margin: 0 }}>LevelUp</h2>
             <div className="section-label" style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0, fontSize: '.76rem' }}>
-              {ready ? fmtDate(today, { weekday: 'long', month: 'long', day: 'numeric' }) + ' · ' + focus.label + ' day' : '—'}
+              {ready ? fmtDate(today, { weekday: 'long', month: 'long', day: 'numeric' }) + ' · ' + focus.day : '—'}
             </div>
           </div>
         </div>
         {ready && s.started && (
           <span className={'chip ms-auto ' + (s.safe ? 'chip-done' : 'chip-soon')}>
-            {s.safe ? <><i className="bi bi-shield-check"></i>Safe for today</>
+            {s.rest ? <><i className="bi bi-moon-stars"></i>Rest day</> : s.safe ? <><i className="bi bi-shield-check"></i>Safe for today</>
               : <><i className="bi bi-exclamation-triangle"></i>{s.atRisk ? s.atRisk + ' XP at risk' : 'Do 1 quest today'}</>}
           </span>
         )}
@@ -62,7 +62,9 @@ export function ExerciseCard({ summary: s, ready, today }: Props) {
                 </div>
               </div>
               <div className="stats">
-                {stat('bi-check2-square', 'Today', <>{s.doneCount}<span className="ex-of">/3</span></>, s.quests ? 'daily quests done' : 'not started yet')}
+                {s.rest
+                  ? stat('bi-moon-stars', 'Today', 'Rest', 'no daily quests')
+                  : stat('bi-check2-square', 'Today', <>{s.doneCount}<span className="ex-of">/3</span></>, s.quests ? 'daily quests done' : 'not started yet')}
                 {stat('bi-fire', 'Streak', s.streak, s.streak === 1 ? 'day' : 'days')}
                 {stat('bi-star', 'Total XP', s.info.total, 'all time')}
                 {stat('bi-calendar-week', 'This week', '+' + s.weekXp, 'XP earned')}
@@ -70,7 +72,9 @@ export function ExerciseCard({ summary: s, ready, today }: Props) {
             </div>
             <div>
               <div className="section-label ex-quests-label">Today’s daily quests</div>
-              {ready && s.quests ? (
+              {ready && s.rest ? (
+                <p className="ex-note">Rest day: no daily quests and no penalty. An optional quest in LevelUp still earns XP and adds to your streak.</p>
+              ) : ready && s.quests ? (
                 <div className="recent-list ex-quests">
                   {s.quests.map((q, i) => (
                     <div className={'recent-row' + (q.done ? ' done' : '')} key={i}>

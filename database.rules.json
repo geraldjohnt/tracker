@@ -65,6 +65,7 @@
                 "amount":   { ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "xp":       { ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "manual":   { ".validate": "newData.isBoolean()" },
+                "bonus":    { ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "$other": { ".validate": false }
               } },
               "optional": { "$difficulty": {
@@ -77,8 +78,26 @@
                 "manual":   { ".validate": "newData.isBoolean()" },
                 "$other": { ".validate": false }
               } },
-              "focus":   { ".validate": "newData.isString() && newData.val().matches(/^(legs|upper|core|full)$/)" },
+              "focus":   { ".validate": "newData.isString() && newData.val().matches(/^(legs|upper|core|full|rest)$/)" },
               "penalty": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+              "challengeXp": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+              "$other": { ".validate": false }
+            }
+          },
+          "weeks": {
+            "$monday": {
+              ".validate": "$monday.matches(/^\\d{4}-\\d{2}-\\d{2}$/)",
+              "challenge": {
+                ".validate": "newData.hasChildren(['ex','target','reward'])",
+                "ex":     { ".validate": "newData.isString() && newData.val().length <= 40" },
+                "target": { ".validate": "newData.isNumber() && newData.val() > 0" },
+                "reward": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "cam":    { ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "man":    { ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "done":   { ".validate": "newData.isNumber()" },
+                "xp":     { ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "$other": { ".validate": false }
+              },
               "$other": { ".validate": false }
             }
           },
@@ -87,7 +106,7 @@
             "template": { ".validate": "newData.isString() && newData.val().matches(/^(default|neomorphism|glassmorphism|claymorphism|minimalism|liquidglass|spatial)$/)" },
             "palette":  { ".validate": "newData.isString() && newData.val().matches(/^(indigo|rose|emerald|amber|ocean|violet|slate|sunset)$/)" },
             "targets":  { "$weekday": {
-              ".validate": "$weekday.matches(/^(mon|tue|wed|thu|fri|sat|sun)$/) && newData.isString() && newData.val().matches(/^(legs|upper|core|full)$/)"
+              ".validate": "$weekday.matches(/^(mon|tue|wed|thu|fri|sat|sun)$/) && newData.isString() && newData.val().matches(/^(legs|upper|core|full|rest)$/)"
             } }
           }
         },

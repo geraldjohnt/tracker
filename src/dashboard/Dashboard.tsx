@@ -50,7 +50,7 @@ export function Dashboard({ user }: { user: AuthUser }) {
     if (w) bits.push(peopleOf(w).length + ' logging this week');
   }
   if (spendReady) bits.push(fmtMoney(dayTotal(expenses, today)) + ' spent today');
-  if (exReady && ex.started) bits.push(ex.doneCount + '/3 quests done');
+  if (exReady && ex.started) bits.push(ex.rest ? 'rest day' : ex.doneCount + '/3 quests done');
 
   return (
     <>

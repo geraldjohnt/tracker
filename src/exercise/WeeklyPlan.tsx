@@ -1,9 +1,9 @@
-// The weekly plan: what each weekday's daily quests train (legs, upper body, core or full body).
+// The weekly plan: what each weekday's daily quests train (legs, upper body, core or full body), or a rest day.
 // Shown as a strip on the Quests view; tapping it opens an editor.
 import { forwardRef, useImperativeHandle } from 'react';
 import { createPortal } from 'react-dom';
 import { useBsModal } from '../shared/components/useBsModal';
-import { DEFAULT_TARGETS, FOCUS_INFO, FOCUSES, weekdayOf, WEEKDAY_LABELS, WEEKDAYS, type Targets } from './derive';
+import { DEFAULT_TARGETS, FOCUS_INFO, FOCUSES, MAX_REST_DAYS, restDays, weekdayOf, WEEKDAY_LABELS, WEEKDAYS, type Targets } from './derive';
 import { exerciseStore } from './store';
 
 export interface WeeklyPlanHandle { open: () => void }
@@ -14,7 +14,7 @@ export function WeeklyStrip({ targets, today, onEdit }: { targets: Targets; toda
     <div className="card-x fade-in">
       <div className="card-x-head">
         <h2 className="card-x-title"><i className="bi bi-calendar-week"></i>Weekly plan</h2>
-        <span className="head-note">Daily quests follow each day’s target.</span>
+        <span className="head-note">Daily quests follow each day’s target. Rest days have none, and no penalty.</span>
         <button type="button" className="btn btn-ghost btn-sm ms-auto" onClick={onEdit}><i className="bi bi-pencil me-1"></i>Edit</button>
       </div>
       <div className="card-x-body">
@@ -22,7 +22,7 @@ export function WeeklyStrip({ targets, today, onEdit }: { targets: Targets; toda
           {WEEKDAYS.map(d => {
             const f = FOCUS_INFO[targets[d]];
             return (
-              <button type="button" key={d} className={'week-day' + (d === wd ? ' today' : '')} onClick={onEdit} title={WEEKDAY_LABELS[d] + ': ' + f.label}>
+              <button type="button" key={d} className={'week-day' + (d === wd ? ' today' : '') + (targets[d] === 'rest' ? ' rest' : '')} onClick={onEdit} title={WEEKDAY_LABELS[d] + ': ' + f.label}>
                 <span className="week-day-name">{WEEKDAY_LABELS[d].slice(0, 3)}</span>
                 <i className={'bi ' + f.icon}></i>
                 <span className="week-day-focus">{f.short}</span>
@@ -41,6 +41,7 @@ export const WeeklyPlanModal = forwardRef<WeeklyPlanHandle, { targets: Targets; 
     useImperativeHandle(ref, () => ({ open: modal.show }), [modal.show]);
     const wd = weekdayOf(today);
     const isDefault = WEEKDAYS.every(d => targets[d] === DEFAULT_TARGETS[d]);
+    const restFull = restDays(targets) >= MAX_REST_DAYS;
     return createPortal(
       <div className="modal fade" id="planModal" tabIndex={-1} ref={modal.ref}>
         <div className="modal-dialog modal-dialog-centered">
@@ -50,7 +51,10 @@ export const WeeklyPlanModal = forwardRef<WeeklyPlanHandle, { targets: Targets; 
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div className="modal-body">
-              <p className="head-note mt-0">Pick what each day’s 3 daily quests train. Optional quests stay a mix of everything.</p>
+              <p className="head-note mt-0">
+                Pick what each day’s 3 daily quests train, or make it a rest day (up to {MAX_REST_DAYS} a week): no daily quests, no penalty,
+                and your streak carries on. Optional quests stay a mix of everything, every day.
+              </p>
               <div className="plan-rows">
                 {WEEKDAYS.map(d => (
                   <div key={d} className={'plan-row' + (d === wd ? ' today' : '')}>
@@ -61,7 +65,9 @@ export const WeeklyPlanModal = forwardRef<WeeklyPlanHandle, { targets: Targets; 
                     <div className="plan-choices" role="radiogroup" aria-label={WEEKDAY_LABELS[d]}>
                       {FOCUSES.map(f => (
                         <button type="button" key={f} role="radio" aria-checked={targets[d] === f}
-                          className={'chip' + (targets[d] === f ? ' active' : '')} onClick={() => exerciseStore.setTarget(d, f)}>
+                          disabled={f === 'rest' && restFull && targets[d] !== 'rest'}
+                          title={f === 'rest' && restFull && targets[d] !== 'rest' ? 'At most ' + MAX_REST_DAYS + ' rest days a week' : undefined}
+                          className={'chip' + (targets[d] === f ? ' active' : '') + (f === 'rest' ? ' chip-rest' : '')} onClick={() => exerciseStore.setTarget(d, f)}>
                           <i className={'bi ' + FOCUS_INFO[f].icon}></i>{FOCUS_INFO[f].label}
                         </button>
                       ))}

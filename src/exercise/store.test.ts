@@ -95,13 +95,13 @@ describe('ExerciseStore (sample data only)', () => {
     await flush();
     expect(s.xp()).toBe(55);
 
-    today = '2026-10-27'; // 25th (opened? no) and 26th missed; 24th was fine
+    today = '2026-10-27'; // 26th missed; 24th was fine; the 25th is a Sunday, a rest day by default
     s = make();
     await flush();
     const st = s.getState();
-    expect(st.lastSettlement?.missedDays).toBe(2);
+    expect(st.lastSettlement?.missedDays).toBe(1);
     expect(backend.get(ROOT + '/days/2026-10-24/penalty')).toBeNull();
-    expect(backend.get(ROOT + '/days/2026-10-25/penalty')).toBeGreaterThan(0);
+    expect(backend.get(ROOT + '/days/2026-10-25/penalty')).toBeNull();
     expect(backend.get(ROOT + '/days/2026-10-26/penalty')).toBeGreaterThan(0);
     expect(backend.get(ROOT + '/profile/settledThrough')).toBe('2026-10-26');
     expect(s.xp()).toBe(55 - st.lastSettlement!.xpLost);
@@ -109,11 +109,11 @@ describe('ExerciseStore (sample data only)', () => {
   });
 
   it('picks today’s daily quests for the day’s target, and re-picks them when today’s target changes', async () => {
-    const s = make(); // 2026-10-24 is a Saturday: core by default
+    const s = make(); // 2026-10-24 is a Saturday: full body by default
     await flush();
     const exs = () => Object.values(s.getState().days[today].daily!).map(q => s.getState().byId[q!.ex]);
-    expect(backend.get(ROOT + '/days/2026-10-24/focus')).toBe('core');
-    expect(exs().every(e => ['core', 'full'].includes(e.category))).toBe(true);
+    expect(backend.get(ROOT + '/days/2026-10-24/focus')).toBe('full');
+    expect(exs().map(e => e.category)[0]).toBe('legs');
 
     s.setTarget('sat', 'legs');
     await flush();
@@ -183,5 +183,92 @@ describe('ExerciseStore (sample data only)', () => {
     s.completeDaily('q1');
     await flush();
     expect(backend.get(BOARD_PATH + '/u1')).toBeNull();
+  });
+
+  it('a rest day stores its focus and optional quests only, is never re-created, and caps rest days at 3', async () => {
+    today = '2026-11-01'; // Sunday: the default rest day
+    const s = make();
+    await flush();
+    expect(backend.get(ROOT + '/days/2026-11-01/focus')).toBe('rest');
+    expect(backend.get(ROOT + '/days/2026-11-01/daily')).toBeNull();
+    expect(Object.keys(backend.get(ROOT + '/days/2026-11-01/optional') as object)).toHaveLength(4);
+    const before = JSON.stringify(backend.get(ROOT + '/days'));
+    s.tick();
+    await flush();
+    expect(JSON.stringify(backend.get(ROOT + '/days'))).toBe(before);
+
+    // Training on a rest day: change today's target and the daily quests appear.
+    s.setTarget('sun', 'legs');
+    await flush();
+    expect(Object.keys(backend.get(ROOT + '/days/2026-11-01/daily') as object)).toHaveLength(3);
+    s.setTarget('sun', 'rest');
+    await flush();
+    expect(backend.get(ROOT + '/days/2026-11-01/daily')).toBeNull();
+    expect(backend.get(ROOT + '/days/2026-11-01/focus')).toBe('rest');
+
+    s.setTarget('mon', 'rest'); s.setTarget('tue', 'rest');
+    s.setTarget('wed', 'rest'); // a 4th: refused
+    await flush();
+    expect(s.getState().targets).toMatchObject({ mon: 'rest', tue: 'rest', wed: 'core', sun: 'rest' });
+  });
+
+  it('adds the streak bonus to daily quests from a 7-day streak, and undo clears it', async () => {
+    const week = Object.fromEntries(Array.from({ length: 6 }, (_, i) => ['2026-10-' + (18 + i),
+      { focus: 'legs', daily: { q0: { ex: 'air-squat', done: 1, amount: 10, xp: 5 } } }]));
+    await backend.set(ROOT, { profile: { startDate: '2026-10-18', settledThrough: '2026-10-23' }, days: week });
+    const s = make();
+    await flush();
+    s.completeDaily('q0'); // the 7th day in a row
+    s.acceptOptional('easy'); s.completeOptional('easy'); // optional quests get no streak bonus
+    await flush();
+    const q0 = backend.get(ROOT + '/days/2026-10-24/daily/q0') as Record<string, number>;
+    expect(q0.bonus).toBe(Math.ceil(q0.xp * 0.1));
+    expect(backend.get(ROOT + '/days/2026-10-24/optional/easy/bonus')).toBeNull();
+    expect(s.xp()).toBe(30 + q0.xp + q0.bonus + 8);
+    s.undoDaily('q0');
+    await flush();
+    expect(backend.get(ROOT + '/days/2026-10-24/daily/q0/bonus')).toBeNull();
+  });
+
+  it('picks one challenge per week; camera and manual reps add up; finishing pays XP today, once', async () => {
+    const s = make();
+    await flush();
+    const c = s.challenge()!;
+    expect(backend.get(ROOT + '/weeks/2026-10-19/challenge')).toMatchObject({ ex: c.ex, target: c.target, reward: 40 }); // Monday of the 24th's week
+    s.logChallenge(10, true);
+    s.logChallenge(0, true); // nothing
+    await flush();
+    expect(s.challenge()).toMatchObject({ cam: 10 });
+    expect(s.xp()).toBe(0);
+    s.logChallenge(c.target, false); // more than needed: capped at the rest
+    await flush();
+    const after = s.challenge()!;
+    expect(after).toMatchObject({ cam: 10, man: c.target - 10 });
+    expect(after.done).toBeGreaterThan(0);
+    const xp = Math.floor((40 * (10 + (c.target - 10) / 2)) / c.target);
+    expect(after.xp).toBe(xp);
+    expect(backend.get(ROOT + '/days/2026-10-24/challengeXp')).toBe(xp);
+    s.logChallenge(5, true); // already done
+    await flush();
+    expect(s.challenge()).toEqual(after);
+
+    today = '2026-10-26'; // next Monday: a new challenge
+    const next = make();
+    await flush();
+    expect(backend.get(ROOT + '/weeks/2026-10-26/challenge/target')).toBeGreaterThan(0);
+    expect(next.challenge()!.done).toBeUndefined();
+  });
+
+  it('queues a celebration for a new rank tier and for each new achievement level', async () => {
+    await backend.set(ROOT, { profile: { startDate: '2026-10-23', settledThrough: '2026-10-23' }, days: { '2026-10-23': { optional: { elite: { ex: 'air-squat', accepted: 1, done: 1, xp: 70 } } } } });
+    const s = make(); // 70 XP: Level 4, one level below Rookie 2
+    await flush();
+    expect(s.getState().celebrations).toEqual([]);
+    s.completeDaily('q0'); // 75 XP → Level 5, Rookie 2
+    const kinds = s.getState().celebrations.map(c => (c.kind === 'rank' ? 'rank:' + c.rank.label : c.id + ':' + c.level));
+    expect(kinds[0]).toBe('rank:Rookie 2');
+    expect(kinds).toContain('climber:2'); // peak Level 5
+    s.dismissCelebration();
+    expect(s.getState().celebrations.length).toBe(kinds.length - 1);
   });
 });
